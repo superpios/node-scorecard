@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel Node Scorecard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070b10; --panel:#0e151f; --panel2:#111a26; --line:#1d2a3a;
+    --txt:#eaf1f8; --dim:#7587a0; --faint:#4a5a70;
+    --ok:#37e0a0; --good:#4aa8ff; --warn:#ffc24a; --bad:#ff5d6c;
+    --mono:'IBM Plex Mono',monospace; --sans:'Manrope',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:radial-gradient(1100px 550px at 88% -8%, rgba(55,224,160,.08), transparent 55%),radial-gradient(800px 400px at -8% 108%, rgba(74,168,255,.06), transparent 50%),var(--bg);
+    color:var(--txt);font-family:var(--sans);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:44px 22px 80px}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);border:1px solid var(--line);border-radius:100px;padding:6px 14px;margin-bottom:18px}
+  .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+  h1{font-size:clamp(30px,5.5vw,46px);font-weight:800;letter-spacing:-.025em;line-height:1.05}
+  h1 span{color:var(--ok)}
+  .sub{color:var(--dim);font-size:15.5px;max-width:600px;margin-top:12px}
+  .social{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .social a{font-family:var(--mono);font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:8px;padding:7px 12px;text-decoration:none;transition:all .2s;display:inline-flex;gap:6px;align-items:center}
+  .social a:hover{color:var(--ok);border-color:var(--ok)}
+  .tabs{display:flex;gap:6px;margin-top:30px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .tab{font-family:var(--mono);font-size:13px;color:var(--dim);padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+  .tab.active{color:var(--ok);border-bottom-color:var(--ok)}
+  .tab:hover{color:var(--txt)}
+  .pane{display:none;margin-top:28px}
+  .pane.active{display:block}
+  .search{display:flex;gap:10px;flex-wrap:wrap}
+  .search input,.search select{flex:1;min-width:160px;background:var(--panel);border:1px solid var(--line);color:var(--txt);font-family:var(--mono);font-size:14px;padding:15px 17px;border-radius:11px}
+  .search input:focus,.search select:focus{outline:none;border-color:var(--ok);box-shadow:0 0 0 3px rgba(55,224,160,.1)}
+  .btn{background:var(--ok);color:#04130c;border:none;font-family:var(--sans);font-weight:700;font-size:15px;padding:0 26px;border-radius:11px;cursor:pointer;transition:filter .2s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--dim);font-weight:600;font-size:13px;font-family:var(--mono);padding:10px 16px}
+  .btn.ghost:hover{border-color:var(--ok);color:var(--ok)}
+  .hint{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:11px}
+  .hint a{color:var(--good);cursor:pointer;text-decoration:none}
+  .hint a:hover{text-decoration:underline}
+  .drop{border:1.5px dashed var(--line);border-radius:14px;padding:34px 24px;text-align:center;transition:.2s;cursor:pointer}
+  .drop:hover,.drop.over{border-color:var(--ok);background:rgba(55,224,160,.04)}
+  .drop h3{font-size:16px;font-weight:700;margin-bottom:6px}
+  .drop p{color:var(--dim);font-size:13px;font-family:var(--mono)}
+  .drop .big{font-size:28px;margin-bottom:10px}
+  .result{margin-top:30px;opacity:0;transform:translateY(10px);transition:.5s}
+  .result.show{opacity:1;transform:none}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .diag{padding:20px 30px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start}
+  .diag .ic{font-size:22px;line-height:1.2;flex-shrink:0}
+  .diag .dx{flex:1}
+  .diag .dx h4{font-size:12px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+  .diag .dx p{font-size:15px;font-weight:600;line-height:1.45}
+  .diag .dx .fix{font-size:13.5px;font-weight:400;color:var(--dim);margin-top:5px}
+  .top{display:flex;gap:26px;padding:30px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
+  .gauge{position:relative;width:140px;height:140px;flex-shrink:0}
+  .gauge svg{transform:rotate(-90deg)}
+  .gauge .n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .gauge .n b{font-size:40px;font-weight:800;line-height:1}
+  .gauge .n small{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.12em;margin-top:3px}
+  .idblock{flex:1;min-width:230px}
+  .grade{font-family:var(--mono);font-size:12px;letter-spacing:.15em;text-transform:uppercase;font-weight:600}
+  .mon{font-size:24px;font-weight:800;margin:5px 0 4px;word-break:break-word}
+  .adr{font-family:var(--mono);font-size:11.5px;color:var(--dim);word-break:break-all}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+  .chip{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:7px;border:1px solid var(--line);color:var(--dim)}
+  .chip b{color:var(--txt)}
+  .metrics{padding:8px 30px 22px}
+  .metric{padding:18px 0;border-bottom:1px solid rgba(29,42,58,.5)}
+  .metric:last-child{border-bottom:none}
+  .metric .h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .metric .h .label{font-weight:700;font-size:15px}
+  .metric .h .val{font-family:var(--mono);font-size:15px;font-weight:600}
+  .metric .desc{color:var(--dim);font-size:13px;margin-top:4px}
+  .bar{height:7px;background:var(--line);border-radius:4px;margin-top:11px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:4px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+  .spark{display:flex;align-items:flex-end;gap:2px;height:42px;margin-top:12px}
+  .spark span{flex:1;border-radius:2px 2px 0 0;min-height:3px}
+  .actions{padding:18px 30px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .actions .msg{font-family:var(--mono);font-size:12px;color:var(--ok)}
+  /* leaderboard */
+  .lbrow{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--panel);transition:border-color .2s}
+  .lbrow:hover{border-color:var(--ok)}
+  .lbrank{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--dim);width:38px;flex-shrink:0;text-align:center}
+  .lbrank.top{color:var(--ok)}
+  .lbscore{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0}
+  .lbinfo{flex:1;min-width:0}
+  .lbinfo .m{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lbinfo .a{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lbmeta{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:right;flex-shrink:0;line-height:1.6}
+  .lbmeta b{color:var(--txt)}
+  .loading{text-align:center;padding:50px;color:var(--dim);font-family:var(--mono);font-size:14px}
+  .spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--ok);border-radius:50%;margin:0 auto 16px;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{background:rgba(255,93,108,.08);border:1px solid rgba(255,93,108,.3);color:#ffb3ba;padding:16px 20px;border-radius:11px;font-size:14px;margin-top:24px}
+  .err b{color:var(--bad)}
+  footer{margin-top:44px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.9}
+  footer a{color:var(--good);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <div class="badge">Sentinel dVPN · Reputation Engine</div>
+      <h1>Node <span>Scorecard</span></h1>
+      <p class="sub">Real reliability scoring for Sentinel dVPN nodes. Live snapshot, historical uptime, and a network-wide leaderboard — the metrics no other tool gives you.</p>
+    </div>
+    <div class="social">
+      <a href="https://github.com/superpios/node-scorecard" target="_blank">★ GitHub</a>
+      <a href="https://t.me/SentinelNodeNetwork" target="_blank">✈ Sentinel P2P</a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-pane="live">Live snapshot</div>
+    <div class="tab" data-pane="hist">Historical score</div>
+    <div class="tab" data-pane="board">Leaderboard</div>
+  </div>
+
+  <div class="pane active" id="pane-live">
+    <div class="search">
+      <input id="addr" type="text" placeholder="sentnode1..." spellcheck="false" autocomplete="off">
+      <button class="btn" id="go">Analyze</button>
+    </div>
+    <div class="hint">Try: <a id="ex1">sentnode15ywe3fh0wem9cwkg6d5nle48ztsl8skn0dpgmc</a></div>
+    <div id="liveout"></div>
+  </div>
+
+  <div class="pane" id="pane-hist">
+    <div id="histAuto"></div>
+    <div class="drop" id="dropH">
+      <div class="big">📊</div>
+      <h3>Drop your <code>history.jsonl</code> here</h3>
+      <p>Per-node uptime &amp; stability over time, from your collector.</p>
+      <input type="file" id="fileH" accept=".jsonl,.json,.txt" hidden>
+    </div>
+    <div id="histout"></div>
+  </div>
+
+  <div class="pane" id="pane-board">
+    <div id="boardAuto"></div>
+    <div class="drop" id="dropB">
+      <div class="big">🏆</div>
+      <h3>Drop <code>history.jsonl</code> or <code>latest.json</code> here</h3>
+      <p>Network-wide reliability ranking from your collector (run with --all).<br>Or it loads automatically if published alongside this page.</p>
+      <input type="file" id="fileB" accept=".jsonl,.json,.txt" hidden>
+    </div>
+    <div id="boardControls"></div>
+    <div id="boardout"></div>
+  </div>
+
+  <footer>
+    Live: <a href="https://lcd.sentinel.co" target="_blank">lcd.sentinel.co</a> ·
+    Historical &amp; leaderboard: your collector · Open-source community tool, not officially affiliated with Sentinel
+  </footer>
+</div>
+
+<script>
+const LCD="https://lcd.sentinel.co", EX="sentnode15ywe3fh0wem9cwkg6d5nle48ztsl8skn0dpgmc";
+const $=s=>document.querySelector(s);
+let lastReport="", boardData=null;
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".pane").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active"); $("#pane-"+t.dataset.pane).classList.add("active");
+});
+$("#ex1").onclick=()=>{$("#addr").value=EX; runLive();};
+$("#go").onclick=runLive;
+$("#addr").addEventListener("keydown",e=>{if(e.key==="Enter")runLive();});
+
+function fetchJSON(url,timeout=9000){
+  return Promise.race([
+    fetch(url).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}),
+    new Promise((_,x)=>setTimeout(()=>x(new Error("timeout")),timeout))
+  ]);
+}
+function grade(s){
+  if(s>=85)return{g:"RELIABLE",c:"var(--ok)"};
+  if(s>=65)return{g:"GOOD",c:"var(--good)"};
+  if(s>=45)return{g:"UNSTABLE",c:"var(--warn)"};
+  return{g:"AT RISK",c:"var(--bad)"};
+}
+function gaugeHTML(pct,c){
+  const circ=2*Math.PI*62;
+  return `<div class="gauge"><svg width="140" height="140" viewBox="0 0 140 140">
+    <circle cx="70" cy="70" r="62" fill="none" stroke="var(--line)" stroke-width="10"/>
+    <circle cx="70" cy="70" r="62" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"
+      stroke-dasharray="${circ}" stroke-dashoffset="${circ}" class="ring" data-off="${circ*(1-pct/100)}"
+      style="transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)"/>
+    </svg><div class="n"><b style="color:${c}">${pct}</b><small>/ 100</small></div></div>`;
+}
+function metric(label,val,desc,pct,color){
+  const bar=pct!==null?`<div class="bar"><i style="width:0%;background:${color}" data-w="${pct}"></i></div>`:"";
+  return `<div class="metric"><div class="h"><span class="label">${label}</span><span class="val" style="color:${color}">${val}</span></div><div class="desc">${desc}</div>${bar}</div>`;
+}
+function animate(){
+  requestAnimationFrame(()=>{
+    document.querySelectorAll(".ring").forEach(r=>setTimeout(()=>r.style.strokeDashoffset=r.dataset.off,100));
+    document.querySelectorAll(".bar i").forEach(b=>setTimeout(()=>b.style.width=b.dataset.w+"%",150));
+  });
+}
+function diagnose(pct,findings){
+  const bad=findings.filter(f=>f.k==="bad"),warn=findings.filter(f=>f.k==="warn");
+  let ic,head,fix;
+  if(bad.length){ic="🔴";head=`Critical: ${bad[0].label}. ${bad[0].note||""}`;fix=bad[0].fix||"Address this first — it blocks clients or earnings.";}
+  else if(warn.length){ic="🟡";head=`Mostly healthy, but: ${warn[0].label}. ${warn[0].note||""}`;fix=warn[0].fix||"Worth fixing to improve reliability.";}
+  else{ic="🟢";head="Healthy across all checks. Eligible, reachable, well-configured.";fix="Nothing to fix. Track historical uptime with the collector for full confidence.";}
+  return `<div class="diag"><div class="ic">${ic}</div><div class="dx"><h4>Diagnosis</h4><p>${head}</p><div class="fix">${fix}</div></div></div>`;
+}
+
+async function runLive(){
+  const addr=$("#addr").value.trim();
+  $("#liveout").innerHTML="";
+  if(!/^sentnode1[a-z0-9]{38,}$/.test(addr)){$("#liveout").innerHTML=`<div class="err"><b>Invalid address.</b> Must start with <code>sentnode1</code>.</div>`;return;}
+  $("#go").disabled=true;
+  $("#liveout").innerHTML=`<div class="loading"><div class="spin"></div>Querying the blockchain…</div>`;
+  let n;
+  try{ n=(await fetchJSON(`${LCD}/sentinel/node/v3/nodes/${addr}`)).node; if(!n)throw new Error("not found"); }
+  catch(e){ $("#liveout").innerHTML=`<div class="err"><b>Could not read node.</b> ${e.message}. Possibly CORS or a wrong address.</div>`; $("#go").disabled=false; return; }
+  let score=0,max=0;const M=[],F=[];
+  max+=35;
+  if(n.status==="active"){score+=35;M.push(["On-chain status","ACTIVE","Eligible to receive clients right now.",100,"var(--ok)"]);F.push({k:"ok",label:"active"});}
+  else{M.push(["On-chain status",(n.status||"?").toUpperCase(),"Not active — no clients, no rewards.",0,"var(--bad)"]);F.push({k:"bad",label:"node is inactive",note:"Not active on-chain.",fix:"Restart and check the scheduler renews the heartbeat."});}
+  max+=30;const ia=n.inactive_at;let mins=null;
+  if(ia&&ia!=="0001-01-01T00:00:00Z")mins=Math.round((new Date(ia)-Date.now())/60000);
+  if(mins===null){M.push(["Heartbeat margin","EXPIRED","inactive_at zeroed — chain marked it inactive.",0,"var(--bad)"]);F.push({k:"bad",label:"heartbeat expired",fix:"Restart and investigate the scheduler."});}
+  else if(mins>25){score+=30;M.push(["Heartbeat margin",`~${mins} min`,"Renews well ahead of the 60-min window.",100,"var(--ok)"]);F.push({k:"ok",label:"good margin"});}
+  else if(mins>5){score+=17;M.push(["Heartbeat margin",`~${mins} min`,"Thin margin — risks flickering off apps.",55,"var(--warn)"]);F.push({k:"warn",label:`only ~${mins} min margin`,fix:"Lower interval_status_update (e.g. 40m)."});}
+  else if(mins>0){score+=6;M.push(["Heartbeat margin",`~${mins} min`,"At the edge.",20,"var(--warn)"]);F.push({k:"warn",label:"heartbeat at the edge",fix:"Lower interval_status_update; ensure scheduler runs."});}
+  else{M.push(["Heartbeat margin",`${mins} min`,`Expired ${Math.abs(mins)} min ago.`,0,"var(--bad)"]);F.push({k:"bad",label:"heartbeat expired",fix:"Restart now."});}
+  max+=25;let api=null;const ra=(n.remote_addrs||[])[0];
+  if(ra){try{const a=await fetchJSON(`https://${ra}/`,8000);api=a.result||a;score+=25;M.push(["External reachability","REACHABLE",`API responds (${api.moniker||"?"}). Genuinely reachable.`,100,"var(--ok)"]);F.push({k:"ok",label:"reachable"});}
+  catch(e){M.push(["External reachability","UNVERIFIED",`Browser couldn't reach the API (${e.message}). Usually a CORS/TLS browser block, not a node fault. Verify from terminal.`,40,"var(--warn)"]);F.push({k:"warn",label:"reachability unverified from browser",note:"Usually a browser limitation, not a node fault.",fix:"Verify from terminal: nc -zv <host> <port>."});}}
+  else{M.push(["External reachability","NO ADDRESS","No remote_addrs advertised.",0,"var(--bad)"]);F.push({k:"bad",label:"no advertised address",fix:"Set remote_addrs to your public host:port."});}
+  max+=10;const gp=(n.gigabyte_prices||[]).length;
+  if(gp>=1){score+=10;M.push(["Payment tokens",`${gp} token${gp>1?"s":""}`,"Configured for payment.",100,"var(--good)"]);F.push({k:"ok",label:"prices set"});}
+  else{M.push(["Payment tokens","NONE","No prices — cannot monetize.",0,"var(--bad)"]);F.push({k:"bad",label:"no prices configured"});}
+  const pct=Math.round(score/max*100),{g,c}=grade(pct);
+  const ver=api&&api.version?api.version.tag:"?",st=(api&&api.service_type)||n.type||"?",pe=api&&api.peers!==undefined?api.peers:"?";
+  lastReport=buildReport(addr,n.moniker,pct,g,M);
+  $("#liveout").innerHTML=`<div class="result" id="r"><div class="card">${diagnose(pct,F)}
+    <div class="top">${gaugeHTML(pct,c)}<div class="idblock"><div class="grade" style="color:${c}">${g}</div>
+    <div class="mon">${n.moniker||"(no name)"}</div><div class="adr">${addr}</div>
+    <div class="chips"><span class="chip">type <b>${st}</b></span><span class="chip">v <b>${ver}</b></span><span class="chip">peers now <b>${pe}</b></span></div></div></div>
+    <div class="metrics">${M.map(m=>metric(...m)).join("")}</div>
+    <div class="actions"><button class="btn ghost" id="copy">⧉ Copy report for Telegram / GitHub</button><span class="msg" id="copymsg"></span></div></div></div>`;
+  $("#r").classList.add("show");animate();$("#go").disabled=false;
+  $("#copy").onclick=()=>navigator.clipboard.writeText(lastReport).then(()=>$("#copymsg").textContent="Copied! Paste in Sentinel P2P or a GitHub issue.");
+}
+function buildReport(addr,mon,pct,g,M){
+  let t=`Sentinel Node Scorecard — ${mon||"(no name)"}\nAddress: ${addr}\nScore: ${pct}/100 (${g})\n\n`;
+  M.forEach(m=>t+=`- ${m[0]}: ${m[1]}\n`);
+  return t+`\nGenerated with Node Scorecard (community tool).`;
+}
+
+// ---- shared: compute per-node stats from rows ----
+function nodeStats(rows){
+  const by={};
+  rows.forEach(r=>{ if(r&&r.addr) (by[r.addr]=by[r.addr]||[]).push(r); });
+  return Object.keys(by).map(a=>{
+    const recs=by[a].sort((x,y)=>new Date(x.ts)-new Date(y.ts));
+    const n=recs.length,active=recs.filter(r=>r.status==="active").length;
+    const uptime=n?active/n*100:0;
+    let trans=0;for(let i=1;i<recs.length;i++){if((recs[i].status==="active")!==(recs[i-1].status==="active"))trans++;}
+    const stab=n>1?Math.max(0,100-(trans/(n-1))*200):100;
+    const uls=recs.map(r=>r.ul_mbps).filter(v=>v!=null);
+    const ul=uls.length?uls.reduce((a,b)=>a+b,0)/uls.length:null;
+    const last=recs[recs.length-1];
+    const country=recs.map(r=>r.country).filter(Boolean).pop()||null;
+    const sc=Math.round(uptime*0.6+stab*0.3+(ul?10:0));
+    return {a,mon:(last.moniker||a),n,uptime,trans,stab,ul,country,sc,recs};
+  });
+}
+function parseFile(text){
+  text=text.trim();
+  if(text[0]==="["){ try{return JSON.parse(text);}catch{return [];} }  // latest.json array
+  return text.split("\n").filter(l=>l.trim()).map(l=>{try{return JSON.parse(l);}catch{return null;}}).filter(Boolean);
+}
+
+// HISTORICAL tab
+const dropH=$("#dropH"),fileH=$("#fileH");
+dropH.onclick=()=>fileH.click();
+fileH.onchange=e=>{if(e.target.files[0])readH(e.target.files[0]);};
+["dragover","dragenter"].forEach(ev=>dropH.addEventListener(ev,e=>{e.preventDefault();dropH.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>dropH.addEventListener(ev,e=>{e.preventDefault();dropH.classList.remove("over");}));
+dropH.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)readH(f);});
+function readH(f){const r=new FileReader();r.onload=()=>{const rows=parseFile(r.result);if(!rows.length){$("#histout").innerHTML=`<div class="err"><b>Empty/invalid file.</b></div>`;return;}analyzeHist(rows);};r.readAsText(f);}
+
+// auto-fetch history.jsonl if published alongside the page
+(async function autoHist(){
+  try{
+    const r=await fetch("history.jsonl",{cache:"no-store"});
+    if(!r.ok) return;
+    const rows=parseFile(await r.text());
+    if(!rows.length) return;
+    $("#histAuto").innerHTML=`<div style="font-family:var(--mono);font-size:12px;color:var(--ok);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:16px">● Historical data loaded automatically · ${rows.length} samples · refreshed hourly</div>`;
+    $("#dropH").style.display="none";
+    analyzeHist(rows);
+  }catch(e){ /* niente file pubblicato: resta il drag&drop */ }
+})();
+function analyzeHist(rows){
+  const stats=nodeStats(rows).sort((x,y)=>y.uptime-x.uptime);const total=stats.length;
+  const html=stats.map((s,idx)=>{
+    const {g,c}=grade(s.sc);const last=s.recs.slice(-40);
+    const spark=last.map(r=>{const up=r.status==="active";return `<span style="height:${up?100:18}%;background:${up?'var(--ok)':'var(--bad)'}" title="${r.ts}: ${r.status}"></span>`;}).join("");
+    const ulTxt=s.ul!=null?`${s.ul.toFixed(1)} Mbps`:"n/d";
+    const F=[];
+    if(s.uptime<80)F.push({k:"bad",label:`uptime only ${s.uptime.toFixed(0)}%`,note:"Significant time inactive.",fix:"Investigate scheduler/power/network."});
+    else if(s.trans>4)F.push({k:"warn",label:`${s.trans} active⇄inactive flips`,note:"Flickering drops sessions.",fix:"Stabilize the heartbeat."});
+    return `<div class="result show" style="margin-top:${idx?16:24}px"><div class="card">${diagnose(s.sc,F.length?F:[{k:"ok",label:"stable"}])}
+      <div class="top">${gaugeHTML(s.sc,c)}<div class="idblock"><div class="grade" style="color:${c}">${g} · rank #${idx+1}/${total}</div>
+      <div class="mon">${s.mon}</div><div class="adr">${s.a}</div>
+      <div class="chips"><span class="chip">samples <b>${s.n}</b></span><span class="chip">flips <b>${s.trans}</b></span><span class="chip">avg up <b>${ulTxt}</b></span></div></div></div>
+      <div class="metrics">
+        ${metric("Uptime (measured)",s.uptime.toFixed(1)+"%",`Active in ${Math.round(s.uptime/100*s.n)} of ${s.n} samples. Real reliability over time.`,s.uptime,s.uptime>=95?"var(--ok)":s.uptime>=80?"var(--good)":s.uptime>=50?"var(--warn)":"var(--bad)")}
+        ${metric("Stability",s.trans+" flips",`${s.trans} transitions. Fewer is better — flickering drops sessions.`,s.stab,s.stab>=80?"var(--ok)":s.stab>=50?"var(--warn)":"var(--bad)")}
+        ${metric("Bandwidth (avg upload)",ulTxt,s.ul!=null?"Average advertised upload.":"This node doesn't expose live bandwidth (common).",s.ul!=null?Math.min(100,s.ul*2):null,"var(--good)")}
+        <div class="metric"><div class="h"><span class="label">Uptime timeline</span><span class="val" style="color:var(--dim)">last ${last.length}</span></div>
+        <div class="desc">Green = active, red = inactive.</div><div class="spark">${spark}</div></div></div></div></div>`;
+  }).join("");
+  const span=(()=>{const ts=rows.map(r=>new Date(r.ts));const h=(Math.max(...ts)-Math.min(...ts))/3.6e6;return h<24?`${h.toFixed(1)}h`:`${(h/24).toFixed(1)} days`;})();
+  $("#histout").innerHTML=`<div style="font-family:var(--mono);font-size:12px;color:var(--dim);margin:22px 0 4px">${rows.length} samples · ${total} node(s) · spanning ${span}</div>${html}`;
+  animate();
+}
+
+// LEADERBOARD tab
+const dropB=$("#dropB"),fileB=$("#fileB");
+dropB.onclick=()=>fileB.click();
+fileB.onchange=e=>{if(e.target.files[0])readB(e.target.files[0]);};
+["dragover","dragenter"].forEach(ev=>dropB.addEventListener(ev,e=>{e.preventDefault();dropB.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>dropB.addEventListener(ev,e=>{e.preventDefault();dropB.classList.remove("over");}));
+dropB.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)readB(f);});
+function readB(f){const r=new FileReader();r.onload=()=>{const rows=parseFile(r.result);if(!rows.length){$("#boardout").innerHTML=`<div class="err"><b>Empty/invalid file.</b></div>`;return;}boardData=nodeStats(rows);renderBoardControls();renderBoard();};r.readAsText(f);}
+
+// auto-fetch latest.json published alongside the page (no drag&drop needed)
+(async function autoBoard(){
+  try{
+    const r=await fetch("latest.json",{cache:"no-store"});
+    if(!r.ok) return;
+    const rows=await r.json();
+    if(!Array.isArray(rows)||!rows.length) return;
+    boardData=nodeStats(rows);
+    const when=new Date().toLocaleString();
+    $("#boardAuto").innerHTML=`<div style="font-family:var(--mono);font-size:12px;color:var(--ok);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:16px">● Live network data loaded automatically · ${rows.length} nodes · refreshed hourly by the collector</div>`;
+    $("#dropB").style.display="none";
+    renderBoardControls(); renderBoard();
+  }catch(e){ /* nessun latest.json pubblicato: resta il drag&drop */ }
+})();
+function renderBoardControls(){
+  const countries=[...new Set(boardData.map(s=>s.country).filter(Boolean))].sort();
+  const opts=['<option value="">All countries</option>',...countries.map(c=>`<option value="${c}">${c}</option>`)].join("");
+  $("#boardControls").innerHTML=`<div class="search" style="margin-top:18px">
+    <select id="fc">${opts}</select>
+    <select id="fs"><option value="sc">Sort: Score</option><option value="uptime">Sort: Uptime</option><option value="ul">Sort: Bandwidth</option></select>
+    <input id="fq" placeholder="filter moniker/address…">
+  </div>`;
+  $("#fc").onchange=renderBoard;$("#fs").onchange=renderBoard;$("#fq").oninput=renderBoard;
+}
+function renderBoard(){
+  if(!boardData)return;
+  const fc=$("#fc")?.value||"",fs=$("#fs")?.value||"sc",fq=($("#fq")?.value||"").toLowerCase();
+  let rows=boardData.slice();
+  if(fc)rows=rows.filter(s=>s.country===fc);
+  if(fq)rows=rows.filter(s=>(s.mon||"").toLowerCase().includes(fq)||s.a.toLowerCase().includes(fq));
+  rows.sort((x,y)=>fs==="uptime"?y.uptime-x.uptime:fs==="ul"?(y.ul||0)-(x.ul||0):y.sc-x.sc);
+  const total=rows.length;
+  const list=rows.map((s,i)=>{
+    const {c}=grade(s.sc);
+    const ulTxt=s.ul!=null?`${s.ul.toFixed(0)}M`:"–";
+    return `<div class="lbrow">
+      <div class="lbrank ${i<3?'top':''}">#${i+1}</div>
+      <div class="lbscore" style="background:${c}22;color:${c}">${s.sc}</div>
+      <div class="lbinfo"><div class="m">${s.mon}</div><div class="a">${s.a}</div></div>
+      <div class="lbmeta">up <b>${s.uptime.toFixed(0)}%</b> · flips <b>${s.trans}</b><br>${s.country||"?"} · ${ulTxt} · ${s.n}smp</div>
+    </div>`;
+  }).join("");
+  $("#boardout").innerHTML=`<div class="result show"><div style="font-family:var(--mono);font-size:12px;color:var(--dim);margin:16px 0 12px">${total} node(s)${fc?" in "+fc:""} · ranked by ${fs==="uptime"?"uptime":fs==="ul"?"bandwidth":"composite score"}</div>${list}</div>`;
+}
+</script>
+</body>
+</html>
