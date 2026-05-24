@@ -336,8 +336,9 @@ function renderHistFromSummary(summary){
   const stats=summary.slice().sort((x,y)=>y.uptime-x.uptime);
   const total=stats.length;
   const maxN=Math.max(...stats.map(s=>s.n||1));
-  const immature = maxN<6;  // meno di 6 campioni = storico immaturo
-  const warn = immature ? `<div style="font-family:var(--mono);font-size:12px;color:var(--warn);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:16px 0">⚠ Early data: only ${maxN} sample(s) per node so far. Uptime % becomes meaningful after the collector has run for a day or more — right now most nodes show 100% simply because they were active at the single sample.</div>` : "";
+  const medianN=stats.map(s=>s.n||1).sort((a,b)=>a-b)[Math.floor(stats.length/2)];
+  const immature = medianN<12;
+  const warn = immature ? `<div style="font-family:var(--mono);font-size:12px;color:var(--warn);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:16px 0">⚠ Early data: most nodes have only ${medianN} sample(s) so far. Uptime % becomes meaningful after the collector has run for a day or more — right now nodes near 100% are simply ones active during the few samples taken.</div>` : "";
   const html=stats.map((s,idx)=>{
     const {g,c}=grade(s.sc);
     const ulTxt=s.ul!=null?`${s.ul.toFixed(1)} Mbps`:"n/d";
@@ -409,8 +410,8 @@ function renderBoard(){
       <div class="lbmeta">up <b>${s.uptime.toFixed(0)}%</b> · flips <b>${s.trans}</b><br>${s.country||"?"} · ${ulTxt} · ${s.n}smp</div>
     </div>`;
   }).join("");
-  const maxN=Math.max(...boardData.map(s=>s.n||1));
-  const warn = maxN<6 ? `<div style="font-family:var(--mono);font-size:12px;color:var(--warn);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px">⚠ Early data: ${maxN} sample(s) per node so far. Uptime and ranking become meaningful after the collector runs for a day+. Right now most nodes show 100% because they were active at the single sample — this is not a real reliability ranking yet.</div>` : "";
+  const medianN=boardData.map(s=>s.n||1).sort((a,b)=>a-b)[Math.floor(boardData.length/2)];
+  const warn = medianN<12 ? `<div style="font-family:var(--mono);font-size:12px;color:var(--warn);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px">⚠ Early data: most nodes have only ${medianN} sample(s) so far. Uptime and ranking become meaningful after the collector runs for a day or more. Nodes near 100% right now are simply ones active during the few samples taken — this is not yet a mature reliability ranking.</div>` : "";
   $("#boardout").innerHTML=`<div class="result show">${warn}<div style="font-family:var(--mono);font-size:12px;color:var(--dim);margin:16px 0 12px">${total} node(s)${fc?" in "+fc:""} · ranked by ${fs==="uptime"?"uptime":fs==="ul"?"bandwidth":"composite score"}</div>${list}</div>`;
 }
 </script>
