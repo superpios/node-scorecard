@@ -244,12 +244,11 @@ async function runLive(){
   if(gp>=1){score+=10;M.push(["Payment tokens",`${gp} token${gp>1?"s":""}`,"Configured for payment.",100,"var(--good)"]);F.push({k:"ok",label:"prices set"});}
   else{M.push(["Payment tokens","NONE","No prices — cannot monetize.",0,"var(--bad)"]);F.push({k:"bad",label:"no prices configured"});}
   const pct=Math.round(score/max*100),{g,c}=grade(pct);
-  const ver=api&&api.version?api.version.tag:"?",st=(api&&api.service_type)||n.type||"?",pe=api&&api.peers!==undefined?api.peers:"?";
   lastReport=buildReport(addr,n.moniker,pct,g,M);
   $("#liveout").innerHTML=`<div class="result" id="r"><div class="card">${diagnose(pct,F)}
     <div class="top">${gaugeHTML(pct,c)}<div class="idblock"><div class="grade" style="color:${c}">${g}</div>
     <div class="mon">${n.moniker||"(no name)"}</div><div class="adr">${addr}</div>
-    <div class="chips"><span class="chip">type <b>${st}</b></span><span class="chip">v <b>${ver}</b></span><span class="chip">peers now <b>${pe}</b></span></div></div></div>
+    </div></div>
     <div class="metrics">${M.map(m=>metric(...m)).join("")}</div>
     <div class="actions"><button class="btn ghost" id="copy">⧉ Copy report for Telegram / GitHub</button><span class="msg" id="copymsg"></span></div></div></div>`;
   $("#r").classList.add("show");animate();$("#go").disabled=false;
