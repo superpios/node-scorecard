@@ -1,381 +1,306 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sentinel Node Scorecard</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap');
-
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap');
   :root{
-    --bg:#0a0e14;
-    --panel:#121821;
-    --panel-2:#0e141c;
-    --line:#1f2a37;
-    --txt:#e6edf3;
-    --muted:#7d8a9a;
-    --accent:#34d39a;
-    --accent-2:#3b82f6;
-    --warn:#f5a524;
-    --bad:#f04f5a;
-    --gold:#f5c518;
-    --chip:#1a2330;
+    --bg:#0a0e14; --panel:#111722; --panel-2:#0d121a; --line:#1e2937;
+    --txt:#e6edf3; --muted:#76828f; --dim:#4d5866;
+    --accent:#2dd4a7; --accent-2:#4b8bf4; --warn:#f5a524; --bad:#ef4b57; --gold:#f5c518;
+    --chip:#192230;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:
-      radial-gradient(900px 500px at 85% -5%, rgba(52,211,154,.08), transparent 60%),
-      radial-gradient(800px 600px at 0% 100%, rgba(59,130,246,.07), transparent 55%),
-      var(--bg);
-    color:var(--txt);
-    font-family:'Sora',sans-serif;
-    min-height:100vh;
-    padding:24px;
-  }
-  .wrap{max-width:1280px;margin:0 auto}
-
-  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
-  h1{font-size:30px;font-weight:800;letter-spacing:-.5px;line-height:1}
+  body{background:radial-gradient(1000px 520px at 88% -8%,rgba(45,212,167,.07),transparent 60%),radial-gradient(820px 600px at -5% 105%,rgba(75,139,244,.06),transparent 55%),var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-height:100vh;padding:22px}
+  .wrap{max-width:1320px;margin:0 auto}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:29px;font-weight:800;letter-spacing:-.6px;line-height:1}
   h1 .dot{color:var(--accent)}
-  .tagline{color:var(--muted);font-size:13px;margin-top:6px;font-family:'Space Mono',monospace}
-  .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right}
+  .tagline{color:var(--muted);font-size:12.5px;margin-top:6px;font-family:'Space Mono',monospace}
+  .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6}
   .updated b{color:var(--accent)}
-
-  /* stat cards */
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
-  .stat::after{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);opacity:.7}
-  .stat .v{font-size:26px;font-weight:800;font-family:'Space Mono',monospace}
-  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
-  .stat.b2::after{background:var(--accent-2)}
-  .stat.b3::after{background:var(--warn)}
-  .stat.b4::after{background:var(--gold)}
-
-  /* tabs */
-  .tabs{display:flex;gap:6px;margin:18px 0 14px;border-bottom:1px solid var(--line)}
-  .tab{padding:10px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:14px;border-bottom:2px solid transparent;transition:.15s}
-  .tab:hover{color:var(--txt)}
-  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-
-  /* controls */
-  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-  input[type=text],select{
-    background:var(--panel-2);border:1px solid var(--line);color:var(--txt);
-    padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none
-  }
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin:18px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden}
+  .stat::after{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);opacity:.75}
+  .stat .v{font-size:25px;font-weight:800;font-family:'Space Mono',monospace}
+  .stat .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+  .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)}
+  .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--bad)}
+  .tabs{display:flex;gap:4px;margin:16px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;transition:.15s;position:relative;top:1px}
+  .tab:hover{color:var(--txt)} .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .panel-desc{color:var(--dim);font-size:12px;font-family:'Space Mono',monospace;margin:13px 0}
+  .controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
+  input[type=text],select{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
   input[type=text]{flex:1;min-width:200px}
   input[type=text]:focus,select:focus{border-color:var(--accent)}
   .chip-filters{display:flex;gap:6px;flex-wrap:wrap}
-  .cf{padding:8px 14px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
-  .cf:hover{color:var(--txt)}
-  .cf.on{background:rgba(52,211,154,.14);border-color:var(--accent);color:var(--accent)}
-
-  /* table */
-  .tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  thead th{
-    text-align:left;padding:13px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;
-    color:var(--muted);background:var(--panel-2);border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none
-  }
-  thead th:hover{color:var(--txt)}
-  thead th .ar{opacity:.5;font-size:9px}
-  tbody td{padding:12px 14px;border-bottom:1px solid var(--line)}
+  .cf{padding:9px 14px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
+  .cf:hover{color:var(--txt)} .cf.on{background:rgba(45,212,167,.13);border-color:var(--accent);color:var(--accent)}
+  .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:16px}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;position:relative;overflow:hidden}
+  .pcard .medal{font-size:26px;position:absolute;top:14px;right:16px}
+  .pcard.g1{border-color:rgba(245,197,24,.4);background:linear-gradient(160deg,rgba(245,197,24,.07),var(--panel))}
+  .pcard.g2{border-color:rgba(170,180,195,.3)} .pcard.g3{border-color:rgba(205,127,50,.3)}
+  .pcard .pscore{font-size:38px;font-weight:800;font-family:'Space Mono',monospace;line-height:1}
+  .pcard .pmon{font-weight:700;margin-top:8px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pcard .paddr{font-family:'Space Mono',monospace;font-size:10.5px;color:var(--dim);margin-top:2px}
+  .pcard .pmeta{display:flex;gap:12px;margin-top:13px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+  .pcard .pmeta b{color:var(--txt);font-family:'Space Mono',monospace}
+  @media(max-width:760px){.podium{grid-template-columns:1fr}}
+  .tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:15px;overflow:hidden}
+  .tscroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:620px}
+  thead th{text-align:left;padding:12px 13px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:var(--panel-2);border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+  thead th:hover{color:var(--txt)} thead th .ar{opacity:.5;font-size:9px}
+  tbody td{padding:11px 13px;border-bottom:1px solid var(--line);white-space:nowrap}
   tbody tr:last-child td{border-bottom:none}
-  tbody tr:hover{background:rgba(255,255,255,.02)}
-  .mono{font-family:'Space Mono',monospace}
-  .addr{color:var(--muted);font-size:11px}
-  .mon{font-weight:600}
-  .rank{color:var(--muted);font-family:'Space Mono',monospace;width:34px}
-  .rank.top{color:var(--gold);font-weight:700}
-
-  /* score pill */
-  .score{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:5px 10px;border-radius:8px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px}
-  .s-hi{background:rgba(52,211,154,.16);color:var(--accent)}
-  .s-mid{background:rgba(245,165,36,.16);color:var(--warn)}
-  .s-lo{background:rgba(240,79,90,.16);color:var(--bad)}
-
-  .badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600}
-  .b-act{background:rgba(52,211,154,.14);color:var(--accent)}
-  .b-ina{background:rgba(240,79,90,.14);color:var(--bad)}
-  .flag{font-size:11px;color:var(--muted)}
-
-  /* score bar */
-  .sbar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;width:90px}
-  .sbar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
-
-  /* pagination */
-  .pager{display:flex;align-items:center;justify-content:space-between;padding:14px;gap:12px;flex-wrap:wrap}
+  tbody tr.node-row{cursor:pointer} tbody tr.node-row:hover{background:rgba(255,255,255,.022)}
+  .mono{font-family:'Space Mono',monospace} .addr{color:var(--dim);font-size:10.5px} .mon{font-weight:600}
+  .rank{color:var(--muted);font-family:'Space Mono',monospace;width:30px} .rank.top{color:var(--gold);font-weight:700}
+  .score{display:inline-flex;align-items:center;justify-content:center;min-width:42px;padding:5px 9px;border-radius:7px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px}
+  .s-hi{background:rgba(45,212,167,.15);color:var(--accent)} .s-mid{background:rgba(245,165,36,.15);color:var(--warn)} .s-lo{background:rgba(239,75,87,.15);color:var(--bad)}
+  .sbar{height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;width:80px}
+  .sbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
+  .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600}
+  .b-act{background:rgba(45,212,167,.13);color:var(--accent)} .b-ina{background:rgba(239,75,87,.13);color:var(--bad)}
+  .proto{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600;background:var(--chip);color:var(--muted)}
+  .proto.v2ray{background:rgba(75,139,244,.14);color:var(--accent-2)} .proto.wireguard{background:rgba(245,165,36,.14);color:var(--warn)} .proto.openvpn{background:rgba(168,85,247,.14);color:#c084fc}
+  .flag{color:var(--muted);font-size:12px} .price{font-family:'Space Mono',monospace} .na{color:var(--dim)}
+  tr.detail td{background:var(--panel-2);padding:0;border-bottom:1px solid var(--line)}
+  .detail-inner{padding:16px 18px;display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
+  .detail-inner h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:9px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12.5px}
+  .kv .k{color:var(--muted)} .kv .v{font-family:'Space Mono',monospace;text-align:right;word-break:break-all}
+  .breakdown .br{display:flex;align-items:center;gap:9px;margin-bottom:7px;font-size:12px}
+  .breakdown .br .lbl{width:90px;color:var(--muted)}
+  .breakdown .br .bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+  .breakdown .br .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
+  .breakdown .br .pct{width:34px;text-align:right;font-family:'Space Mono',monospace;color:var(--txt)}
+  @media(max-width:760px){.detail-inner{grid-template-columns:1fr}}
+  .pager{display:flex;align-items:center;justify-content:space-between;padding:13px;gap:12px;flex-wrap:wrap}
   .pager .info{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace}
-  .pager .btns{display:flex;gap:6px}
+  .pager .btns{display:flex;gap:6px;align-items:center}
   .pg{padding:7px 13px;border-radius:8px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);cursor:pointer;font-size:13px;font-family:'Space Mono',monospace}
-  .pg:hover:not(:disabled){border-color:var(--accent)}
-  .pg:disabled{opacity:.35;cursor:not-allowed}
-
-  .loading,.err{padding:60px;text-align:center;color:var(--muted);font-family:'Space Mono',monospace}
-  .err{color:var(--bad)}
-  .spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
+  .pg:hover:not(:disabled){border-color:var(--accent)} .pg:disabled{opacity:.35;cursor:not-allowed}
+  .pp{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 9px;font-size:12px}
+  .loading,.err{padding:56px;text-align:center;color:var(--muted);font-family:'Space Mono',monospace} .err{color:var(--bad)}
+  .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto 15px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-
-  .scoreinfo{font-size:11px;color:var(--muted);margin-top:14px;font-family:'Space Mono',monospace;line-height:1.7}
-  .scoreinfo b{color:var(--txt)}
-  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:11px;font-family:'Space Mono',monospace}
-  @media(max-width:720px){
-    .hide-sm{display:none}
-    h1{font-size:23px}
-  }
+  .scoreinfo{font-size:11px;color:var(--dim);margin-top:14px;font-family:'Space Mono',monospace;line-height:1.7}
+  .scoreinfo b{color:var(--muted)}
+  footer{margin-top:16px;text-align:center;color:var(--dim);font-size:11px;font-family:'Space Mono',monospace}
+  @media(max-width:760px){.hide-sm{display:none}h1{font-size:22px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div>
-      <h1>Sentinel Node <span class="dot">Scorecard</span></h1>
-      <div class="tagline">live ranking · rete P2P · score con varianza reale</div>
-    </div>
-    <div class="updated" id="updated">caricamento…</div>
+    <div><h1>Sentinel Node <span class="dot">Scorecard</span></h1>
+      <div class="tagline">live ranking &middot; P2P bandwidth network &middot; client-side variance score</div></div>
+    <div class="updated" id="updated">loading&hellip;</div>
   </header>
-
   <div class="stats" id="stats"></div>
-
   <div class="tabs">
-    <div class="tab active" data-tab="leaderboard">Leaderboard</div>
-    <div class="tab" data-tab="all">Tutti i nodi</div>
-    <div class="tab" data-tab="historical">Storico</div>
+    <div class="tab active" data-tab="leaderboard">&#127942; Leaderboard</div>
+    <div class="tab" data-tab="all">All Nodes</div>
+    <div class="tab" data-tab="historical">Historical</div>
   </div>
-
+  <div class="panel-desc" id="paneldesc"></div>
   <div class="controls">
-    <input type="text" id="search" placeholder="cerca moniker, address, città…">
-    <select id="country"><option value="">Tutti i paesi</option></select>
+    <input type="text" id="search" placeholder="search moniker, address, city&hellip;">
+    <select id="country"><option value="">All countries</option></select>
+    <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
     <div class="chip-filters">
-      <div class="cf" data-f="active">Solo active</div>
-      <div class="cf" data-f="api">API ok</div>
-      <div class="cf" data-f="italy">🇮🇹 Italia</div>
+      <div class="cf" data-f="active">Active only</div>
+      <div class="cf" data-f="api">API reachable</div>
     </div>
   </div>
-
+  <div id="podium-mount"></div>
   <div class="tablewrap">
-    <div id="content"><div class="loading"><div class="spinner"></div>connessione alla rete Sentinel…</div></div>
+    <div class="tscroll"><div id="content"><div class="loading"><div class="spinner"></div>connecting to Sentinel network&hellip;</div></div></div>
     <div class="pager" id="pager" style="display:none">
       <div class="info" id="pginfo"></div>
       <div class="btns">
-        <button class="pg" id="prev">‹ prec</button>
-        <button class="pg" id="next">succ ›</button>
+        <select class="pp" id="perpage"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
+        <button class="pg" id="prev">&lsaquo; prev</button>
+        <button class="pg" id="next">next &rsaquo;</button>
       </div>
     </div>
   </div>
-
   <div class="scoreinfo" id="scoreinfo"></div>
-  <footer>Sentinel Scorecard · dati da GitHub · score calcolato lato client su uptime, stabilità, longevità, freshness, salute API e token di pagamento</footer>
+  <footer>Sentinel Scorecard &middot; data from GitHub &middot; score computed client-side &middot; click a row for full details &amp; score breakdown</footer>
 </div>
-
 <script>
-// ============ CONFIG ============
-const REPO = "superpios/node-scorecard";
-// prova prima relativo (se servito da GitHub Pages stesso repo), poi raw main, poi raw master
-const SOURCES = {
-  latest: ["./latest.json",
-           `https://raw.githubusercontent.com/${REPO}/main/latest.json`,
-           `https://raw.githubusercontent.com/${REPO}/master/latest.json`],
-  history:["./history-summary.json",
-           `https://raw.githubusercontent.com/${REPO}/main/history-summary.json`,
-           `https://raw.githubusercontent.com/${REPO}/master/history-summary.json`]
+const REPO="superpios/node-scorecard";
+const SOURCES={
+  latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
+  history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]
 };
-
-let NODES=[], HIST={}, MAXN=1;
-let state={tab:"leaderboard", page:0, perPage:50, sortKey:"score", sortDir:-1, search:"", country:"", filters:{active:false,api:false,italy:false}};
-
-// ============ DATA LOAD ============
-async function tryFetch(urls){
-  for(const u of urls){
-    try{ const r=await fetch(u,{cache:"no-store"}); if(r.ok) return await r.json(); }catch(e){}
-  }
-  return null;
-}
+let NODES=[],HIST={},MAXN=1,expanded=null;
+let state={tab:"leaderboard",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false}};
+async function tryFetch(urls){for(const u of urls){try{const r=await fetch(u,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
 async function load(){
   const [latest,history]=await Promise.all([tryFetch(SOURCES.latest),tryFetch(SOURCES.history)]);
-  if(!latest){ document.getElementById("content").innerHTML=`<div class="err">Impossibile caricare latest.json dal repo ${REPO}.<br>Verifica che il file sia stato pushato e il repo sia pubblico.</div>`; return; }
-  // indicizza storico per addr
-  if(Array.isArray(history)){
-    history.forEach(h=>{ HIST[h.a]=h; });
-    MAXN=Math.max(1,...history.map(h=>h.n||1));
-  }
+  if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.<br>Make sure the file is pushed and the repo is public.</div>';return;}
+  if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
   NODES=latest.map(enrich);
-  buildCountryFilter();
-  renderStats();
-  render();
-  const ts=latest[0]?.ts || new Date().toISOString();
-  document.getElementById("updated").innerHTML=`aggiornato <b>${fmtAgo(ts)}</b><br>${NODES.length} nodi · ${Object.keys(HIST).length} con storico`;
+  buildCountryFilter();renderStats();render();
+  const ts=(latest[0]&&latest[0].ts)||new Date().toISOString();
+  document.getElementById("updated").innerHTML="updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.length+" nodes &middot; "+Object.keys(HIST).length+" with history";
 }
-
-// ============ SCORE (varianza reale) ============
-// componenti 0-100 -> pesi: uptime35 stab15 longevita25 freshness15 health10
 function enrich(n){
-  const h=HIST[n.addr]||{};
-  const active = n.status==="active";
-
-  // uptime storico (se manca: 100 se active, 0 se no)
-  const uptime = (typeof h.uptime==="number") ? h.uptime : (active?100:0);
-  // stabilità storica (meno transizioni = meglio)
-  const stab = (typeof h.stab==="number") ? h.stab : (active?100:0);
-  // longevità: n campionamenti normalizzato sul max della rete (track record)
-  const longevity = h.n ? Math.min(100, (h.n/MAXN)*100) : 0;
-  // freshness: inactive_at nel futuro = heartbeat recente
+  const h=HIST[n.addr]||{};const active=n.status==="active";
+  const uptime=(typeof h.uptime==="number")?h.uptime:(active?100:0);
+  const stab=(typeof h.stab==="number")?h.stab:(active?100:0);
+  const longevity=h.n?Math.min(100,(h.n/MAXN)*100):0;
   let freshness=0;
-  if(n.inactive_at){
-    const mins=(new Date(n.inactive_at)-Date.now())/60000;
-    if(mins>=30) freshness=100;
-    else if(mins>=0) freshness=60+(mins/30)*40;
-    else if(mins>=-60) freshness=Math.max(0,60+(mins/60)*60);
-    else freshness=0;
-  } else freshness = active?70:0;
-  // health: status + api raggiungibile
-  let health = active?60:0;
-  if(n.api_ok===true) health+=40;
-  // token di pagamento (più denom = più flessibile) — piccolo bonus dentro health già pesato a parte
-  const tokenBonus = Math.min(100, ((n.gb_tokens||0)/3)*100);
-
-  const score = Math.round(
-    uptime*0.32 + stab*0.15 + longevity*0.25 + freshness*0.13 + health*0.10 + tokenBonus*0.05
-  );
-
-  return {
-    addr:n.addr, moniker:n.moniker||n.addr, status:n.status,
-    country:n.country||"—", city:n.city||"—",
-    api_ok:n.api_ok===true, gb_tokens:n.gb_tokens||0,
-    samples:h.n||0, uptime, stab, longevity:Math.round(longevity),
-    freshness:Math.round(freshness), score:Math.max(0,Math.min(100,score)),
-    inactive_at:n.inactive_at, remote:n.remote||""
-  };
+  if(n.inactive_at){const mins=(new Date(n.inactive_at)-Date.now())/60000;
+    if(mins>=30)freshness=100;else if(mins>=0)freshness=60+(mins/30)*40;
+    else if(mins>=-60)freshness=Math.max(0,60+(mins/60)*60);else freshness=0;}
+  else freshness=active?70:0;
+  let health=active?60:0;if(n.api_ok===true)health+=40;
+  const tokenBonus=Math.min(100,((n.gb_tokens||0)/3)*100);
+  const comps={uptime:uptime*0.32,stability:stab*0.15,longevity:longevity*0.25,freshness:freshness*0.13,health:health*0.10,tokens:tokenBonus*0.05};
+  const score=Math.round(Object.values(comps).reduce((a,b)=>a+b,0));
+  return {addr:n.addr,moniker:n.moniker||n.addr,status:n.status,country:n.country||"\u2014",city:n.city||"\u2014",
+    api_ok:n.api_ok===true,gb_tokens:n.gb_tokens||0,samples:h.n||0,
+    uptime:uptime,stab:stab,longevity:Math.round(longevity),freshness:Math.round(freshness),
+    price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
+    protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
+    dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",
+    score:Math.max(0,Math.min(100,score)),comps:comps};
 }
-
-// ============ RENDER ============
 function buildCountryFilter(){
-  const sel=document.getElementById("country");
-  const counts={};
-  NODES.forEach(n=>{ if(n.country&&n.country!=="—") counts[n.country]=(counts[n.country]||0)+1; });
-  Object.entries(counts).sort((a,b)=>b[1]-a[1]).forEach(([c,n])=>{
-    const o=document.createElement("option"); o.value=c; o.textContent=`${c} (${n})`; sel.appendChild(o);
-  });
+  const sel=document.getElementById("country");const c={};
+  NODES.forEach(n=>{if(n.country&&n.country!=="\u2014")c[n.country]=(c[n.country]||0)+1;});
+  Object.entries(c).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=k+" ("+v+")";sel.appendChild(o);});
 }
 function renderStats(){
   const active=NODES.filter(n=>n.status==="active").length;
-  const it=NODES.filter(n=>n.country==="Italy").length;
   const avg=Math.round(NODES.reduce((s,n)=>s+n.score,0)/NODES.length);
   const top=NODES.filter(n=>n.score>=85).length;
-  document.getElementById("stats").innerHTML=`
-    <div class="stat"><div class="v">${NODES.length}</div><div class="l">Nodi totali</div></div>
-    <div class="stat b2"><div class="v">${active}</div><div class="l">Active</div></div>
-    <div class="stat b3"><div class="v">${avg}</div><div class="l">Score medio</div></div>
-    <div class="stat b4"><div class="v">${top}</div><div class="l">Score ≥ 85</div></div>
-    <div class="stat"><div class="v">${it}</div><div class="l">🇮🇹 Italia</div></div>`;
+  const reach=NODES.filter(n=>n.api_ok).length;
+  document.getElementById("stats").innerHTML=
+    '<div class="stat"><div class="v">'+NODES.length+'</div><div class="l">Total nodes</div></div>'+
+    '<div class="stat b2"><div class="v">'+active+'</div><div class="l">Active</div></div>'+
+    '<div class="stat b3"><div class="v">'+avg+'</div><div class="l">Avg score</div></div>'+
+    '<div class="stat b4"><div class="v">'+top+'</div><div class="l">Score &ge; 85</div></div>'+
+    '<div class="stat b5"><div class="v">'+reach+'</div><div class="l">API reachable</div></div>';
 }
 function filtered(){
   let r=NODES.slice();
-  if(state.tab==="historical") r=r.filter(n=>n.samples>0);
-  if(state.filters.active) r=r.filter(n=>n.status==="active");
-  if(state.filters.api) r=r.filter(n=>n.api_ok);
-  if(state.filters.italy) r=r.filter(n=>n.country==="Italy");
-  if(state.country) r=r.filter(n=>n.country===state.country);
-  if(state.search){
-    const q=state.search.toLowerCase();
-    r=r.filter(n=>n.moniker.toLowerCase().includes(q)||n.addr.toLowerCase().includes(q)||n.city.toLowerCase().includes(q));
-  }
-  const k=state.sortKey, d=state.sortDir;
-  r.sort((a,b)=>{
-    let av=a[k], bv=b[k];
-    if(typeof av==="string"){av=av.toLowerCase();bv=(bv||"").toLowerCase();return av<bv?-d:av>bv?d:0;}
-    return ((av||0)-(bv||0))*d;
-  });
+  if(state.tab==="historical")r=r.filter(n=>n.samples>0);
+  if(state.filters.active)r=r.filter(n=>n.status==="active");
+  if(state.filters.api)r=r.filter(n=>n.api_ok);
+  if(state.country)r=r.filter(n=>n.country===state.country);
+  if(state.protocol)r=r.filter(n=>n.protocol===state.protocol);
+  if(state.search){const q=state.search.toLowerCase();r=r.filter(n=>n.moniker.toLowerCase().includes(q)||n.addr.toLowerCase().includes(q)||n.city.toLowerCase().includes(q));}
+  const k=state.sortKey,d=state.sortDir;
+  r.sort((a,b)=>{let av=a[k],bv=b[k];if(av==null)av=-1;if(bv==null)bv=-1;
+    if(typeof av==="string"){av=av.toLowerCase();bv=(""+bv).toLowerCase();return av<bv?-d:av>bv?d:0;}
+    return (av-bv)*d;});
   return r;
 }
 function scoreClass(s){return s>=80?"s-hi":s>=55?"s-mid":"s-lo";}
+function fmtPrice(p){return p==null?'<span class="na">\u2014</span>':'<span class="price">'+p+'</span>';}
+function renderPodium(data){
+  const mount=document.getElementById("podium-mount");
+  if(state.tab!=="leaderboard"||data.length<3){mount.innerHTML="";return;}
+  const medals=["\ud83e\udd47","\ud83e\udd48","\ud83e\udd49"],cls=["g1","g2","g3"];
+  mount.innerHTML='<div class="podium">'+data.slice(0,3).map((n,i)=>
+    '<div class="pcard '+cls[i]+'"><div class="medal">'+medals[i]+'</div>'+
+    '<div class="pscore" style="color:'+(n.score>=80?'var(--accent)':n.score>=55?'var(--warn)':'var(--bad)')+'">'+n.score+'</div>'+
+    '<div class="pmon">'+esc(n.moniker)+'</div><div class="paddr">'+n.addr.slice(0,18)+'\u2026</div>'+
+    '<div class="pmeta"><span>'+(n.protocol?'<b>'+n.protocol+'</b> ':'')+esc(n.country)+'</span>'+
+    '<span>uptime <b>'+n.uptime.toFixed(0)+'%</b></span>'+
+    (n.peers!=null?'<span>peers <b>'+n.peers+'</b></span>':'')+
+    (n.price_hr!=null?'<span><b>'+n.price_hr+'</b> P2P/hr</span>':'')+'</div></div>').join("")+'</div>';
+}
 function render(){
   const data=filtered();
-  const isLb=state.tab==="leaderboard";
-  const isHist=state.tab==="historical";
+  document.getElementById("paneldesc").textContent=({
+    leaderboard:"Top performers ranked by score \u2014 podium for the best 3, full top list below.",
+    all:"Every node on the network. Sort any column, filter, search. Click a row for details.",
+    historical:"Nodes with collected history \u2014 ranked by track record (uptime, stability, longevity)."
+  })[state.tab];
+  renderPodium(data);
+  const isLb=state.tab==="leaderboard",isHist=state.tab==="historical";
   const per=isLb?25:state.perPage;
-  const rows = isLb ? data.slice(0,25) : data.slice(state.page*per,(state.page+1)*per);
-
-  if(!data.length){ document.getElementById("content").innerHTML=`<div class="loading">nessun nodo con questi filtri</div>`; document.getElementById("pager").style.display="none"; return; }
-
-  const cols = isHist
-    ? [["rank","#"],["moniker","Nodo"],["score","Score"],["uptime","Uptime%"],["stab","Stab%"],["samples","Campioni"],["country","Paese"]]
-    : [["rank","#"],["moniker","Nodo"],["score","Score"],["status","Status"],["longevity","Longevità"],["freshness","Fresh"],["gb_tokens","Token"],["country","Paese"]];
-
-  let html=`<table><thead><tr>`;
-  cols.forEach(([k,l])=>{
-    const ar = state.sortKey===k ? (state.sortDir>0?"▲":"▼") : "";
-    const sortable = k!=="rank";
-    html+=`<th ${sortable?`onclick="sortBy('${k}')"`:""} class="${["status","longevity","freshness","gb_tokens","stab","samples","country"].includes(k)?"hide-sm":""}">${l} <span class="ar">${ar}</span></th>`;
-  });
-  html+=`</tr></thead><tbody>`;
+  const rows=isLb?data.slice(0,25):data.slice(state.page*per,(state.page+1)*per);
+  if(!data.length){document.getElementById("content").innerHTML='<div class="loading">no nodes match these filters</div>';document.getElementById("pager").style.display="none";return;}
+  const cols=isHist
+    ?[["rank","#"],["moniker","Node"],["score","Score"],["uptime","Uptime%"],["stab","Stab%"],["samples","Samples"],["protocol","Proto"],["country","Country"]]
+    :[["rank","#"],["moniker","Node"],["score","Score"],["status","Status"],["protocol","Proto"],["price_hr","P2P/hr"],["price_gb","P2P/GB"],["peers","Peers"],["country","Country"]];
+  let html='<table><thead><tr>';
+  cols.forEach(([k,l])=>{const ar=state.sortKey===k?(state.sortDir>0?"\u25b2":"\u25bc"):"";
+    const hideSm=["status","protocol","price_hr","price_gb","peers","stab","samples","country"].includes(k);
+    html+='<th '+(k!=="rank"?'onclick="sortBy(\''+k+'\')"':'')+' class="'+(hideSm?'hide-sm':'')+'">'+l+' <span class="ar">'+ar+'</span></th>';});
+  html+='</tr></thead><tbody>';
   rows.forEach((n,i)=>{
-    const rank = isLb ? i+1 : state.page*per+i+1;
-    const rankCls = rank<=3?"rank top":"rank";
-    html+=`<tr>
-      <td class="${rankCls}">${rank}</td>
-      <td><div class="mon">${esc(n.moniker)}</div><div class="addr mono">${n.addr.slice(0,16)}…${n.addr.slice(-6)}</div></td>
-      <td><span class="score ${scoreClass(n.score)}">${n.score}</span><div class="sbar"><i style="width:${n.score}%"></i></div></td>`;
+    const rank=isLb?i+1:state.page*per+i+1;const rk=rank<=3?"rank top":"rank";
+    html+='<tr class="node-row" onclick="toggle(\''+n.addr+'\')"><td class="'+rk+'">'+rank+'</td>'+
+      '<td><div class="mon">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
+      '<td><span class="score '+scoreClass(n.score)+'">'+n.score+'</span><div class="sbar"><i style="width:'+n.score+'%"></i></div></td>';
     if(isHist){
-      html+=`<td class="mono hide-sm">${n.uptime.toFixed(1)}</td>
-             <td class="mono hide-sm">${n.stab.toFixed(0)}</td>
-             <td class="mono hide-sm">${n.samples}</td>`;
+      html+='<td class="mono hide-sm">'+n.uptime.toFixed(1)+'</td><td class="mono hide-sm">'+n.stab.toFixed(0)+'</td>'+
+        '<td class="mono hide-sm">'+n.samples+'</td>'+
+        '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>';
     }else{
-      html+=`<td><span class="badge ${n.status==="active"?"b-act":"b-ina"}">${n.status}</span></td>
-             <td class="mono hide-sm">${n.longevity}</td>
-             <td class="mono hide-sm">${n.freshness}</td>
-             <td class="mono hide-sm">${n.gb_tokens}</td>`;
+      html+='<td><span class="badge '+(n.status==="active"?"b-act":"b-ina")+'">'+n.status+'</span></td>'+
+        '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>'+
+        '<td class="hide-sm">'+fmtPrice(n.price_hr)+'</td><td class="hide-sm">'+fmtPrice(n.price_gb)+'</td>'+
+        '<td class="mono hide-sm">'+(n.peers!=null?n.peers:'<span class="na">\u2014</span>')+'</td>';
     }
-    html+=`<td class="flag hide-sm">${esc(n.country)}${n.city&&n.city!=="—"?" · "+esc(n.city):""}</td></tr>`;
+    html+='<td class="flag hide-sm">'+esc(n.country)+(n.city&&n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</td></tr>';
+    if(expanded===n.addr)html+=detailRow(n,cols.length);
   });
-  html+=`</tbody></table>`;
+  html+='</tbody></table>';
   document.getElementById("content").innerHTML=html;
-
-  // pager
   const pager=document.getElementById("pager");
-  if(isLb){ pager.style.display="none"; }
-  else{
-    pager.style.display="flex";
-    const tot=data.length, start=state.page*per+1, end=Math.min((state.page+1)*per,tot);
-    document.getElementById("pginfo").textContent=`${start}–${end} di ${tot}`;
-    document.getElementById("prev").disabled=state.page===0;
-    document.getElementById("next").disabled=end>=tot;
-  }
+  if(isLb){pager.style.display="none";}
+  else{pager.style.display="flex";const tot=data.length,start=state.page*per+1,end=Math.min((state.page+1)*per,tot);
+    document.getElementById("pginfo").textContent=start+"\u2013"+end+" of "+tot;
+    document.getElementById("prev").disabled=state.page===0;document.getElementById("next").disabled=end>=tot;}
 }
-function renderScoreInfo(){
-  document.getElementById("scoreinfo").innerHTML=
-    `<b>Come si calcola lo Score</b> (0–100, varianza reale): `+
-    `uptime 32% · stabilità 15% · longevità 25% (campioni storici / max rete) · freshness 13% (heartbeat recente da inactive_at) · salute API 10% · token pagamento 5%. `+
-    `Niente più "90 a tutti": un nodo nuovo parte basso sulla longevità e cresce col track record.`;
+function detailRow(n,span){
+  const W={uptime:32,stability:15,longevity:25,freshness:13,health:10,tokens:5};
+  const br=Object.entries(n.comps).map(([k,v])=>{const pct=Math.round((v/W[k])*100);
+    return '<div class="br"><span class="lbl">'+k+'</span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="pct">'+pct+'</span></div>';}).join("");
+  return '<tr class="detail"><td colspan="'+span+'"><div class="detail-inner"><div><h4>Node details</h4><div class="kv">'+
+    '<span class="k">Address</span><span class="v">'+n.addr+'</span>'+
+    '<span class="k">Status</span><span class="v">'+n.status+'</span>'+
+    '<span class="k">Protocol</span><span class="v">'+(n.protocol||"\u2014")+'</span>'+
+    '<span class="k">Version</span><span class="v">'+(n.version||"\u2014")+'</span>'+
+    '<span class="k">Peers</span><span class="v">'+(n.peers!=null?n.peers:"\u2014")+'</span>'+
+    '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P":"\u2014")+'</span>'+
+    '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P":"\u2014")+'</span>'+
+    '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps":"\u2014")+'</span>'+
+    '<span class="k">Download</span><span class="v">'+(n.dl_mbps!=null?n.dl_mbps+" Mbps":"\u2014")+'</span>'+
+    '<span class="k">Location</span><span class="v">'+esc(n.country)+(n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</span>'+
+    '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
+    '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span>'+
+    '</div></div><div class="breakdown"><h4>Score breakdown \u2014 total '+n.score+'</h4>'+br+
+    '<div style="font-size:11px;color:var(--dim);margin-top:8px;font-family:\'Space Mono\',monospace">bars show % of each weighted component achieved</div></div></div></td></tr>';
 }
-
-// ============ EVENTS ============
-function sortBy(k){ if(state.sortKey===k) state.sortDir*=-1; else {state.sortKey=k; state.sortDir=(k==="moniker"||k==="country")?1:-1;} state.page=0; render(); }
+function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=(k==="moniker"||k==="country"||k==="protocol")?1:-1;}state.page=0;render();}
+function toggle(a){expanded=expanded===a?null:a;render();}
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  t.classList.add("active"); state.tab=t.dataset.tab; state.page=0;
-  if(state.tab==="historical"){state.sortKey="score";state.sortDir=-1;}
-  render();
-});
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");
+  state.tab=t.dataset.tab;state.page=0;expanded=null;
+  if(state.tab==="historical"){state.sortKey="score";state.sortDir=-1;}render();});
 document.getElementById("search").oninput=e=>{state.search=e.target.value;state.page=0;render();};
 document.getElementById("country").onchange=e=>{state.country=e.target.value;state.page=0;render();};
-document.querySelectorAll(".cf").forEach(c=>c.onclick=()=>{
-  const f=c.dataset.f; state.filters[f]=!state.filters[f]; c.classList.toggle("on",state.filters[f]); state.page=0; render();
-});
+document.getElementById("protocol").onchange=e=>{state.protocol=e.target.value;state.page=0;render();};
+document.querySelectorAll(".cf").forEach(c=>c.onclick=()=>{const f=c.dataset.f;state.filters[f]=!state.filters[f];c.classList.toggle("on",state.filters[f]);state.page=0;render();});
 document.getElementById("prev").onclick=()=>{if(state.page>0){state.page--;render();}};
 document.getElementById("next").onclick=()=>{state.page++;render();};
-
-// ============ UTILS ============
+document.getElementById("perpage").onchange=e=>{state.perPage=+e.target.value;state.page=0;render();};
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function fmtAgo(ts){
-  const d=(Date.now()-new Date(ts))/1000;
-  if(d<90)return "ora";
-  if(d<3600)return Math.round(d/60)+" min fa";
-  if(d<86400)return Math.round(d/3600)+" h fa";
-  return Math.round(d/86400)+" g fa";
-}
-
-renderScoreInfo();
+function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just now";if(d<3600)return Math.round(d/60)+" min ago";if(d<86400)return Math.round(d/3600)+" h ago";return Math.round(d/86400)+" d ago";}
+document.getElementById("scoreinfo").innerHTML='<b>Score formula</b> (0\u2013100, real variance): uptime 32% \u00b7 stability 15% \u00b7 longevity 25% (history samples / network max) \u00b7 freshness 13% (recent heartbeat) \u00b7 API health 10% \u00b7 payment tokens 5%. New nodes start lower on longevity and climb as they build a track record.';
 load();
 </script>
 </body>
