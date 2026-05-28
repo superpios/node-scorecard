@@ -6,53 +6,32 @@
 <title>Sentinel Node Scorecard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap');
-  :root{
-    --bg:#0a0e14; --panel:#111722; --panel-2:#0d121a; --line:#1e2937;
-    --txt:#e6edf3; --muted:#76828f; --dim:#4d5866;
-    --accent:#2dd4a7; --accent-2:#4b8bf4; --warn:#f5a524; --bad:#ef4b57; --gold:#f5c518;
-    --chip:#192230;
-  }
+  :root{--bg:#0a0e14;--panel:#111722;--panel-2:#0d121a;--line:#1e2937;--txt:#e6edf3;--muted:#76828f;--dim:#4d5866;--accent:#2dd4a7;--accent-2:#4b8bf4;--warn:#f5a524;--bad:#ef4b57;--gold:#f5c518;--chip:#192230}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:radial-gradient(1000px 520px at 88% -8%,rgba(45,212,167,.07),transparent 60%),radial-gradient(820px 600px at -5% 105%,rgba(75,139,244,.06),transparent 55%),var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-height:100vh;padding:22px}
   .wrap{max-width:1320px;margin:0 auto}
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
-  h1{font-size:29px;font-weight:800;letter-spacing:-.6px;line-height:1}
-  h1 .dot{color:var(--accent)}
+  h1{font-size:29px;font-weight:800;letter-spacing:-.6px;line-height:1} h1 .dot{color:var(--accent)}
   .tagline{color:var(--muted);font-size:12.5px;margin-top:6px;font-family:'Space Mono',monospace}
-  .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6}
-  .updated b{color:var(--accent)}
+  .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6} .updated b{color:var(--accent)}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin:18px 0}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden}
   .stat::after{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);opacity:.75}
-  .stat .v{font-size:25px;font-weight:800;font-family:'Space Mono',monospace}
-  .stat .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
-  .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)}
-  .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--bad)}
+  .stat .v{font-size:25px;font-weight:800;font-family:'Space Mono',monospace} .stat .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+  .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)} .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--bad)}
   .tabs{display:flex;gap:4px;margin:16px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
   .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;transition:.15s;position:relative;top:1px}
   .tab:hover{color:var(--txt)} .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
   .panel-desc{color:var(--dim);font-size:12px;font-family:'Space Mono',monospace;margin:13px 0}
   .controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
   input[type=text],select{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
-  input[type=text]{flex:1;min-width:200px}
-  input[type=text]:focus,select:focus{border-color:var(--accent)}
+  input[type=text]{flex:1;min-width:200px} input[type=text]:focus,select:focus{border-color:var(--accent)}
   .chip-filters{display:flex;gap:6px;flex-wrap:wrap}
   .cf{padding:9px 14px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
   .cf:hover{color:var(--txt)} .cf.on{background:rgba(45,212,167,.13);border-color:var(--accent);color:var(--accent)}
-  .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:16px}
-  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;position:relative;overflow:hidden}
-  .pcard .medal{font-size:26px;position:absolute;top:14px;right:16px}
-  .pcard.g1{border-color:rgba(245,197,24,.4);background:linear-gradient(160deg,rgba(245,197,24,.07),var(--panel))}
-  .pcard.g2{border-color:rgba(170,180,195,.3)} .pcard.g3{border-color:rgba(205,127,50,.3)}
-  .pcard .pscore{font-size:38px;font-weight:800;font-family:'Space Mono',monospace;line-height:1}
-  .pcard .pmon{font-weight:700;margin-top:8px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pcard .paddr{font-family:'Space Mono',monospace;font-size:10.5px;color:var(--dim);margin-top:2px}
-  .pcard .pmeta{display:flex;gap:12px;margin-top:13px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
-  .pcard .pmeta b{color:var(--txt);font-family:'Space Mono',monospace}
-  @media(max-width:760px){.podium{grid-template-columns:1fr}}
   .tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:15px;overflow:hidden}
   .tscroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:620px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
   thead th{text-align:left;padding:12px 13px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:var(--panel-2);border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
   thead th:hover{color:var(--txt)} thead th .ar{opacity:.5;font-size:9px}
   tbody td{padding:11px 13px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -62,24 +41,12 @@
   .rank{color:var(--muted);font-family:'Space Mono',monospace;width:30px} .rank.top{color:var(--gold);font-weight:700}
   .score{display:inline-flex;align-items:center;justify-content:center;min-width:42px;padding:5px 9px;border-radius:7px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px}
   .s-hi{background:rgba(45,212,167,.15);color:var(--accent)} .s-mid{background:rgba(245,165,36,.15);color:var(--warn)} .s-lo{background:rgba(239,75,87,.15);color:var(--bad)}
-  .sbar{height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;width:80px}
-  .sbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
+  .sbar{height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;width:80px} .sbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
   .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600}
   .b-act{background:rgba(45,212,167,.13);color:var(--accent)} .b-ina{background:rgba(239,75,87,.13);color:var(--bad)}
   .proto{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600;background:var(--chip);color:var(--muted)}
   .proto.v2ray{background:rgba(75,139,244,.14);color:var(--accent-2)} .proto.wireguard{background:rgba(245,165,36,.14);color:var(--warn)} .proto.openvpn{background:rgba(168,85,247,.14);color:#c084fc}
   .flag{color:var(--muted);font-size:12px} .price{font-family:'Space Mono',monospace} .na{color:var(--dim)}
-  tr.detail td{background:var(--panel-2);padding:0;border-bottom:1px solid var(--line)}
-  .detail-inner{padding:16px 18px;display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
-  .detail-inner h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:9px}
-  .kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12.5px}
-  .kv .k{color:var(--muted)} .kv .v{font-family:'Space Mono',monospace;text-align:right;word-break:break-all}
-  .breakdown .br{display:flex;align-items:center;gap:9px;margin-bottom:7px;font-size:12px}
-  .breakdown .br .lbl{width:90px;color:var(--muted)}
-  .breakdown .br .bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
-  .breakdown .br .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
-  .breakdown .br .pct{width:34px;text-align:right;font-family:'Space Mono',monospace;color:var(--txt)}
-  @media(max-width:760px){.detail-inner{grid-template-columns:1fr}}
   .pager{display:flex;align-items:center;justify-content:space-between;padding:13px;gap:12px;flex-wrap:wrap}
   .pager .info{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace}
   .pager .btns{display:flex;gap:6px;align-items:center}
@@ -89,9 +56,31 @@
   .loading,.err{padding:56px;text-align:center;color:var(--muted);font-family:'Space Mono',monospace} .err{color:var(--bad)}
   .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto 15px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .scoreinfo{font-size:11px;color:var(--dim);margin-top:14px;font-family:'Space Mono',monospace;line-height:1.7}
-  .scoreinfo b{color:var(--muted)}
   footer{margin-top:16px;text-align:center;color:var(--dim);font-size:11px;font-family:'Space Mono',monospace}
+  /* ===== INSPECTOR ===== */
+  .insp-search{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap}
+  .insp-empty{padding:50px;text-align:center;color:var(--dim);font-family:'Space Mono',monospace}
+  .insp-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
+  @media(max-width:860px){.insp-grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px 20px}
+  .card h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px}
+  .ihead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+  .ihead .imon{font-size:22px;font-weight:800} .ihead .iaddr{font-family:'Space Mono',monospace;font-size:11px;color:var(--dim);margin-top:3px;word-break:break-all}
+  .ibig{font-size:46px;font-weight:800;font-family:'Space Mono',monospace;line-height:1}
+  .imeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px}
+  .kv .k{color:var(--muted)} .kv .v{font-family:'Space Mono',monospace;text-align:right;word-break:break-all}
+  .br{display:flex;align-items:center;gap:9px;margin-bottom:8px;font-size:12px}
+  .br .lbl{width:92px;color:var(--muted)} .br .bar{flex:1;height:7px;background:var(--line);border-radius:4px;overflow:hidden} .br .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))} .br .pct{width:34px;text-align:right;font-family:'Space Mono',monospace}
+  .timeline{display:flex;gap:2px;flex-wrap:wrap;margin-top:6px}
+  .tlc{width:7px;height:20px;border-radius:2px} .tlc.a{background:var(--accent)} .tlc.i{background:var(--bad)}
+  .rankbox{font-size:14px} .rankbox b{font-size:28px;font-family:'Space Mono',monospace;color:var(--accent)}
+  .problem{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .problem:last-child{border:none} .problem .pic{font-size:15px} .problem.ok .pic{filter:none}
+  .repbtn{margin-top:12px;width:100%;padding:12px;border-radius:10px;background:var(--accent);color:#04241a;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif}
+  .repbtn:hover{filter:brightness(1.08)}
+  .report{margin-top:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:13px;font-family:'Space Mono',monospace;font-size:11.5px;white-space:pre-wrap;color:var(--txt);display:none;line-height:1.55}
+  .back{cursor:pointer;color:var(--accent-2);font-size:12px;font-family:'Space Mono',monospace;margin-bottom:10px;display:inline-block}
   @media(max-width:760px){.hide-sm{display:none}h1{font-size:22px}}
 </style>
 </head>
@@ -99,55 +88,58 @@
 <div class="wrap">
   <header>
     <div><h1>Sentinel Node <span class="dot">Scorecard</span></h1>
-      <div class="tagline">live ranking &middot; P2P bandwidth network &middot; client-side variance score</div></div>
+      <div class="tagline">network intelligence &middot; historical uptime &middot; node diagnostics &mdash; what other tools don't give you</div></div>
     <div class="updated" id="updated">loading&hellip;</div>
   </header>
   <div class="stats" id="stats"></div>
   <div class="tabs">
-    <div class="tab active" data-tab="leaderboard">&#127942; Leaderboard</div>
-    <div class="tab" data-tab="all">All Nodes</div>
-    <div class="tab" data-tab="historical">Historical</div>
+    <div class="tab active" data-tab="explorer">Network Explorer</div>
+    <div class="tab" data-tab="inspector">Node Inspector</div>
   </div>
   <div class="panel-desc" id="paneldesc"></div>
-  <div class="controls">
-    <input type="text" id="search" placeholder="search moniker, address, city&hellip;">
-    <select id="country"><option value="">All countries</option></select>
-    <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
-    <div class="chip-filters">
-      <div class="cf" data-f="active">Active only</div>
-      <div class="cf" data-f="api">API reachable</div>
+
+  <!-- EXPLORER -->
+  <div id="view-explorer">
+    <div class="controls">
+      <input type="text" id="search" placeholder="search moniker, address, city&hellip;">
+      <select id="country"><option value="">All countries</option></select>
+      <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
+      <div class="chip-filters"><div class="cf" data-f="active">Active only</div><div class="cf" data-f="api">API reachable</div></div>
     </div>
-  </div>
-  <div id="podium-mount"></div>
-  <div class="tablewrap">
-    <div class="tscroll"><div id="content"><div class="loading"><div class="spinner"></div>connecting to Sentinel network&hellip;</div></div></div>
-    <div class="pager" id="pager" style="display:none">
-      <div class="info" id="pginfo"></div>
-      <div class="btns">
-        <select class="pp" id="perpage"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
-        <button class="pg" id="prev">&lsaquo; prev</button>
-        <button class="pg" id="next">next &rsaquo;</button>
+    <div class="tablewrap">
+      <div class="tscroll"><div id="content"><div class="loading"><div class="spinner"></div>connecting to Sentinel network&hellip;</div></div></div>
+      <div class="pager" id="pager" style="display:none">
+        <div class="info" id="pginfo"></div>
+        <div class="btns"><select class="pp" id="perpage"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
+          <button class="pg" id="prev">&lsaquo; prev</button><button class="pg" id="next">next &rsaquo;</button></div>
       </div>
     </div>
   </div>
-  <div class="scoreinfo" id="scoreinfo"></div>
-  <footer>Sentinel Scorecard &middot; data from GitHub &middot; score computed client-side &middot; click a row for full details &amp; score breakdown</footer>
+
+  <!-- INSPECTOR -->
+  <div id="view-inspector" style="display:none">
+    <div class="insp-search">
+      <input type="text" id="insp-input" placeholder="paste a node address (sentnode1&hellip;) or moniker">
+      <button class="pg" id="insp-go">Inspect</button>
+    </div>
+    <div id="insp-body"><div class="insp-empty">Enter a node address or moniker above &mdash; or click any node in the Network Explorer &mdash; to see its full diagnostic: historical uptime, stability timeline, country ranking, detected problems, and a ready-to-paste support report.</div></div>
+  </div>
+
+  <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators</footer>
 </div>
 <script>
 const REPO="superpios/node-scorecard";
-const SOURCES={
-  latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
-  history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]
-};
-let NODES=[],HIST={},MAXN=1,expanded=null;
-let state={tab:"leaderboard",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false}};
-async function tryFetch(urls){for(const u of urls){try{const r=await fetch(u,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
+const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
+  history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]};
+let NODES=[],MAP={},HIST={},MAXN=1;
+let state={tab:"explorer",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false}};
+async function tryFetch(u){for(const x of u){try{const r=await fetch(x,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
 async function load(){
-  const [latest,history]=await Promise.all([tryFetch(SOURCES.latest),tryFetch(SOURCES.history)]);
-  if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.<br>Make sure the file is pushed and the repo is public.</div>';return;}
+  const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
+  if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
   if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
-  NODES=latest.map(enrich);
-  buildCountryFilter();renderStats();render();
+  NODES=latest.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
+  buildCountry();renderStats();render();
   const ts=(latest[0]&&latest[0].ts)||new Date().toISOString();
   document.getElementById("updated").innerHTML="updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.length+" nodes &middot; "+Object.keys(HIST).length+" with history";
 }
@@ -156,33 +148,27 @@ function enrich(n){
   const uptime=(typeof h.uptime==="number")?h.uptime:(active?100:0);
   const stab=(typeof h.stab==="number")?h.stab:(active?100:0);
   const longevity=h.n?Math.min(100,(h.n/MAXN)*100):0;
-  let freshness=0;
-  if(n.inactive_at){const mins=(new Date(n.inactive_at)-Date.now())/60000;
-    if(mins>=30)freshness=100;else if(mins>=0)freshness=60+(mins/30)*40;
-    else if(mins>=-60)freshness=Math.max(0,60+(mins/60)*60);else freshness=0;}
-  else freshness=active?70:0;
+  let fresh=0;if(n.inactive_at){const m=(new Date(n.inactive_at)-Date.now())/60000;
+    if(m>=30)fresh=100;else if(m>=0)fresh=60+(m/30)*40;else if(m>=-60)fresh=Math.max(0,60+(m/60)*60);else fresh=0;}else fresh=active?70:0;
   let health=active?60:0;if(n.api_ok===true)health+=40;
-  const tokenBonus=Math.min(100,((n.gb_tokens||0)/3)*100);
-  const comps={uptime:uptime*0.32,stability:stab*0.15,longevity:longevity*0.25,freshness:freshness*0.13,health:health*0.10,tokens:tokenBonus*0.05};
+  const tok=Math.min(100,((n.gb_tokens||0)/3)*100);
+  const comps={uptime:uptime*0.32,stability:stab*0.15,longevity:longevity*0.25,freshness:fresh*0.13,health:health*0.10,tokens:tok*0.05};
   const score=Math.round(Object.values(comps).reduce((a,b)=>a+b,0));
   return {addr:n.addr,moniker:n.moniker||n.addr,status:n.status,country:n.country||"\u2014",city:n.city||"\u2014",
-    api_ok:n.api_ok===true,gb_tokens:n.gb_tokens||0,samples:h.n||0,
-    uptime:uptime,stab:stab,longevity:Math.round(longevity),freshness:Math.round(freshness),
+    api_ok:n.api_ok===true,gb_tokens:n.gb_tokens||0,samples:h.n||0,uptimeRaw:uptime,stabRaw:stab,
+    uptime:uptime,stab:stab,longevity:Math.round(longevity),freshness:Math.round(fresh),
     price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
     protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
     dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",
+    tl:h.tl||"",tl_from:h.tl_from,tl_to:h.tl_to,
     score:Math.max(0,Math.min(100,score)),comps:comps};
 }
-function buildCountryFilter(){
-  const sel=document.getElementById("country");const c={};
+function buildCountry(){const sel=document.getElementById("country");const c={};
   NODES.forEach(n=>{if(n.country&&n.country!=="\u2014")c[n.country]=(c[n.country]||0)+1;});
-  Object.entries(c).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=k+" ("+v+")";sel.appendChild(o);});
-}
+  Object.entries(c).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=k+" ("+v+")";sel.appendChild(o);});}
 function renderStats(){
-  const active=NODES.filter(n=>n.status==="active").length;
-  const avg=Math.round(NODES.reduce((s,n)=>s+n.score,0)/NODES.length);
-  const top=NODES.filter(n=>n.score>=85).length;
-  const reach=NODES.filter(n=>n.api_ok).length;
+  const active=NODES.filter(n=>n.status==="active").length,avg=Math.round(NODES.reduce((s,n)=>s+n.score,0)/NODES.length);
+  const top=NODES.filter(n=>n.score>=85).length,reach=NODES.filter(n=>n.api_ok).length;
   document.getElementById("stats").innerHTML=
     '<div class="stat"><div class="v">'+NODES.length+'</div><div class="l">Total nodes</div></div>'+
     '<div class="stat b2"><div class="v">'+active+'</div><div class="l">Active</div></div>'+
@@ -190,9 +176,7 @@ function renderStats(){
     '<div class="stat b4"><div class="v">'+top+'</div><div class="l">Score &ge; 85</div></div>'+
     '<div class="stat b5"><div class="v">'+reach+'</div><div class="l">API reachable</div></div>';
 }
-function filtered(){
-  let r=NODES.slice();
-  if(state.tab==="historical")r=r.filter(n=>n.samples>0);
+function filtered(){let r=NODES.slice();
   if(state.filters.active)r=r.filter(n=>n.status==="active");
   if(state.filters.api)r=r.filter(n=>n.api_ok);
   if(state.country)r=r.filter(n=>n.country===state.country);
@@ -200,97 +184,125 @@ function filtered(){
   if(state.search){const q=state.search.toLowerCase();r=r.filter(n=>n.moniker.toLowerCase().includes(q)||n.addr.toLowerCase().includes(q)||n.city.toLowerCase().includes(q));}
   const k=state.sortKey,d=state.sortDir;
   r.sort((a,b)=>{let av=a[k],bv=b[k];if(av==null)av=-1;if(bv==null)bv=-1;
-    if(typeof av==="string"){av=av.toLowerCase();bv=(""+bv).toLowerCase();return av<bv?-d:av>bv?d:0;}
-    return (av-bv)*d;});
-  return r;
-}
-function scoreClass(s){return s>=80?"s-hi":s>=55?"s-mid":"s-lo";}
-function fmtPrice(p){return p==null?'<span class="na">\u2014</span>':'<span class="price">'+p+'</span>';}
-function renderPodium(data){
-  const mount=document.getElementById("podium-mount");
-  if(state.tab!=="leaderboard"||data.length<3){mount.innerHTML="";return;}
-  const medals=["\ud83e\udd47","\ud83e\udd48","\ud83e\udd49"],cls=["g1","g2","g3"];
-  mount.innerHTML='<div class="podium">'+data.slice(0,3).map((n,i)=>
-    '<div class="pcard '+cls[i]+'"><div class="medal">'+medals[i]+'</div>'+
-    '<div class="pscore" style="color:'+(n.score>=80?'var(--accent)':n.score>=55?'var(--warn)':'var(--bad)')+'">'+n.score+'</div>'+
-    '<div class="pmon">'+esc(n.moniker)+'</div><div class="paddr">'+n.addr.slice(0,18)+'\u2026</div>'+
-    '<div class="pmeta"><span>'+(n.protocol?'<b>'+n.protocol+'</b> ':'')+esc(n.country)+'</span>'+
-    '<span>uptime <b>'+n.uptime.toFixed(0)+'%</b></span>'+
-    (n.peers!=null?'<span>peers <b>'+n.peers+'</b></span>':'')+
-    (n.price_hr!=null?'<span><b>'+n.price_hr+'</b> P2P/hr</span>':'')+'</div></div>').join("")+'</div>';
-}
+    if(typeof av==="string"){av=av.toLowerCase();bv=(""+bv).toLowerCase();return av<bv?-d:av>bv?d:0;}return (av-bv)*d;});
+  return r;}
+function sc(s){return s>=80?"s-hi":s>=55?"s-mid":"s-lo";}
+function pr(p){return p==null?'<span class="na">\u2014</span>':'<span class="price">'+p+'</span>';}
 function render(){
   const data=filtered();
-  document.getElementById("paneldesc").textContent=({
-    leaderboard:"Top performers ranked by score \u2014 podium for the best 3, full top list below.",
-    all:"Every node on the network. Sort any column, filter, search. Click a row for details.",
-    historical:"Nodes with collected history \u2014 ranked by track record (uptime, stability, longevity)."
-  })[state.tab];
-  renderPodium(data);
-  const isLb=state.tab==="leaderboard",isHist=state.tab==="historical";
-  const per=isLb?25:state.perPage;
-  const rows=isLb?data.slice(0,25):data.slice(state.page*per,(state.page+1)*per);
+  const total=data.length,start=state.page*state.perPage,rows=data.slice(start,start+state.perPage);
   if(!data.length){document.getElementById("content").innerHTML='<div class="loading">no nodes match these filters</div>';document.getElementById("pager").style.display="none";return;}
-  const cols=isHist
-    ?[["rank","#"],["moniker","Node"],["score","Score"],["uptime","Uptime%"],["stab","Stab%"],["samples","Samples"],["protocol","Proto"],["country","Country"]]
-    :[["rank","#"],["moniker","Node"],["score","Score"],["status","Status"],["protocol","Proto"],["price_hr","P2P/hr"],["price_gb","P2P/GB"],["peers","Peers"],["country","Country"]];
+  const cols=[["rank","#"],["moniker","Node"],["score","Score"],["status","Status"],["protocol","Proto"],["price_hr","P2P/hr"],["price_gb","P2P/GB"],["peers","Peers"],["uptime","Uptime%"],["country","Country"]];
   let html='<table><thead><tr>';
   cols.forEach(([k,l])=>{const ar=state.sortKey===k?(state.sortDir>0?"\u25b2":"\u25bc"):"";
-    const hideSm=["status","protocol","price_hr","price_gb","peers","stab","samples","country"].includes(k);
-    html+='<th '+(k!=="rank"?'onclick="sortBy(\''+k+'\')"':'')+' class="'+(hideSm?'hide-sm':'')+'">'+l+' <span class="ar">'+ar+'</span></th>';});
+    const hs=["status","protocol","price_hr","price_gb","peers","uptime","country"].includes(k);
+    html+='<th '+(k!=="rank"?'onclick="sortBy(\''+k+'\')"':'')+' class="'+(hs?'hide-sm':'')+'">'+l+' <span class="ar">'+ar+'</span></th>';});
   html+='</tr></thead><tbody>';
-  rows.forEach((n,i)=>{
-    const rank=isLb?i+1:state.page*per+i+1;const rk=rank<=3?"rank top":"rank";
-    html+='<tr class="node-row" onclick="toggle(\''+n.addr+'\')"><td class="'+rk+'">'+rank+'</td>'+
+  rows.forEach((n,i)=>{const rank=start+i+1,rk=rank<=3?"rank top":"rank";
+    html+='<tr class="node-row" onclick="inspect(\''+n.addr+'\')"><td class="'+rk+'">'+rank+'</td>'+
       '<td><div class="mon">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
-      '<td><span class="score '+scoreClass(n.score)+'">'+n.score+'</span><div class="sbar"><i style="width:'+n.score+'%"></i></div></td>';
-    if(isHist){
-      html+='<td class="mono hide-sm">'+n.uptime.toFixed(1)+'</td><td class="mono hide-sm">'+n.stab.toFixed(0)+'</td>'+
-        '<td class="mono hide-sm">'+n.samples+'</td>'+
-        '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>';
-    }else{
-      html+='<td><span class="badge '+(n.status==="active"?"b-act":"b-ina")+'">'+n.status+'</span></td>'+
-        '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>'+
-        '<td class="hide-sm">'+fmtPrice(n.price_hr)+'</td><td class="hide-sm">'+fmtPrice(n.price_gb)+'</td>'+
-        '<td class="mono hide-sm">'+(n.peers!=null?n.peers:'<span class="na">\u2014</span>')+'</td>';
-    }
-    html+='<td class="flag hide-sm">'+esc(n.country)+(n.city&&n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</td></tr>';
-    if(expanded===n.addr)html+=detailRow(n,cols.length);
-  });
+      '<td><span class="score '+sc(n.score)+'">'+n.score+'</span><div class="sbar"><i style="width:'+n.score+'%"></i></div></td>'+
+      '<td><span class="badge '+(n.status==="active"?"b-act":"b-ina")+'">'+n.status+'</span></td>'+
+      '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>'+
+      '<td class="hide-sm">'+pr(n.price_hr)+'</td><td class="hide-sm">'+pr(n.price_gb)+'</td>'+
+      '<td class="mono hide-sm">'+(n.peers!=null?n.peers:'<span class="na">\u2014</span>')+'</td>'+
+      '<td class="mono hide-sm">'+(n.samples?n.uptime.toFixed(0):'<span class="na">\u2014</span>')+'</td>'+
+      '<td class="flag hide-sm">'+esc(n.country)+(n.city&&n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</td></tr>';});
   html+='</tbody></table>';
   document.getElementById("content").innerHTML=html;
-  const pager=document.getElementById("pager");
-  if(isLb){pager.style.display="none";}
-  else{pager.style.display="flex";const tot=data.length,start=state.page*per+1,end=Math.min((state.page+1)*per,tot);
-    document.getElementById("pginfo").textContent=start+"\u2013"+end+" of "+tot;
-    document.getElementById("prev").disabled=state.page===0;document.getElementById("next").disabled=end>=tot;}
+  const pager=document.getElementById("pager");pager.style.display="flex";
+  const end=Math.min(start+state.perPage,total);
+  document.getElementById("pginfo").textContent=(start+1)+"\u2013"+end+" of "+total;
+  document.getElementById("prev").disabled=state.page===0;document.getElementById("next").disabled=end>=total;
 }
-function detailRow(n,span){
+// ===== INSPECTOR =====
+function inspect(addr){
+  state.tab="inspector";switchTab();
+  const n=MAP[addr]||NODES.find(x=>x.moniker.toLowerCase()===(""+addr).toLowerCase());
+  document.getElementById("insp-input").value=addr;
+  if(!n){document.getElementById("insp-body").innerHTML='<div class="insp-empty">Node not found: '+esc(addr)+'</div>';return;}
+  renderInspector(n);
+}
+function countryRank(n){
+  if(n.country==="\u2014")return null;
+  const peers=NODES.filter(x=>x.country===n.country).sort((a,b)=>b.score-a.score);
+  const pos=peers.findIndex(x=>x.addr===n.addr)+1;
+  return {pos:pos,total:peers.length};
+}
+function detectProblems(n){
+  const P=[];
+  if(n.status!=="active")P.push(["bad","\ud83d\udd34","Node is INACTIVE on-chain \u2014 not earning. Check container & heartbeat."]);
+  if(n.samples>3&&n.uptime<90)P.push(["warn","\ud83d\udfe0","Historical uptime "+n.uptime.toFixed(0)+"% \u2014 below 90%. Node flaps offline."]);
+  if(n.samples>3&&n.stab<80)P.push(["warn","\ud83d\udfe0","Low stability ("+n.stab.toFixed(0)+") \u2014 frequent active/inactive transitions."]);
+  if(!n.api_ok)P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
+  if(n.freshness<60&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
+  if(n.peers===0&&n.status==="active")P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
+  if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
+  return P;
+}
+function renderInspector(n){
+  const rank=countryRank(n);
   const W={uptime:32,stability:15,longevity:25,freshness:13,health:10,tokens:5};
   const br=Object.entries(n.comps).map(([k,v])=>{const pct=Math.round((v/W[k])*100);
     return '<div class="br"><span class="lbl">'+k+'</span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="pct">'+pct+'</span></div>';}).join("");
-  return '<tr class="detail"><td colspan="'+span+'"><div class="detail-inner"><div><h4>Node details</h4><div class="kv">'+
-    '<span class="k">Address</span><span class="v">'+n.addr+'</span>'+
-    '<span class="k">Status</span><span class="v">'+n.status+'</span>'+
-    '<span class="k">Protocol</span><span class="v">'+(n.protocol||"\u2014")+'</span>'+
-    '<span class="k">Version</span><span class="v">'+(n.version||"\u2014")+'</span>'+
-    '<span class="k">Peers</span><span class="v">'+(n.peers!=null?n.peers:"\u2014")+'</span>'+
-    '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P":"\u2014")+'</span>'+
-    '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P":"\u2014")+'</span>'+
-    '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps":"\u2014")+'</span>'+
-    '<span class="k">Download</span><span class="v">'+(n.dl_mbps!=null?n.dl_mbps+" Mbps":"\u2014")+'</span>'+
-    '<span class="k">Location</span><span class="v">'+esc(n.country)+(n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</span>'+
-    '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
-    '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span>'+
-    '</div></div><div class="breakdown"><h4>Score breakdown \u2014 total '+n.score+'</h4>'+br+
-    '<div style="font-size:11px;color:var(--dim);margin-top:8px;font-family:\'Space Mono\',monospace">bars show % of each weighted component achieved</div></div></div></td></tr>';
+  let tl='<span class="na" style="font-family:Space Mono;font-size:12px">no history yet \u2014 collector needs time</span>';
+  if(n.tl){tl='<div class="timeline">'+n.tl.split("").map(c=>'<span class="tlc '+(c==="1"?"a":"i")+'" title="'+(c==="1"?"active":"inactive")+'"></span>').join("")+'</div>'+
+    '<div style="font-size:10.5px;color:var(--dim);font-family:Space Mono;margin-top:6px">'+(n.tl_from?fmtShort(n.tl_from):"")+' \u2192 '+(n.tl_to?fmtShort(n.tl_to):"")+' &middot; '+n.tl.length+' samples</div>';}
+  const probs=detectProblems(n).map(([cl,ic,t])=>'<div class="problem '+cl+'"><span class="pic">'+ic+'</span><span>'+t+'</span></div>').join("");
+  document.getElementById("insp-body").innerHTML=
+    '<span class="back" onclick="backToExplorer()">\u2039 back to Explorer</span>'+
+    '<div class="insp-grid"><div class="card">'+
+      '<div class="ihead"><div><div class="imon">'+esc(n.moniker)+'</div><div class="iaddr">'+n.addr+'</div>'+
+        '<div class="imeta"><span class="badge '+(n.status==="active"?"b-act":"b-ina")+'">'+n.status+'</span>'+
+        (n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'')+
+        '<span class="proto">'+esc(n.country)+(n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</span>'+
+        (n.version?'<span class="proto">v'+esc(n.version)+'</span>':'')+'</div></div>'+
+        '<div style="text-align:right"><div class="ibig" style="color:'+(n.score>=80?'var(--accent)':n.score>=55?'var(--warn)':'var(--bad)')+'">'+n.score+'</div>'+
+        '<div style="font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">score</div></div></div>'+
+      (rank?'<div class="rankbox" style="margin:14px 0 4px">Country rank: <b>#'+rank.pos+'</b> of '+rank.total+' in '+esc(n.country)+'</div>':'')+
+      '<h3 style="margin-top:18px">Uptime timeline</h3>'+tl+
+      '<h3 style="margin-top:18px">Key metrics</h3><div class="kv">'+
+        '<span class="k">Historical uptime</span><span class="v">'+(n.samples?n.uptime.toFixed(1)+"%":"\u2014")+'</span>'+
+        '<span class="k">Stability</span><span class="v">'+(n.samples?n.stab.toFixed(0):"\u2014")+'</span>'+
+        '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
+        '<span class="k">Peers (now)</span><span class="v">'+(n.peers!=null?n.peers:"\u2014")+'</span>'+
+        '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P":"\u2014")+'</span>'+
+        '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P":"\u2014")+'</span>'+
+        '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps":"\u2014")+'</span>'+
+        '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span></div>'+
+    '</div><div class="card">'+
+      '<h3>Score breakdown</h3>'+br+
+      '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+
+      '<button class="repbtn" onclick="genReport(\''+n.addr+'\')">\ud83d\udccb Generate support report</button>'+
+      '<div class="report" id="report"></div>'+
+    '</div></div>';
+}
+function genReport(addr){
+  const n=MAP[addr];if(!n)return;const rank=countryRank(n);
+  const probs=detectProblems(n).map(p=>"- "+p[2]).join("\n");
+  const r="=== Sentinel Node Report ===\n"+
+    "Moniker:  "+n.moniker+"\n"+
+    "Address:  "+n.addr+"\n"+
+    "Status:   "+n.status+"  | Protocol: "+(n.protocol||"?")+"  | "+n.country+(n.city!=="\u2014"?" / "+n.city:"")+"\n"+
+    "Score:    "+n.score+"/100"+(rank?"  (rank #"+rank.pos+"/"+rank.total+" in "+n.country+")":"")+"\n"+
+    "Uptime:   "+(n.samples?n.uptime.toFixed(1)+"% over "+n.samples+" samples":"n/a")+"  | Stability: "+(n.samples?n.stab.toFixed(0):"n/a")+"\n"+
+    "Price:    "+(n.price_hr!=null?n.price_hr+" P2P/hr":"?")+" / "+(n.price_gb!=null?n.price_gb+" P2P/GB":"?")+"\n"+
+    "Peers:    "+(n.peers!=null?n.peers:"?")+"  | API reachable: "+(n.api_ok?"yes":"no")+"\n"+
+    "\nDetected:\n"+probs+"\n\n(generated by Sentinel Scorecard)";
+  const el=document.getElementById("report");el.textContent=r;el.style.display="block";
+  if(navigator.clipboard){navigator.clipboard.writeText(r).then(()=>{el.textContent=r+"\n\n\u2713 copied to clipboard";}).catch(()=>{});}
+}
+function backToExplorer(){state.tab="explorer";switchTab();}
+function switchTab(){
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===state.tab));
+  document.getElementById("view-explorer").style.display=state.tab==="explorer"?"block":"none";
+  document.getElementById("view-inspector").style.display=state.tab==="inspector"?"block":"none";
+  document.getElementById("paneldesc").textContent=state.tab==="explorer"
+    ?"The whole network at a glance \u2014 sort, filter, search 1500+ nodes. Click any node to inspect it."
+    :"Deep-dive one node: historical uptime, stability timeline, country ranking, problems, and a paste-ready support report. The data other tools don't give you.";
 }
 function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=(k==="moniker"||k==="country"||k==="protocol")?1:-1;}state.page=0;render();}
-function toggle(a){expanded=expanded===a?null:a;render();}
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");
-  state.tab=t.dataset.tab;state.page=0;expanded=null;
-  if(state.tab==="historical"){state.sortKey="score";state.sortDir=-1;}render();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{state.tab=t.dataset.tab;switchTab();if(state.tab==="explorer")render();});
 document.getElementById("search").oninput=e=>{state.search=e.target.value;state.page=0;render();};
 document.getElementById("country").onchange=e=>{state.country=e.target.value;state.page=0;render();};
 document.getElementById("protocol").onchange=e=>{state.protocol=e.target.value;state.page=0;render();};
@@ -298,10 +310,12 @@ document.querySelectorAll(".cf").forEach(c=>c.onclick=()=>{const f=c.dataset.f;s
 document.getElementById("prev").onclick=()=>{if(state.page>0){state.page--;render();}};
 document.getElementById("next").onclick=()=>{state.page++;render();};
 document.getElementById("perpage").onchange=e=>{state.perPage=+e.target.value;state.page=0;render();};
+document.getElementById("insp-go").onclick=()=>inspect(document.getElementById("insp-input").value.trim());
+document.getElementById("insp-input").addEventListener("keydown",e=>{if(e.key==="Enter")inspect(e.target.value.trim());});
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just now";if(d<3600)return Math.round(d/60)+" min ago";if(d<86400)return Math.round(d/3600)+" h ago";return Math.round(d/86400)+" d ago";}
-document.getElementById("scoreinfo").innerHTML='<b>Score formula</b> (0\u2013100, real variance): uptime 32% \u00b7 stability 15% \u00b7 longevity 25% (history samples / network max) \u00b7 freshness 13% (recent heartbeat) \u00b7 API health 10% \u00b7 payment tokens 5%. New nodes start lower on longevity and climb as they build a track record.';
-load();
+function fmtShort(ts){try{const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":00";}catch(e){return ts;}}
+switchTab();load();
 </script>
 </body>
 </html>
