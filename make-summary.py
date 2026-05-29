@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-# make-summary v2: aggregati + timeline compatta per nodo (per l'Inspector)
+# make-summary v3: aggregati + timeline compatta + stale flag (anti-fantasmi)
 import json, os
+from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__)) or "."
 DATA=os.path.join(HERE,"history.jsonl")
 OUT=os.path.join(HERE,"history-summary.json")
-WINDOW=168  # ultimi N campioni nella timeline (1 settimana orari)
+WINDOW=168           # ultimi N campioni nella timeline (1 settimana orari)
+STALE_HOURS=24       # se l'ultimo campione > 24h -> nodo considerato stale
+NOW=datetime.now(timezone.utc)
 
 by={}
 for l in open(DATA):
@@ -30,9 +33,19 @@ for a,recs in by.items():
     tl="".join("1" if r.get("status")=="active" else "0" for r in win)
     tl_from=win[0].get("ts") if win else None
     tl_to=win[-1].get("ts") if win else None
+    # stale check: età ultimo campione
+    age_h=None; stale=False
+    last_ts=recs[-1].get("ts","")
+    try:
+        last_dt=datetime.fromisoformat(last_ts.replace('Z','+00:00'))
+        age_h=round((NOW-last_dt).total_seconds()/3600, 1)
+        stale=age_h > STALE_HOURS
+    except: pass
     summary.append({"a":a,"mon":recs[-1].get("moniker") or a,"n":n,
         "uptime":round(uptime,1),"trans":trans,"stab":round(stab,1),"ul":ul,
-        "country":country,"sc":sc,"tl":tl,"tl_from":tl_from,"tl_to":tl_to})
+        "country":country,"sc":sc,"tl":tl,"tl_from":tl_from,"tl_to":tl_to,
+        "stale":stale,"age_h":age_h})
 
 json.dump(summary,open(OUT,"w"))
-print(f"summary v2: {len(summary)} nodi (con timeline) -> {OUT}")
+stale_count=sum(1 for s in summary if s.get("stale"))
+print(f"summary v3: {len(summary)} nodi (con timeline, {stale_count} stale) -> {OUT}")
