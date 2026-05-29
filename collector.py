@@ -21,10 +21,11 @@ def add_node(a):
     w=load_watch()
     if a not in w["nodes"]: w["nodes"].append(a); save_watch(w); print(f"Aggiunto {a}")
     else: print("Gia' presente")
-def all_nodes(lim=200,maxp=12):
+def all_nodes(lim=200,maxp=15):
     out=[]; key=None
     for p in range(maxp):
-        url=f"{LCD}/sentinel/node/v3/nodes?status=1&pagination.limit={lim}"
+        # v3: niente filtro status -> pesca tutti (active+inactive), evita nodi 'fantasma' nel latest.json
+        url=f"{LCD}/sentinel/node/v3/nodes?pagination.limit={lim}"
         if key: url+=f"&pagination.key={urllib.parse.quote(key)}"
         try: d=fetch(url,timeout=15)
         except Exception as e: print(f"  ! pagina {p}: {e}"); break
