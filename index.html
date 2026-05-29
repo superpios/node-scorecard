@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -88,7 +88,7 @@
 <div class="wrap">
   <header>
     <div><h1>Sentinel Node <span class="dot">Scorecard</span></h1>
-      <div class="tagline">network intelligence &middot; historical uptime &middot; node diagnostics &mdash; what other tools don't give you</div></div>
+      <div class="tagline">network intelligence &middot; historical uptime &middot; node diagnostics</div></div>
     <div class="updated" id="updated">loading&hellip;</div>
   </header>
   <div class="stats" id="stats"></div>
@@ -149,7 +149,7 @@ function enrich(n){
   const stab=(typeof h.stab==="number")?h.stab:(active?100:0);
   const longevity=h.n?Math.min(100,(h.n/MAXN)*100):0;
   let fresh=0;if(n.inactive_at){const m=(new Date(n.inactive_at)-Date.now())/60000;
-    if(m>=30)fresh=100;else if(m>=0)fresh=60+(m/30)*40;else if(m>=-60)fresh=Math.max(0,60+(m/60)*60);else fresh=0;}else fresh=active?70:0;
+    if(m>=15)fresh=100;else if(m>=0)fresh=70+(m/15)*30;else if(m>=-60)fresh=Math.max(0,70+(m/60)*70);else fresh=0;}else fresh=active?70:0;
   let health=active?60:0;if(n.api_ok===true)health+=40;
   const tok=Math.min(100,((n.gb_tokens||0)/3)*100);
   const comps={uptime:uptime*0.32,stability:stab*0.15,longevity:longevity*0.25,freshness:fresh*0.13,health:health*0.10,tokens:tok*0.05};
@@ -235,7 +235,7 @@ function detectProblems(n){
   if(n.samples>3&&n.uptime<90)P.push(["warn","\ud83d\udfe0","Historical uptime "+n.uptime.toFixed(0)+"% \u2014 below 90%. Node flaps offline."]);
   if(n.samples>3&&n.stab<80)P.push(["warn","\ud83d\udfe0","Low stability ("+n.stab.toFixed(0)+") \u2014 frequent active/inactive transitions."]);
   if(!n.api_ok)P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
-  if(n.freshness<60&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
+  if(n.freshness<40&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
   if(n.peers===0&&n.status==="active")P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
@@ -299,7 +299,7 @@ function switchTab(){
   document.getElementById("view-inspector").style.display=state.tab==="inspector"?"block":"none";
   document.getElementById("paneldesc").textContent=state.tab==="explorer"
     ?"The whole network at a glance \u2014 sort, filter, search 1500+ nodes. Click any node to inspect it."
-    :"Deep-dive one node: historical uptime, stability timeline, country ranking, problems, and a paste-ready support report. The data other tools don't give you.";
+    :"Deep-dive one node: historical uptime, stability timeline, country ranking, problems, and a paste-ready support report.";
 }
 function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=(k==="moniker"||k==="country"||k==="protocol")?1:-1;}state.page=0;render();}
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{state.tab=t.dataset.tab;switchTab();if(state.tab==="explorer")render();});
