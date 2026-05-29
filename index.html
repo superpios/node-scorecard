@@ -1,4 +1,4 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -43,7 +43,7 @@
   .s-hi{background:rgba(45,212,167,.15);color:var(--accent)} .s-mid{background:rgba(245,165,36,.15);color:var(--warn)} .s-lo{background:rgba(239,75,87,.15);color:var(--bad)}
   .sbar{height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;width:80px} .sbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
   .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600}
-  .b-act{background:rgba(45,212,167,.13);color:var(--accent)} .b-ina{background:rgba(239,75,87,.13);color:var(--bad)}
+  .b-act{background:rgba(45,212,167,.13);color:var(--accent)} .b-ina{background:rgba(239,75,87,.13);color:var(--bad)} .b-sta{background:rgba(245,165,36,.14);color:var(--warn)}
   .proto{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600;background:var(--chip);color:var(--muted)}
   .proto.v2ray{background:rgba(75,139,244,.14);color:var(--accent-2)} .proto.wireguard{background:rgba(245,165,36,.14);color:var(--warn)} .proto.openvpn{background:rgba(168,85,247,.14);color:#c084fc}
   .flag{color:var(--muted);font-size:12px} .price{font-family:'Space Mono',monospace} .na{color:var(--dim)}
@@ -148,15 +148,21 @@ function enrich(n){
   const uptime=(typeof h.uptime==="number")?h.uptime:(active?100:0);
   const stab=(typeof h.stab==="number")?h.stab:(active?100:0);
   const longevity=h.n?Math.min(100,(h.n/MAXN)*100):0;
+  // stale: il summary marca stale=true se ultimo campione > 24h vecchio
+  const stale=h.stale===true;
   let fresh=0;if(n.inactive_at){const m=(new Date(n.inactive_at)-Date.now())/60000;
     if(m>=15)fresh=100;else if(m>=0)fresh=70+(m/15)*30;else if(m>=-60)fresh=Math.max(0,70+(m/60)*70);else fresh=0;}else fresh=active?70:0;
-  let health=active?60:0;if(n.api_ok===true)health+=40;
+  if(stale) fresh=0;  // un nodo stale non può essere "fresh"
+  let health=(active && !stale)?60:0;if(n.api_ok===true && !stale)health+=40;
   const tok=Math.min(100,((n.gb_tokens||0)/3)*100);
   const comps={uptime:uptime*0.32,stability:stab*0.15,longevity:longevity*0.25,freshness:fresh*0.13,health:health*0.10,tokens:tok*0.05};
   const score=Math.round(Object.values(comps).reduce((a,b)=>a+b,0));
-  return {addr:n.addr,moniker:n.moniker||n.addr,status:n.status,country:n.country||"\u2014",city:n.city||"\u2014",
+  // displayStatus: se il summary dice stale -> "stale" (override del status del latest che può essere obsoleto)
+  const displayStatus = stale ? "stale" : n.status;
+  return {addr:n.addr,moniker:n.moniker||n.addr,status:displayStatus,country:n.country||"\u2014",city:n.city||"\u2014",
     api_ok:n.api_ok===true,gb_tokens:n.gb_tokens||0,samples:h.n||0,uptimeRaw:uptime,stabRaw:stab,
     uptime:uptime,stab:stab,longevity:Math.round(longevity),freshness:Math.round(fresh),
+    stale:stale,age_h:h.age_h||null,
     price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
     protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
     dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",
@@ -202,7 +208,7 @@ function render(){
     html+='<tr class="node-row" onclick="inspect(\''+n.addr+'\')"><td class="'+rk+'">'+rank+'</td>'+
       '<td><div class="mon">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
       '<td><span class="score '+sc(n.score)+'">'+n.score+'</span><div class="sbar"><i style="width:'+n.score+'%"></i></div></td>'+
-      '<td><span class="badge '+(n.status==="active"?"b-act":"b-ina")+'">'+n.status+'</span></td>'+
+      '<td><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span></td>'+
       '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>'+
       '<td class="hide-sm">'+pr(n.price_hr)+'</td><td class="hide-sm">'+pr(n.price_gb)+'</td>'+
       '<td class="mono hide-sm">'+(n.peers!=null?n.peers:'<span class="na">\u2014</span>')+'</td>'+
@@ -231,10 +237,11 @@ function countryRank(n){
 }
 function detectProblems(n){
   const P=[];
-  if(n.status!=="active")P.push(["bad","\ud83d\udd34","Node is INACTIVE on-chain \u2014 not earning. Check container & heartbeat."]);
+  if(n.status==="stale")P.push(["warn","\ud83d\udfe0","Node data is STALE \u2014 last seen "+(n.age_h?n.age_h.toFixed(0)+"h":">24h")+" ago. Node likely offline."]);
+  else if(n.status!=="active")P.push(["bad","\ud83d\udd34","Node is INACTIVE on-chain \u2014 not earning. Check container & heartbeat."]);
   if(n.samples>3&&n.uptime<90)P.push(["warn","\ud83d\udfe0","Historical uptime "+n.uptime.toFixed(0)+"% \u2014 below 90%. Node flaps offline."]);
   if(n.samples>3&&n.stab<80)P.push(["warn","\ud83d\udfe0","Low stability ("+n.stab.toFixed(0)+") \u2014 frequent active/inactive transitions."]);
-  if(!n.api_ok)P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
+  if(!n.api_ok&&n.status!=="stale")P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
   if(n.freshness<40&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
   if(n.peers===0&&n.status==="active")P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
@@ -253,7 +260,7 @@ function renderInspector(n){
     '<span class="back" onclick="backToExplorer()">\u2039 back to Explorer</span>'+
     '<div class="insp-grid"><div class="card">'+
       '<div class="ihead"><div><div class="imon">'+esc(n.moniker)+'</div><div class="iaddr">'+n.addr+'</div>'+
-        '<div class="imeta"><span class="badge '+(n.status==="active"?"b-act":"b-ina")+'">'+n.status+'</span>'+
+        '<div class="imeta"><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span>'+
         (n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'')+
         '<span class="proto">'+esc(n.country)+(n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</span>'+
         (n.version?'<span class="proto">v'+esc(n.version)+'</span>':'')+'</div></div>'+
