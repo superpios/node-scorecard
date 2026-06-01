@@ -151,9 +151,16 @@ function enrich(n){
   const longevity=h.n?Math.min(100,(h.n/MAXN)*100):0;
   // stale: il summary marca stale=true se ultimo campione > 24h vecchio
   const stale=h.stale===true;
-  let fresh=0;if(n.inactive_at){const m=(new Date(n.inactive_at)-Date.now())/60000;
-    if(m>=15)fresh=100;else if(m>=0)fresh=70+(m/15)*30;else if(m>=-60)fresh=Math.max(0,70+(m/60)*70);else fresh=0;}else fresh=active?70:0;
-  if(stale) fresh=0;  // un nodo stale non può essere "fresh"
+  // freshness: confronto inactive_at col MOMENTO DEL CAMPIONE (n.ts), non con adesso.
+  // Il collector gira ogni ~3h, quindi confrontare con Date.now() darebbe sempre "scaduto".
+  // Quello che conta: al momento in cui il collector ha visto il nodo, l'heartbeat era valido?
+  let fresh=0;
+  if(n.inactive_at && n.ts){
+    const sampleTime=new Date(n.ts).getTime();
+    const m=(new Date(n.inactive_at)-sampleTime)/60000; // min di margine AL CAMPIONAMENTO
+    if(m>=15)fresh=100;else if(m>=0)fresh=70+(m/15)*30;else if(m>=-60)fresh=Math.max(0,70+(m/60)*70);else fresh=0;
+  }else fresh=active?70:0;
+  if(stale) fresh=0;  // un nodo davvero stale (>24h) non può essere fresh
   let health=(active && !stale)?60:0;if(n.api_ok===true && !stale)health+=40;
   const tok=Math.min(100,((n.gb_tokens||0)/3)*100);
   const comps={uptime:uptime*0.32,stability:stab*0.15,longevity:longevity*0.25,freshness:fresh*0.13,health:health*0.10,tokens:tok*0.05};
