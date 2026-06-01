@@ -133,14 +133,15 @@ const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/m
   history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]};
 let NODES=[],MAP={},HIST={},MAXN=1;
 let state={tab:"explorer",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false}};
-async function tryFetch(u){for(const x of u){try{const r=await fetch(x,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
+async function tryFetch(u){const cb="?t="+Date.now();for(const x of u){try{const r=await fetch(x+cb,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
 async function load(){
   const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
   if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
   if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
   NODES=latest.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
   buildCountry();renderStats();render();
-  const ts=(latest[0]&&latest[0].ts)||new Date().toISOString();
+  const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
+  const ts=allTs.length?allTs[allTs.length-1]:new Date().toISOString();
   document.getElementById("updated").innerHTML="updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.length+" nodes &middot; "+Object.keys(HIST).length+" with history";
 }
 function enrich(n){
