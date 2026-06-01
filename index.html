@@ -133,7 +133,7 @@ const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/m
   history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]};
 let NODES=[],MAP={},HIST={},MAXN=1;
 let state={tab:"explorer",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false}};
-async function tryFetch(u){const cb="?t="+Date.now();for(const x of u){try{const r=await fetch(x+cb,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
+async function tryFetch(u){for(const x of u){try{const cb=x.includes("githubusercontent")?"":"?t="+Date.now();const r=await fetch(x+cb,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
 async function load(){
   const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
   if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
@@ -314,6 +314,7 @@ function livePeers(remote){
       if(badge)badge.textContent="\u00b7 collector (live blocked)";
     });
 }
+function genReport(addr){
   const n=MAP[addr];if(!n)return;const rank=countryRank(n);
   const probs=detectProblems(n).map(p=>"- "+p[2]).join("\n");
   const r="=== Sentinel Node Report ===\n"+
