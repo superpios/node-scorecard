@@ -273,7 +273,7 @@ function renderInspector(n){
         '<span class="k">Historical uptime</span><span class="v">'+(n.samples?n.uptime.toFixed(1)+"%":"\u2014")+'</span>'+
         '<span class="k">Stability</span><span class="v">'+(n.samples?n.stab.toFixed(0):"\u2014")+'</span>'+
         '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
-        '<span class="k">Peers (now)</span><span class="v">'+(n.peers!=null?n.peers:"\u2014")+'</span>'+
+        '<span class="k">Peers (now)</span><span class="v" id="peers-live">'+(n.peers!=null?n.peers:"\u2014")+' <span id="peers-badge" style="font-size:10px;color:var(--muted);font-family:Space Mono">\u00b7 collector</span></span>'+
         '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P":"\u2014")+'</span>'+
         '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P":"\u2014")+'</span>'+
         '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps":"\u2014")+'</span>'+
@@ -284,8 +284,36 @@ function renderInspector(n){
       '<button class="repbtn" onclick="genReport(\''+n.addr+'\')">\ud83d\udccb Generate support report</button>'+
       '<div class="report" id="report"></div>'+
     '</div></div>';
+  // fetch LIVE diretto all'API del nodo: aggiorna "Peers (now)" col valore reale di adesso
+  livePeers(n.remote);
 }
-function genReport(addr){
+function livePeers(remote){
+  if(!remote){return;}
+  // remote è tipo "host:porta" — costruisco l'url https
+  const url="https://"+remote.replace(/^https?:\/\//,"")+"/";
+  const badge=document.getElementById("peers-badge");
+  const cell=document.getElementById("peers-live");
+  if(badge)badge.textContent="\u00b7 checking live\u2026";
+  const ctrl=new AbortController();
+  const to=setTimeout(()=>ctrl.abort(),6000);
+  fetch(url+"?t="+Date.now(),{signal:ctrl.signal,cache:"no-store"})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      clearTimeout(to);
+      if(!cell)return;
+      const p=d&&d.result?d.result.peers:null;
+      if(p!=null){
+        cell.innerHTML=p+' <span style="font-size:10px;color:var(--accent);font-family:Space Mono">\u00b7 \ud83d\udd34 LIVE</span>';
+      }else if(badge){
+        badge.textContent="\u00b7 collector (live n/d)";
+      }
+    })
+    .catch(()=>{
+      clearTimeout(to);
+      // cert self-signed o CORS o nodo non raggiungibile dal browser -> resta il dato collector
+      if(badge)badge.textContent="\u00b7 collector (live blocked)";
+    });
+}
   const n=MAP[addr];if(!n)return;const rank=countryRank(n);
   const probs=detectProblems(n).map(p=>"- "+p[2]).join("\n");
   const r="=== Sentinel Node Report ===\n"+
