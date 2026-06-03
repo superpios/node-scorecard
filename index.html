@@ -92,37 +92,36 @@
     <div class="updated" id="updated">loading&hellip;</div>
   </header>
   <div class="stats" id="stats"></div>
-  <div class="tabs">
-    <div class="tab active" data-tab="explorer">Network Explorer</div>
-    <div class="tab" data-tab="inspector">Node Inspector</div>
-  </div>
   <div class="panel-desc" id="paneldesc"></div>
 
-  <!-- EXPLORER -->
+  <!-- EXPLORER (unica vista; l'inspector si apre qui sopra al click) -->
   <div id="view-explorer">
-    <div class="controls">
-      <input type="text" id="search" placeholder="search moniker, address, city&hellip;">
-      <select id="country"><option value="">All countries</option></select>
-      <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
-      <div class="chip-filters"><div class="cf" data-f="active">Active only</div><div class="cf" data-f="api">API reachable</div></div>
+    <!-- INSPECTOR PANEL: nascosto finché non si clicca un nodo -->
+    <div id="view-inspector" style="display:none">
+      <div class="insp-search">
+        <input type="text" id="insp-input" placeholder="paste a node address (sentnode1&hellip;) or moniker">
+        <button class="pg" id="insp-go">Inspect</button>
+      </div>
+      <div id="insp-body"></div>
     </div>
-    <div class="tablewrap">
-      <div class="tscroll"><div id="content"><div class="loading"><div class="spinner"></div>connecting to Sentinel network&hellip;</div></div></div>
-      <div class="pager" id="pager" style="display:none">
-        <div class="info" id="pginfo"></div>
-        <div class="btns"><select class="pp" id="perpage"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
-          <button class="pg" id="prev">&lsaquo; prev</button><button class="pg" id="next">next &rsaquo;</button></div>
+
+    <!-- LISTA: controlli + tabella -->
+    <div id="explorer-list">
+      <div class="controls">
+        <input type="text" id="search" placeholder="search moniker, address, city&hellip;">
+        <select id="country"><option value="">All countries</option></select>
+        <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
+        <div class="chip-filters"><div class="cf" data-f="active">Active only</div><div class="cf" data-f="api">API reachable</div></div>
+      </div>
+      <div class="tablewrap">
+        <div class="tscroll"><div id="content"><div class="loading"><div class="spinner"></div>connecting to Sentinel network&hellip;</div></div></div>
+        <div class="pager" id="pager" style="display:none">
+          <div class="info" id="pginfo"></div>
+          <div class="btns"><select class="pp" id="perpage"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
+            <button class="pg" id="prev">&lsaquo; prev</button><button class="pg" id="next">next &rsaquo;</button></div>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- INSPECTOR -->
-  <div id="view-inspector" style="display:none">
-    <div class="insp-search">
-      <input type="text" id="insp-input" placeholder="paste a node address (sentnode1&hellip;) or moniker">
-      <button class="pg" id="insp-go">Inspect</button>
-    </div>
-    <div id="insp-body"><div class="insp-empty">Enter a node address or moniker above &mdash; or click any node in the Network Explorer &mdash; to see its full diagnostic: historical uptime, stability timeline, country ranking, detected problems, and a ready-to-paste support report.</div></div>
   </div>
 
   <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators</footer>
@@ -167,7 +166,8 @@ function enrich(n){
   const score=Math.round(Object.values(comps).reduce((a,b)=>a+b,0));
   // displayStatus: se il summary dice stale -> "stale" (override del status del latest che può essere obsoleto)
   const displayStatus = stale ? "stale" : n.status;
-  return {addr:n.addr,moniker:n.moniker||n.addr,status:displayStatus,country:n.country||"\u2014",city:n.city||"\u2014",
+  const dispMoniker = n.moniker || (n.addr ? "("+n.addr.slice(0,11)+"\u2026"+n.addr.slice(-4)+")" : "(unnamed)");
+  return {addr:n.addr,moniker:dispMoniker,hasName:!!n.moniker,status:displayStatus,country:n.country||"\u2014",city:n.city||"\u2014",
     api_ok:n.api_ok===true,gb_tokens:n.gb_tokens||0,samples:h.n||0,uptimeRaw:uptime,stabRaw:stab,
     uptime:uptime,stab:stab,longevity:Math.round(longevity),freshness:Math.round(fresh),
     stale:stale,age_h:h.age_h||null,
@@ -214,7 +214,7 @@ function render(){
   html+='</tr></thead><tbody>';
   rows.forEach((n,i)=>{const rank=start+i+1,rk=rank<=3?"rank top":"rank";
     html+='<tr class="node-row" onclick="inspect(\''+n.addr+'\')"><td class="'+rk+'">'+rank+'</td>'+
-      '<td><div class="mon">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
+      '<td><div class="mon'+(n.hasName?'':' na')+'">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
       '<td><span class="score '+sc(n.score)+'">'+n.score+'</span><div class="sbar"><i style="width:'+n.score+'%"></i></div></td>'+
       '<td><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span></td>'+
       '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>'+
@@ -231,11 +231,15 @@ function render(){
 }
 // ===== INSPECTOR =====
 function inspect(addr){
-  state.tab="inspector";switchTab();
-  const n=MAP[addr]||NODES.find(x=>x.moniker.toLowerCase()===(""+addr).toLowerCase());
+  showInspector();
+  const n=MAP[addr]||NODES.find(x=>x.moniker&&x.moniker.toLowerCase()===(""+addr).toLowerCase());
   document.getElementById("insp-input").value=addr;
-  if(!n){document.getElementById("insp-body").innerHTML='<div class="insp-empty">Node not found: '+esc(addr)+'</div>';return;}
+  if(!n){document.getElementById("insp-body").innerHTML='<div class="insp-empty"><a href="#" onclick="backToExplorer();return false" style="color:var(--accent)">&lsaquo; back to list</a><br><br>Node not found: '+esc(addr)+'</div>';return;}
   renderInspector(n);
+}
+function showInspector(){
+  document.getElementById("explorer-list").style.display="none";
+  document.getElementById("view-inspector").style.display="block";
 }
 function countryRank(n){
   if(n.country==="\u2014")return null;
@@ -265,7 +269,7 @@ function renderInspector(n){
     '<div style="font-size:10.5px;color:var(--dim);font-family:Space Mono;margin-top:6px">'+(n.tl_from?fmtShort(n.tl_from):"")+' \u2192 '+(n.tl_to?fmtShort(n.tl_to):"")+' &middot; '+n.tl.length+' samples</div>';}
   const probs=detectProblems(n).map(([cl,ic,t])=>'<div class="problem '+cl+'"><span class="pic">'+ic+'</span><span>'+t+'</span></div>').join("");
   document.getElementById("insp-body").innerHTML=
-    '<span class="back" onclick="backToExplorer()">\u2039 back to Explorer</span>'+
+    '<span class="back" onclick="backToExplorer()">\u2039 back to list</span>'+
     '<div class="insp-grid"><div class="card">'+
       '<div class="ihead"><div><div class="imon">'+esc(n.moniker)+'</div><div class="iaddr">'+n.addr+'</div>'+
         '<div class="imeta"><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span>'+
@@ -336,17 +340,14 @@ function genReport(addr){
   const el=document.getElementById("report");el.textContent=r;el.style.display="block";
   if(navigator.clipboard){navigator.clipboard.writeText(r).then(()=>{el.textContent=r+"\n\n\u2713 copied to clipboard";}).catch(()=>{});}
 }
-function backToExplorer(){state.tab="explorer";switchTab();}
-function switchTab(){
-  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===state.tab));
-  document.getElementById("view-explorer").style.display=state.tab==="explorer"?"block":"none";
-  document.getElementById("view-inspector").style.display=state.tab==="inspector"?"block":"none";
-  document.getElementById("paneldesc").textContent=state.tab==="explorer"
-    ?"The whole network at a glance \u2014 sort, filter, search 1500+ nodes. Click any node to inspect it."
-    :"Deep-dive one node: historical uptime, stability timeline, country ranking, problems, and a paste-ready support report.";
+function backToExplorer(){
+  document.getElementById("view-inspector").style.display="none";
+  document.getElementById("explorer-list").style.display="block";
+}
+function setPanelDesc(){
+  document.getElementById("paneldesc").textContent="The whole network at a glance \u2014 sort, filter, search 1500+ nodes. Click any node to inspect it.";
 }
 function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=(k==="moniker"||k==="country"||k==="protocol")?1:-1;}state.page=0;render();}
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{state.tab=t.dataset.tab;switchTab();if(state.tab==="explorer")render();});
 document.getElementById("search").oninput=e=>{state.search=e.target.value;state.page=0;render();};
 document.getElementById("country").onchange=e=>{state.country=e.target.value;state.page=0;render();};
 document.getElementById("protocol").onchange=e=>{state.protocol=e.target.value;state.page=0;render();};
@@ -359,7 +360,7 @@ document.getElementById("insp-input").addEventListener("keydown",e=>{if(e.key===
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just now";if(d<3600)return Math.round(d/60)+" min ago";if(d<86400)return Math.round(d/3600)+" h ago";return Math.round(d/86400)+" d ago";}
 function fmtShort(ts){try{const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":00";}catch(e){return ts;}}
-switchTab();load();
+setPanelDesc();load();
 </script>
 </body>
 </html>
