@@ -31,6 +31,16 @@ Click any node (or paste an address) to deep-dive:
 - **Score breakdown** — how each weighted component contributes
 - **Generate support report** — a ready-to-paste summary for the Sentinel support Telegram or a GitHub issue, so a node's problems actually reach the people who can help
 
+### 💬 NodeAdvisor — community feedback
+The data tells you how a node *behaves*; NodeAdvisor tells you how it *feels to use*. On any node, anyone can leave structured feedback:
+
+- **Quick tags** — positive (fast, stable, good uptime, good value, connects first try) and negative (drops often, high latency, slow, hard to reach)
+- **Optional comment** (up to 500 chars)
+- **Aggregated view** — feedback is shown as tag counts ("12 · fast connection · 3 · high latency"), not a single falsifiable star rating
+- **Light anti-abuse** — one vote per node per browser, plus server-side de-duplication. Not bulletproof (nothing browser-side is), but it keeps casual self-voting down, and comments can be moderated.
+
+Feedback is stored in a free Supabase table read directly from the static page — still no server of your own to run.
+
 ---
 
 ## The score
@@ -63,10 +73,11 @@ make-summary.py  -> aggregates history.jsonl into history-summary.json (uptime %
                     nodes not seen for 30+ days to keep the files lean.
 push-latest.sh   -> publishes latest.json + history-summary.json to this repo
 index.html       -> static UI, fetches the two JSON files and renders everything
-                    client-side (no backend)
+                    client-side. Community feedback (NodeAdvisor) is read/written
+                    directly to a free Supabase table from the browser.
 ```
 
-The UI is a single static HTML file — host it on GitHub Pages or any static host. It reads the published JSON directly.
+The UI is a single static HTML file — host it on GitHub Pages or any static host. It reads the published JSON directly. The only external dependency is a free Supabase project for NodeAdvisor feedback (optional — the rest works without it).
 
 ---
 
