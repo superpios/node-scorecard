@@ -81,6 +81,78 @@ The UI is a single static HTML file — host it on GitHub Pages or any static ho
 
 ---
 
+## API / Data access (for developers & white-label apps)
+
+All Scorecard data is served as plain JSON over HTTPS — no key, no auth, no rate limit. White-label apps, dashboards, or bots can consume it directly. These are **read-only** endpoints.
+
+### Per-node current snapshot — `latest.json`
+The most recent sample of every node on the network.
+
+```
+GET https://superpios.github.io/node-scorecard/latest.json
+```
+
+Returns an array of node objects:
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `addr` | string | Node address (`sentnode1…`) |
+| `moniker` | string\|null | Node name (null if its API didn't answer at sample time) |
+| `status` | string | `active` / `inactive` (on-chain) |
+| `ts` | string | ISO timestamp of this sample |
+| `inactive_at` | string | On-chain heartbeat-expiry timestamp |
+| `remote` | string\|null | Announced `host:port` |
+| `protocol` | string\|null | `v2ray` / `wireguard` / `openvpn` |
+| `peers` | int\|null | Connected peers at sample time |
+| `price_hr` / `price_gb` | number\|null | Price in P2P per hour / per GB |
+| `dl_mbps` / `ul_mbps` | number\|null | Measured bandwidth |
+| `version` | string\|null | Node software version |
+| `country` / `city` | string\|null | Geolocation |
+| `gb_tokens` | int | Number of accepted payment denoms |
+| `api_ok` | bool | Whether the node's API answered the collector |
+
+### Per-node historical summary — `history-summary.json`
+Aggregated history + a compact uptime timeline per node.
+
+```
+GET https://superpios.github.io/node-scorecard/history-summary.json
+```
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `a` | string | Node address |
+| `mon` | string | Moniker (or address if unnamed) |
+| `n` | int | Number of samples collected |
+| `uptime` | number | % active across all samples |
+| `stab` | number | Stability score (0–100) |
+| `trans` | int | Count of active↔inactive transitions |
+| `ul` | number\|null | Average upload Mbps |
+| `country` | string\|null | Country |
+| `sc` | int | Rough composite score |
+| `tl` | string | Compact timeline: `1`=active, `0`=inactive, oldest→newest |
+| `tl_from` / `tl_to` | string | Timeline start / end timestamps |
+| `stale` | bool | Last sample older than 24h |
+| `age_h` | number\|null | Hours since last sample |
+
+> The on-page score uses a richer weighting than the `sc` field above; `sc` is a lightweight pre-computed approximation. To reproduce the full score, see the weights table under [The score](#the-score).
+
+### Community feedback (NodeAdvisor)
+Feedback is stored in Supabase and is **readable** via its auto-generated REST API (read policy only). Example — fetch visible feedback for one node:
+
+```
+GET https://<project>.supabase.co/rest/v1/node_feedback?node_addr=eq.<addr>&hidden=eq.false&select=tags,comment,created_at
+Header: apikey: <publishable-key>
+```
+
+Feedback **writing** goes through the web UI, which applies anti-abuse measures (one vote per device, de-duplication). Writing directly via API bypasses those, so it isn't documented here by design.
+
+### Notes for integrators
+- Data refreshes roughly every 3 hours; cache accordingly.
+- Fields can be `null` for nodes whose API was unreachable at sample time (~half the network at any moment) — handle nulls gracefully.
+- This is a community project; endpoints may evolve. Open an issue if you build on it and need stability guarantees.
+
+---
+
 ## Data sources & honest limits
 
 - **Prices, status, heartbeat** come from the Sentinel LCD and are available for **every** node.
@@ -113,7 +185,9 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 
 ## Roadmap
 
-- On-chain earnings trend per node
+- ✅ Public read-only JSON API (done — see API section)
+- On-chain earnings trend per node (opt-in, by wallet)
+- Clean versioned API endpoint with developer-friendly field names
 - Multi-network support (agnostic core - Sentinel first, others later)
 - Alerting hooks for operators
 - Integration with the Sentinel Scout / AI data layer
