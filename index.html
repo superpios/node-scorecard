@@ -110,6 +110,14 @@
   .na-note{font-size:10.5px;color:var(--dim);margin-top:8px}
   .na-privacy{font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5;opacity:.85;border-top:1px solid var(--line);padding-top:7px}
   .na-voted{font-size:12.5px;color:var(--accent);padding:8px 0}
+  /* medref: contesto mediana accanto ai valori */
+  .medref{font-size:9.5px;color:var(--dim);font-family:'Space Mono',monospace;margin-left:6px;opacity:.8}
+  /* tooltip score breakdown */
+  .qm{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:9px;margin-left:5px;cursor:help;position:relative;font-family:'Space Mono',monospace;vertical-align:middle}
+  .qm:hover{border-color:var(--accent);color:var(--accent)}
+  .qm::after{content:attr(data-tip);position:absolute;left:50%;bottom:140%;transform:translateX(-50%);width:210px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;line-height:1.5;color:var(--txt);font-family:inherit;text-align:left;opacity:0;pointer-events:none;transition:opacity .15s;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .qm:hover::after{opacity:1}
+  @media(max-width:600px){.qm::after{width:160px}}
 </style>
 </head>
 <body>
@@ -173,7 +181,7 @@ const NA_TAGS=[
 const NA_TAGMAP=Object.fromEntries(NA_TAGS.map(t=>[t.id,t]));
 const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
   history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]};
-let NODES=[],MAP={},HIST={},MAXN=1;
+let NODES=[],MAP={},HIST={},MAXN=1,MED={};
 let state={tab:"explorer",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false},hideStale:true};
 async function tryFetch(u){for(const x of u){try{const cb=x.includes("githubusercontent")?"":"?t="+Date.now();const r=await fetch(x+cb,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
 async function load(){
@@ -181,6 +189,7 @@ async function load(){
   if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
   if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
   NODES=latest.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
+  computeMedians();
   buildCountry();renderStats();render();
   const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
   const ts=allTs.length?allTs[allTs.length-1]:new Date().toISOString();
@@ -219,6 +228,31 @@ function enrich(n){
     dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",
     tl:h.tl||"",tl_from:h.tl_from,tl_to:h.tl_to,
     score:Math.max(0,Math.min(100,score)),comps:comps};
+}
+function pctRank(sortedArr,v){ // % di valori <= v (0-100)
+  if(!sortedArr.length||v==null)return null;
+  let lo=0,hi=sortedArr.length;
+  while(lo<hi){const mid=(lo+hi)>>1;if(sortedArr[mid]<=v)lo=mid+1;else hi=mid;}
+  return Math.round((lo/sortedArr.length)*100);
+}
+function median(arr){
+  if(!arr.length)return null;
+  const s=[...arr].sort((a,b)=>a-b);const m=Math.floor(s.length/2);
+  return s.length%2?s[m]:(s[m-1]+s[m])/2;
+}
+function computeMedians(){
+  const act=NODES.filter(n=>n.status==="active");
+  const hr=act.map(n=>n.price_hr).filter(v=>typeof v==="number").sort((a,b)=>a-b);
+  const gb=act.map(n=>n.price_gb).filter(v=>typeof v==="number").sort((a,b)=>a-b);
+  const ul=act.map(n=>n.ul_mbps).filter(v=>typeof v==="number"&&v>0).sort((a,b)=>a-b);
+  const vcount={};act.forEach(n=>{if(n.version)vcount[n.version]=(vcount[n.version]||0)+1;});
+  const topVer=Object.entries(vcount).sort((a,b)=>b[1]-a[1])[0];
+  MED={
+    price_hr:median(hr),price_gb:median(gb),ul_mbps:median(ul),
+    hrArr:hr,gbArr:gb,ulArr:ul,
+    topVersion:topVer?topVer[0]:null,
+    versionCounts:vcount
+  };
 }
 function buildCountry(){const sel=document.getElementById("country");const c={};
   NODES.forEach(n=>{if(n.country&&n.country!=="\u2014")c[n.country]=(c[n.country]||0)+1;});
@@ -301,14 +335,46 @@ function detectProblems(n){
   if(!n.api_ok&&n.status!=="stale")P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
   if(n.freshness<40&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
   if(n.peers===0&&n.status==="active")P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
+  // --- regole basate sul confronto con la rete (mediane) ---
+  if(n.status==="active"&&n.price_hr!=null&&MED.price_hr){
+    if(n.price_hr>MED.price_hr*2.5)P.push(["warn","\ud83d\udfe0","Price/hr ("+n.price_hr+") is far above the network median ("+MED.price_hr+") \u2014 fewer clients will pick this node."]);
+    else if(n.price_hr>0&&n.price_hr<MED.price_hr*0.4)P.push(["info","\u2139\ufe0f","Price/hr ("+n.price_hr+") well below median ("+MED.price_hr+") \u2014 you may be leaving rewards on the table."]);
+  }
+  if(n.status==="active"&&n.ul_mbps!=null&&MED.ul_mbps){
+    if(n.ul_mbps>0&&n.ul_mbps<MED.ul_mbps*0.5)P.push(["warn","\ud83d\udfe0","Upload "+n.ul_mbps+" Mbps is well below the network median ("+MED.ul_mbps.toFixed(0)+") \u2014 may reduce client allocation."]);
+  }
+  if(n.status==="active"&&n.version&&MED.topVersion&&n.version!==MED.topVersion){
+    const mine=(MED.versionCounts[n.version]||0),top=(MED.versionCounts[MED.topVersion]||0);
+    if(top>mine*3)P.push(["info","\u2139\ufe0f","Running v"+n.version+" while most active nodes run v"+MED.topVersion+" \u2014 consider updating."]);
+  }
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
+}
+function medRef(key,v){
+  const m=MED[key];if(!m)return "";
+  const rel=v>m*1.15?"above":v<m*0.85?"below":"\u2248";
+  const txt=rel==="\u2248"?"\u2248 median "+m:rel+" median "+m;
+  return ' <span class="medref">'+txt+'</span>';
+}
+function ulRef(v){
+  if(!MED.ulArr||!MED.ulArr.length||!v)return "";
+  const p=pctRank(MED.ulArr,v);if(p==null)return "";
+  const lbl=p>=75?"top "+(100-p)+"%":p<=25?"bottom "+p+"%":"median "+MED.ul_mbps.toFixed(0);
+  return ' <span class="medref">'+lbl+'</span>';
 }
 function renderInspector(n){
   const rank=countryRank(n);
   const W={uptime:32,stability:15,longevity:25,freshness:13,health:10,tokens:5};
+  const EXPL={
+    uptime:"How often the node was active across all collected samples. Weight 32%. The single biggest factor \u2014 measured, not self-reported.",
+    stability:"Penalizes frequent active\u2194inactive flips. Weight 15%. A node that flaps offline scores low even with decent uptime.",
+    longevity:"Length of the node's track record (samples collected vs the network's longest). Weight 25%. New nodes start low and climb with time \u2014 trust is earned.",
+    freshness:"Recency of the on-chain heartbeat at sample time. Weight 13%. Measures whether the node updated its status on schedule.",
+    health:"Active on-chain (60) + node API reachable by scanners (40). Weight 10%. Reflects whether the node is publicly responsive.",
+    tokens:"Number of accepted payment denoms configured. Weight 5%. More payment options = reachable to more client apps."
+  };
   const br=Object.entries(n.comps).map(([k,v])=>{const pct=Math.round((v/W[k])*100);
-    return '<div class="br"><span class="lbl">'+k+'</span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="pct">'+pct+'</span></div>';}).join("");
+    return '<div class="br"><span class="lbl">'+k+'<span class="qm" data-tip="'+esc(EXPL[k]||"")+'">?</span></span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="pct">'+pct+'</span></div>';}).join("");
   let tl='<span class="na" style="font-family:Space Mono;font-size:12px">no history yet \u2014 collector needs time</span>';
   if(n.tl){tl='<div class="timeline">'+n.tl.split("").map(c=>'<span class="tlc '+(c==="1"?"a":"i")+'" title="'+(c==="1"?"active":"inactive")+'"></span>').join("")+'</div>'+
     '<div style="font-size:10.5px;color:var(--dim);font-family:Space Mono;margin-top:6px">'+(n.tl_from?fmtShort(n.tl_from):"")+' \u2192 '+(n.tl_to?fmtShort(n.tl_to):"")+' &middot; '+n.tl.length+' samples</div>';}
@@ -330,9 +396,9 @@ function renderInspector(n){
         '<span class="k">Stability</span><span class="v">'+(n.samples?n.stab.toFixed(0):"\u2014")+'</span>'+
         '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
         '<span class="k">Peers (now)</span><span class="v" id="peers-live">'+(n.peers!=null?n.peers:"\u2014")+' <span id="peers-badge" style="font-size:10px;color:var(--muted);font-family:Space Mono">\u00b7 collector</span></span>'+
-        '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P":"\u2014")+'</span>'+
-        '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P":"\u2014")+'</span>'+
-        '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps":"\u2014")+'</span>'+
+        '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+medRef("price_hr",n.price_hr):"\u2014")+'</span>'+
+        '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P"+medRef("price_gb",n.price_gb):"\u2014")+'</span>'+
+        '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps"+ulRef(n.ul_mbps):"\u2014")+'</span>'+
         '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span></div>'+
     '</div><div class="card">'+
       '<h3>Score breakdown</h3>'+br+
