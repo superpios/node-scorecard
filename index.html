@@ -340,8 +340,11 @@ function detectProblems(n){
     if(n.price_hr>MED.price_hr*2.5)P.push(["warn","\ud83d\udfe0","Price/hr ("+n.price_hr+") is far above the network median ("+MED.price_hr+") \u2014 fewer clients will pick this node."]);
     else if(n.price_hr>0&&n.price_hr<MED.price_hr*0.4)P.push(["info","\u2139\ufe0f","Price/hr ("+n.price_hr+") well below median ("+MED.price_hr+") \u2014 you may be leaving rewards on the table."]);
   }
-  if(n.status==="active"&&n.ul_mbps!=null&&MED.ul_mbps){
-    if(n.ul_mbps>0&&n.ul_mbps<MED.ul_mbps*0.5)P.push(["warn","\ud83d\udfe0","Upload "+n.ul_mbps+" Mbps is well below the network median ("+MED.ul_mbps.toFixed(0)+") \u2014 may reduce client allocation."]);
+  if(n.status==="active"&&n.ul_mbps!=null){
+    // Soglia ASSOLUTA, non relativa alla mediana: la mediana di rete è gonfiata dai datacenter
+    // (fibra simmetrica). Un nodo residenziale serve clienti benissimo con pochi Mbps.
+    // Segnaliamo solo banda così bassa da compromettere davvero il servizio.
+    if(n.ul_mbps>0&&n.ul_mbps<5)P.push(["warn","\ud83d\udfe0","Upload "+n.ul_mbps+" Mbps is very low \u2014 may struggle to serve client sessions."]);
   }
   if(n.status==="active"&&n.version&&MED.topVersion&&n.version!==MED.topVersion){
     const mine=(MED.versionCounts[n.version]||0),top=(MED.versionCounts[MED.topVersion]||0);
