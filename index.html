@@ -108,6 +108,7 @@
   .na-submit{margin-top:10px;background:var(--accent);color:#04110b;border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:13px}
   .na-submit:disabled{opacity:.6;cursor:default}
   .na-note{font-size:10.5px;color:var(--dim);margin-top:8px}
+  .na-privacy{font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5;opacity:.85;border-top:1px solid var(--line);padding-top:7px}
   .na-voted{font-size:12.5px;color:var(--accent);padding:8px 0}
 </style>
 </head>
@@ -465,6 +466,7 @@ function renderFeedback(addr,rows){
       '<textarea id="na-comment" maxlength="500" placeholder="Optional comment (max 500 chars)\u2026"></textarea>'+
       '<button class="na-submit" onclick="submitFeedback(\''+addr+'\')">Send feedback</button>'+
       '<div class="na-note">One vote per node. Be fair \u2014 other operators rely on this.</div>'+
+      '<div class="na-privacy">To prevent double-voting we use an anonymous browser fingerprint \u2014 no IP, no cookies, no cross-site tracking. It only counts one vote per device on this page.</div>'+
     '</div>';
   }
   body.innerHTML=summary+clist+form;
