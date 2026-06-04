@@ -82,6 +82,33 @@
   .report{margin-top:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:13px;font-family:'Space Mono',monospace;font-size:11.5px;white-space:pre-wrap;color:var(--txt);display:none;line-height:1.55}
   .back{cursor:pointer;color:var(--accent-2);font-size:12px;font-family:'Space Mono',monospace;margin-bottom:10px;display:inline-block}
   @media(max-width:760px){.hide-sm{display:none}h1{font-size:22px}}
+  /* NodeAdvisor */
+  #nodeadvisor h3{margin-bottom:10px}
+  .na-loading,.na-err,.na-empty{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)}
+  .na-err{color:var(--warn)}
+  .na-count{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:8px}
+  .na-tags-sum{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .na-tagchip{font-size:11.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--txt)}
+  .na-tagchip.pos{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+  .na-tagchip.neg{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.08)}
+  .na-tagchip b{color:var(--accent)}
+  .na-tagchip.neg b{color:var(--bad)}
+  .na-sub{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 8px}
+  .na-comments{margin:10px 0}
+  .na-comment{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .na-ctext{color:var(--txt)}
+  .na-cdate{color:var(--dim);font-family:'Space Mono',monospace;font-size:10.5px;white-space:nowrap}
+  .na-form{margin-top:6px}
+  .na-checks{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+  .na-chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;user-select:none}
+  .na-chk.pos:hover{border-color:rgba(52,211,153,.5)}
+  .na-chk.neg:hover{border-color:rgba(248,113,113,.5)}
+  .na-chk input{accent-color:var(--accent);cursor:pointer}
+  #na-comment{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;min-height:54px}
+  .na-submit{margin-top:10px;background:var(--accent);color:#04110b;border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:13px}
+  .na-submit:disabled{opacity:.6;cursor:default}
+  .na-note{font-size:10.5px;color:var(--dim);margin-top:8px}
+  .na-voted{font-size:12.5px;color:var(--accent);padding:8px 0}
 </style>
 </head>
 <body>
@@ -128,6 +155,21 @@
 </div>
 <script>
 const REPO="superpios/node-scorecard";
+// ===== NodeAdvisor (Supabase) =====
+const SB_URL="https://upalnwxnmavcrgifoftt.supabase.co";
+const SB_KEY="sb_publishable_cA2TS9Gq4b9rdV26bb2VfQ_NSxGU2Ds";
+const NA_TAGS=[
+  {id:"fast",label:"Fast connection",pos:true},
+  {id:"stable",label:"Stable / no drops",pos:true},
+  {id:"good_uptime",label:"Good uptime",pos:true},
+  {id:"good_value",label:"Good price/quality",pos:true},
+  {id:"connects_first",label:"Connects first try",pos:true},
+  {id:"drops",label:"Drops often",pos:false},
+  {id:"high_latency",label:"High latency",pos:false},
+  {id:"slow",label:"Slow",pos:false},
+  {id:"unreachable",label:"Hard to reach",pos:false}
+];
+const NA_TAGMAP=Object.fromEntries(NA_TAGS.map(t=>[t.id,t]));
 const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
   history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]};
 let NODES=[],MAP={},HIST={},MAXN=1;
@@ -296,9 +338,11 @@ function renderInspector(n){
       '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+
       '<button class="repbtn" onclick="genReport(\''+n.addr+'\')">\ud83d\udccb Generate support report</button>'+
       '<div class="report" id="report"></div>'+
+      '<div id="nodeadvisor" style="margin-top:22px"><h3>NodeAdvisor \u2014 community feedback</h3><div id="na-body" class="na-loading">loading feedback\u2026</div></div>'+
     '</div></div>';
   // fetch LIVE diretto all'API del nodo: aggiorna "Peers (now)" col valore reale di adesso
   livePeers(n.remote);
+  loadFeedback(n.addr);
 }
 function livePeers(remote){
   if(!remote){return;}
@@ -326,6 +370,107 @@ function livePeers(remote){
       // cert self-signed o CORS o nodo non raggiungibile dal browser -> resta il dato collector
       if(badge)badge.textContent="\u00b7 collector (live blocked)";
     });
+}
+
+// ===== NodeAdvisor =====
+// voter hash: identificatore stabile per browser (non IP, per privacy). Genera/legge da localStorage.
+function voterHash(){
+  let v=null;
+  try{ v=localStorage.getItem("na_voter"); }catch(e){}
+  if(!v){
+    v="v"+Math.random().toString(36).slice(2)+Date.now().toString(36);
+    try{ localStorage.setItem("na_voter",v); }catch(e){}
+  }
+  return v;
+}
+function votedNodes(){
+  try{ return JSON.parse(localStorage.getItem("na_voted")||"[]"); }catch(e){ return []; }
+}
+function markVoted(addr){
+  try{ const a=votedNodes(); if(!a.includes(addr)){ a.push(addr); localStorage.setItem("na_voted",JSON.stringify(a)); } }catch(e){}
+}
+function sbHeaders(){
+  return {"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"};
+}
+function loadFeedback(addr){
+  const body=document.getElementById("na-body");
+  if(!body)return;
+  const url=SB_URL+"/rest/v1/node_feedback?node_addr=eq."+encodeURIComponent(addr)+"&hidden=eq.false&select=tags,comment,created_at&order=created_at.desc&limit=100";
+  fetch(url,{headers:sbHeaders()})
+    .then(r=>r.ok?r.json():Promise.reject(r.status))
+    .then(rows=>renderFeedback(addr,rows))
+    .catch(err=>{
+      body.innerHTML='<div class="na-err">Community feedback not available right now.</div>';
+    });
+}
+function renderFeedback(addr,rows){
+  const body=document.getElementById("na-body");
+  if(!body)return;
+  rows=Array.isArray(rows)?rows:[];
+  // conteggio aggregato dei tag
+  const counts={};
+  rows.forEach(r=>(r.tags||[]).forEach(t=>{counts[t]=(counts[t]||0)+1;}));
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  let summary="";
+  if(rows.length===0){
+    summary='<div class="na-empty">No community feedback yet. Be the first to rate this node.</div>';
+  }else{
+    summary='<div class="na-count">'+rows.length+' feedback'+(rows.length>1?"s":"")+'</div><div class="na-tags-sum">'+
+      sorted.map(([id,c])=>{const t=NA_TAGMAP[id];const lbl=t?t.label:id;const cls=t?(t.pos?"pos":"neg"):"";
+        return '<span class="na-tagchip '+cls+'">'+esc(lbl)+' <b>'+c+'</b></span>';}).join("")+'</div>';
+  }
+  // commenti recenti (solo quelli con testo)
+  const comments=rows.filter(r=>r.comment&&r.comment.trim()).slice(0,8);
+  let clist="";
+  if(comments.length){
+    clist='<div class="na-comments"><div class="na-sub">Recent comments</div>'+
+      comments.map(r=>'<div class="na-comment"><span class="na-ctext">'+esc(r.comment)+'</span><span class="na-cdate">'+fmtShort(r.created_at)+'</span></div>').join("")+'</div>';
+  }
+  // form o "gia votato"
+  let form="";
+  if(votedNodes().includes(addr)){
+    form='<div class="na-voted">\u2713 You\u2019ve already given feedback on this node.</div>';
+  }else{
+    form='<div class="na-form">'+
+      '<div class="na-sub">Your experience with this node</div>'+
+      '<div class="na-checks">'+
+        NA_TAGS.map(t=>'<label class="na-chk '+(t.pos?"pos":"neg")+'"><input type="checkbox" value="'+t.id+'"> '+esc(t.label)+'</label>').join("")+
+      '</div>'+
+      '<textarea id="na-comment" maxlength="500" placeholder="Optional comment (max 500 chars)\u2026"></textarea>'+
+      '<button class="na-submit" onclick="submitFeedback(\''+addr+'\')">Send feedback</button>'+
+      '<div class="na-note">One vote per node. Be fair \u2014 other operators rely on this.</div>'+
+    '</div>';
+  }
+  body.innerHTML=summary+clist+form;
+}
+function submitFeedback(addr){
+  const body=document.getElementById("na-body");
+  if(!body)return;
+  const checks=[...body.querySelectorAll(".na-checks input:checked")].map(c=>c.value);
+  const comment=(document.getElementById("na-comment")||{}).value||"";
+  if(checks.length===0 && !comment.trim()){
+    alert("Select at least one tag or write a comment.");
+    return;
+  }
+  const btn=body.querySelector(".na-submit");
+  if(btn){btn.disabled=true;btn.textContent="Sending\u2026";}
+  const payload={node_addr:addr,tags:checks,comment:comment.trim()||null,voter_hash:voterHash()};
+  fetch(SB_URL+"/rest/v1/node_feedback",{
+    method:"POST",
+    headers:Object.assign(sbHeaders(),{"Prefer":"return=minimal"}),
+    body:JSON.stringify(payload)
+  })
+  .then(r=>{
+    if(r.ok){ markVoted(addr); loadFeedback(addr); }
+    else if(r.status===409){ // vincolo unique: gia votato da questo voter_hash
+      markVoted(addr); loadFeedback(addr);
+    }
+    else return Promise.reject(r.status);
+  })
+  .catch(err=>{
+    if(btn){btn.disabled=false;btn.textContent="Send feedback";}
+    alert("Could not send feedback right now. Try again later.");
+  });
 }
 function genReport(addr){
   const n=MAP[addr];if(!n)return;const rank=countryRank(n);
