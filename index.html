@@ -373,15 +373,41 @@ function livePeers(remote){
 }
 
 // ===== NodeAdvisor =====
-// voter hash: identificatore stabile per browser (non IP, per privacy). Genera/legge da localStorage.
+// voter hash: fingerprint STABILE del browser (sopravvive alla cancellazione cache).
+// Calcolato da segnali che non cambiano: user-agent, lingua, timezone, schermo, piattaforma,
+// core CPU, memoria. NON usa l'IP (privacy) e NON dipende da localStorage.
+// Ferma il refresh+cancella-cache (genera lo stesso hash); non ferma browser diversi o incognito
+// con impostazioni alterate — limite dichiarato di qualsiasi anti-spam senza login.
+function fnv1a(str){
+  let h=0x811c9dc5;
+  for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193); }
+  return (h>>>0).toString(36);
+}
 function voterHash(){
-  let v=null;
-  try{ v=localStorage.getItem("na_voter"); }catch(e){}
-  if(!v){
-    v="v"+Math.random().toString(36).slice(2)+Date.now().toString(36);
-    try{ localStorage.setItem("na_voter",v); }catch(e){}
+  try{
+    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"";
+    const parts=[
+      navigator.userAgent||"",
+      navigator.language||"",
+      (navigator.languages||[]).join(","),
+      navigator.platform||"",
+      (screen.width+"x"+screen.height+"x"+(screen.colorDepth||"")),
+      (screen.availWidth+"x"+screen.availHeight),
+      tz,
+      (new Date().getTimezoneOffset()),
+      (navigator.hardwareConcurrency||""),
+      (navigator.deviceMemory||""),
+      (navigator.maxTouchPoints||0)
+    ].join("|");
+    // doppio hash su due slice per ridurre collisioni
+    return "fp"+fnv1a(parts)+fnv1a(parts.split("").reverse().join(""));
+  }catch(e){
+    // fallback: vecchio metodo localStorage se il fingerprint non è calcolabile
+    let v=null;
+    try{ v=localStorage.getItem("na_voter"); }catch(_){}
+    if(!v){ v="v"+Math.random().toString(36).slice(2)+Date.now().toString(36); try{ localStorage.setItem("na_voter",v); }catch(_){} }
+    return v;
   }
-  return v;
 }
 function votedNodes(){
   try{ return JSON.parse(localStorage.getItem("na_voted")||"[]"); }catch(e){ return []; }
@@ -462,8 +488,10 @@ function submitFeedback(addr){
   })
   .then(r=>{
     if(r.ok){ markVoted(addr); loadFeedback(addr); }
-    else if(r.status===409){ // vincolo unique: gia votato da questo voter_hash
-      markVoted(addr); loadFeedback(addr);
+    else if(r.status===409){ // vincolo unique: questo fingerprint ha già votato questo nodo
+      markVoted(addr);
+      alert("You\u2019ve already voted on this node from this device.");
+      loadFeedback(addr);
     }
     else return Promise.reject(r.status);
   })
