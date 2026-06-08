@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# Sentinel Scorecard Collector v3.3 (global --all)
+# Sentinel Scorecard Collector v3.4 (global --all)
 # v3: aggiunge price_hr/price_gb (da LCD), protocol/peers/version/banda (da API locale)
 # v3.1: retry API nodo (2 tentativi) per ridurre nodi con moniker/peers None
 # v3.2: ASN enrichment con cache su file (lookup IP->ASN via ip-api, 1 call per IP nuovo)
-# v3.3: enrich_asn robusto - salva cache ogni 40 lookup, stampa progresso, riprende da cache
+# v3.4: enrich_asn solo nodi attivi (status==active) - meno lookup, piu utile
 import json, os, sys, time, urllib.request, urllib.parse, ssl, socket
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +13,7 @@ LCD="https://lcd.sentinel.co"; TIMEOUT=10
 CTX=ssl.create_default_context(); CTX.check_hostname=False; CTX.verify_mode=ssl.CERT_NONE
 def now_iso(): return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 def fetch(url,timeout=TIMEOUT):
-    req=urllib.request.Request(url,headers={"User-Agent":"scorecard/3.3"})
+    req=urllib.request.Request(url,headers={"User-Agent":"scorecard/3.4"})
     with urllib.request.urlopen(req,timeout=timeout,context=CTX) as r: return json.loads(r.read().decode())
 def lookup_asn(remote, cache):
     # remote = 'host:port' o 'ip:port' -> 'AS#### Org' (cache su IP, 1 call per IP nuovo)
@@ -114,16 +114,16 @@ def export_latest():
     json.dump(list(latest.values()),open(LATEST,"w"))
     print(f"Esportati {len(latest)} nodi in {LATEST}")
 def enrich_asn():
-    # v3.3: ASN enrichment robusto. Salva cache ogni 40 lookup (a prova di interruzione),
+    # v3.4: ASN enrichment solo nodi ATTIVI. Salva cache ogni 40 lookup (a prova di interruzione),
     # stampa progresso, riprende dalla cache se rilanciato. Rate-limit ip-api 45/min.
     if not os.path.exists(LATEST): print("Nessun latest.json."); return
     cache=json.load(open(ASNCACHE)) if os.path.exists(ASNCACHE) else {}
     nodes=json.load(open(LATEST))
-    todo=[n for n in nodes if not n.get("asn") and n.get("remote")]
-    print(f"[{now_iso()}] ASN enrich: {len(todo)} nodi da risolvere (cache: {len(cache)} IP)")
+    todo=[n for n in nodes if not n.get("asn") and n.get("remote") and n.get("status")=="active"]
+    print(f"[{now_iso()}] ASN enrich: {len(todo)} nodi ATTIVI da risolvere (cache: {len(cache)} IP)")
     new_lookups=0; done=0
     for n in nodes:
-        if n.get("asn") or not n.get("remote"): continue
+        if n.get("asn") or not n.get("remote") or n.get("status")!="active": continue
         host=n["remote"].split(":")[0].strip()
         try: ip=socket.gethostbyname(host)
         except Exception: ip=None
@@ -175,5 +175,5 @@ def main():
                 if "--all" in a and done%200==0: print(f"  ...{done}/{total} ({act} active)")
     print(f"[{now_iso()}] {w} campioni ({act} active)")
     export_latest()
-    enrich_asn()   # v3.3: aggiunge ASN dopo l'export
+    enrich_asn()   # v3.4: aggiunge ASN dopo l'export
 if __name__=="__main__": main()
