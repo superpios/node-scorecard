@@ -118,6 +118,12 @@
   .qm::after{content:attr(data-tip);position:absolute;left:50%;bottom:140%;transform:translateX(-50%);width:210px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;line-height:1.5;color:var(--txt);font-family:inherit;text-align:left;opacity:0;pointer-events:none;transition:opacity .15s;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.5)}
   .qm:hover::after{opacity:1}
   @media(max-width:600px){.qm::after{width:160px}}
+  .asn-intro{color:var(--dim);font-size:12px;font-family:'Space Mono',monospace;margin:13px 0}
+  .asn-sat{color:var(--bad);font-weight:700}
+  .asn-ok{color:var(--accent);font-weight:700}
+  .asn-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
+  .asn-badge.sat{background:rgba(239,75,87,.13);color:var(--bad)}
+  .asn-badge.ok{background:rgba(45,212,167,.13);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -131,6 +137,11 @@
   <div class="panel-desc" id="paneldesc"></div>
 
   <!-- EXPLORER (unica vista; l'inspector si apre qui sopra al click) -->
+  <div class="tabs" id="maintabs">
+    <div class="tab active" data-view="explorer">Nodes</div>
+    <div class="tab" data-view="asnintel">ASN Intelligence</div>
+  </div>
+  <div id="view-asnintel" style="display:none"></div>
   <div id="view-explorer">
     <!-- INSPECTOR PANEL: nascosto finché non si clicca un nodo -->
     <div id="view-inspector" style="display:none">
@@ -225,7 +236,7 @@ function enrich(n){
     stale:stale,age_h:h.age_h||null,
     price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
     protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
-    dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",
+    dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",asn:n.asn||null,
     tl:h.tl||"",tl_from:h.tl_from,tl_to:h.tl_to,
     score:Math.max(0,Math.min(100,score)),comps:comps};
 }
@@ -285,10 +296,10 @@ function render(){
   const data=filtered();
   const total=data.length,start=state.page*state.perPage,rows=data.slice(start,start+state.perPage);
   if(!data.length){document.getElementById("content").innerHTML='<div class="loading">no nodes match these filters</div>';document.getElementById("pager").style.display="none";return;}
-  const cols=[["rank","#"],["moniker","Node"],["score","Score"],["status","Status"],["protocol","Proto"],["price_hr","P2P/hr"],["price_gb","P2P/GB"],["peers","Peers"],["uptime","Uptime%"],["country","Country"]];
+  const cols=[["rank","#"],["moniker","Node"],["score","Score"],["status","Status"],["protocol","Proto"],["price_hr","P2P/hr"],["price_gb","P2P/GB"],["peers","Peers"],["uptime","Uptime%"],["country","Country"],["asn","ASN"]];
   let html='<table><thead><tr>';
   cols.forEach(([k,l])=>{const ar=state.sortKey===k?(state.sortDir>0?"\u25b2":"\u25bc"):"";
-    const hs=["status","protocol","price_hr","price_gb","peers","uptime","country"].includes(k);
+    const hs=["status","protocol","price_hr","price_gb","peers","uptime","country","asn"].includes(k);
     html+='<th '+(k!=="rank"?'onclick="sortBy(\''+k+'\')"':'')+' class="'+(hs?'hide-sm':'')+'">'+l+' <span class="ar">'+ar+'</span></th>';});
   html+='</tr></thead><tbody>';
   rows.forEach((n,i)=>{const rank=start+i+1,rk=rank<=3?"rank top":"rank";
@@ -300,7 +311,8 @@ function render(){
       '<td class="hide-sm">'+pr(n.price_hr)+'</td><td class="hide-sm">'+pr(n.price_gb)+'</td>'+
       '<td class="mono hide-sm">'+(n.peers!=null?n.peers:'<span class="na">\u2014</span>')+'</td>'+
       '<td class="mono hide-sm">'+(n.samples?n.uptime.toFixed(0):'<span class="na">\u2014</span>')+'</td>'+
-      '<td class="flag hide-sm">'+esc(n.country)+(n.city&&n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</td></tr>';});
+      '<td class="flag hide-sm">'+esc(n.country)+(n.city&&n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</td>'+
+      '<td class="hide-sm">'+asnCell(n.asn)+'</td></tr>';});
   html+='</tbody></table>';
   document.getElementById("content").innerHTML=html;
   const pager=document.getElementById("pager");pager.style.display="flex";
@@ -350,6 +362,7 @@ function detectProblems(n){
     const mine=(MED.versionCounts[n.version]||0),top=(MED.versionCounts[MED.topVersion]||0);
     if(top>mine*3)P.push(["info","\u2139\ufe0f","Running v"+n.version+" while most active nodes run v"+MED.topVersion+" \u2014 consider updating."]);
   }
+  if(asnSaturated(n.asn))P.push(["warn","\ud83d\udfe0","On a saturated ASN ("+asnSaturated(n.asn)+") \u2014 over the NORSE whitelist limit, may not get leased/earn."]);
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
@@ -402,7 +415,8 @@ function renderInspector(n){
         '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+medRef("price_hr",n.price_hr):"\u2014")+'</span>'+
         '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P"+medRef("price_gb",n.price_gb):"\u2014")+'</span>'+
         '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps"+ulRef(n.ul_mbps):"\u2014")+'</span>'+
-        '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span></div>'+
+        '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span>'+
+        '<span class="k">Hosting</span><span class="v">'+(n.asn?esc(asnNum(n.asn))+" \u00b7 "+esc(asnName(n.asn)):"\u2014")+'</span></div>'+
     '</div><div class="card">'+
       '<h3>Score breakdown</h3>'+br+
       '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+
@@ -604,9 +618,58 @@ document.getElementById("next").onclick=()=>{state.page++;render();};
 document.getElementById("perpage").onchange=e=>{state.perPage=+e.target.value;state.page=0;render();};
 document.getElementById("insp-go").onclick=()=>inspect(document.getElementById("insp-input").value.trim());
 document.getElementById("insp-input").addEventListener("keydown",e=>{if(e.key==="Enter")inspect(e.target.value.trim());});
+// ===== ASN helpers =====
+const SATURATED_ASN={"AS31898":"Oracle","AS8560":"IONOS","AS36352":"OVH"};
+function asnNum(asn){if(!asn)return null;const m=String(asn).match(/AS\d+/);return m?m[0]:null;}
+function asnName(asn){if(!asn)return "";return String(asn).replace(/^AS\d+\s*/,"").trim();}
+function asnSaturated(asn){const n=asnNum(asn);return n&&SATURATED_ASN[n]?SATURATED_ASN[n]:null;}
+function asnCell(asn){
+  const num=asnNum(asn);if(!num)return '<span class="na">\u2014</span>';
+  const sat=asnSaturated(asn);
+  const tip=esc(asnName(asn))+(sat?" \u2014 SATURATED, hard to whitelist":" \u2014 not saturated, good for new nodes");
+  return '<span class="qm" data-tip="'+tip+'" style="border:none;width:auto;color:'+(sat?'var(--bad)':'var(--accent)')+'">'+num+'</span>';
+}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just now";if(d<3600)return Math.round(d/60)+" min ago";if(d<86400)return Math.round(d/3600)+" h ago";return Math.round(d/86400)+" d ago";}
 function fmtShort(ts){try{const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":00";}catch(e){return ts;}}
+// ===== ASN Intelligence view =====
+function renderAsnIntel(){
+  const box=document.getElementById("view-asnintel");
+  const act=NODES.filter(n=>n.status==="active"&&n.asn);
+  const agg={};
+  act.forEach(n=>{
+    const num=asnNum(n.asn);if(!num)return;
+    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{}};
+    agg[num].total++;
+    if(n.country&&n.country!=="\u2014")agg[num].countries[n.country]=1;
+  });
+  let rows=Object.values(agg).sort((a,b)=>b.total-a.total);
+  const totAsn=rows.length, totNodes=act.length;
+  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). '+
+    'Saturated ASNs are over the NORSE whitelist limit \u2014 new nodes there are unlikely to get leased. '+
+    'Pick a low-count ASN for a new node. Based on '+totNodes+' active nodes across '+totAsn+' ASNs.</div>';
+  html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
+    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    const sat=SATURATED_ASN[r.num];
+    const pct=Math.round(r.total/totNodes*100);
+    html+='<tr><td class="rank">'+(i+1)+'</td>'+
+      '<td class="mono '+(sat?'asn-sat':'asn-ok')+'">'+r.num+'</td>'+
+      '<td>'+esc(r.name||"\u2014")+'</td>'+
+      '<td class="mono">'+r.total+' <span style="color:var(--dim);font-size:10px">('+pct+'%)</span></td>'+
+      '<td class="mono">'+Object.keys(r.countries).length+'</td>'+
+      '<td>'+(sat?'<span class="asn-badge sat">SATURATED</span>':'<span class="asn-badge ok">OK</span>')+'</td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+  box.innerHTML=html;
+}
+function switchView(v){
+  document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
+  document.getElementById("view-explorer").style.display=(v==="explorer")?"block":"none";
+  document.getElementById("view-asnintel").style.display=(v==="asnintel")?"block":"none";
+  if(v==="asnintel")renderAsnIntel();
+}
+document.querySelectorAll("#maintabs .tab").forEach(t=>t.onclick=()=>switchView(t.dataset.view));
 setPanelDesc();load();
 </script>
 </body>
