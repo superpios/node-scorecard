@@ -362,7 +362,7 @@ function detectProblems(n){
     const mine=(MED.versionCounts[n.version]||0),top=(MED.versionCounts[MED.topVersion]||0);
     if(top>mine*3)P.push(["info","\u2139\ufe0f","Running v"+n.version+" while most active nodes run v"+MED.topVersion+" \u2014 consider updating."]);
   }
-  if(asnSaturated(n.asn))P.push(["warn","\ud83d\udfe0","On a saturated ASN ("+asnSaturated(n.asn)+") \u2014 over the NORSE whitelist limit, may not get leased/earn."]);
+  if(asnSaturated(n.asn))P.push(["warn","\ud83d\udfe0","On a saturated ASN ("+asnSaturated(n.asn)+") \u2014 over the Plan Wizard whitelist limit, may not get leased/earn."]);
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
@@ -646,7 +646,7 @@ function renderAsnIntel(){
   let rows=Object.values(agg).sort((a,b)=>b.total-a.total);
   const totAsn=rows.length, totNodes=act.length;
   let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). '+
-    'Saturated ASNs are over the NORSE whitelist limit \u2014 new nodes there are unlikely to get leased. '+
+    'Saturated ASNs are over the Plan Wizard whitelist limit \u2014 new nodes there are unlikely to get leased. '+
     'Pick a low-count ASN for a new node. Based on '+totNodes+' active nodes across '+totAsn+' ASNs.</div>';
   html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
     '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
