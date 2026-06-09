@@ -213,12 +213,12 @@ async function load(){
   // Filter out long-dead nodes (>30 days since last sample) from the whole view.
   // Active + recently-seen inactive nodes are kept; nodes unseen for 30+ days drop off.
   const NOW=Date.now(), MAXAGE=30*24*3600*1000;
-  latest=latest.filter(n=>{
+  const fresh=latest.filter(n=>{
     if(!n.ts)return true;
     const age=NOW-new Date(n.ts).getTime();
     return age<=MAXAGE;
   });
-  NODES=latest.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
+  NODES=fresh.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
   computeMedians();
   buildCountry();renderStats();render();
   const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
