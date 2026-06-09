@@ -137,6 +137,17 @@
   .asn-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
   .asn-badge.sat{background:rgba(239,75,87,.13);color:var(--bad)}
   .asn-badge.ok{background:rgba(45,212,167,.13);color:var(--accent)}
+  .asn-badge.host{background:rgba(75,139,244,.13);color:var(--accent-2)}
+  .asn-badge.resi{background:rgba(245,197,24,.13);color:var(--gold)}
+  .asn-search{margin:0 0 13px}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0 18px}
+  @media(max-width:560px){.cmp{grid-template-columns:1fr}}
+  .cmp-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden}
+  .cmp-card::after{content:"";position:absolute;inset:0 auto 0 0;width:3px}
+  .cmp-card.host::after{background:var(--accent-2)} .cmp-card.resi::after{background:var(--gold)}
+  .cmp-card h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;font-weight:600}
+  .cmp-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;font-family:'Space Mono',monospace}
+  .cmp-row .ck{color:var(--muted)} .cmp-row .cv{font-weight:700}
 </style>
 </head>
 <body>
@@ -660,6 +671,17 @@ document.getElementById("insp-go").onclick=()=>inspect(document.getElementById("
 document.getElementById("insp-input").addEventListener("keydown",e=>{if(e.key==="Enter")inspect(e.target.value.trim());});
 // ===== ASN helpers =====
 const SATURATED_ASN={"AS31898":"Oracle","AS8560":"IONOS","AS36352":"OVH"};
+// Known hosting/datacenter ASNs (by number or provider-name keyword). Everything else = residential ISP.
+const HOSTING_ASN_NUMS={"AS31898":1,"AS8560":1,"AS36352":1,"AS24940":1,"AS16276":1,"AS51167":1,"AS20473":1,"AS14061":1,"AS16509":1,"AS14618":1,"AS15169":1,"AS396982":1,"AS8075":1,"AS63949":1,"AS45102":1,"AS37963":1,"AS132203":1,"AS9009":1,"AS49981":1,"AS60781":1,"AS200490":1,"AS207990":1,"AS135377":1};
+const HOSTING_KEYWORDS=["hosting","datacenter","data center","cloud","server","ovh","hetzner","contabo","vultr","digitalocean","linode","amazon","aws","google","microsoft","azure","oracle","ionos","leaseweb","choopa","scaleway","alibaba","tencent","hostpapa","limestone","colocrossing","m247","datacamp","ggcore","ColoCrossing"];
+function isHosting(asn){
+  if(!asn)return null;
+  const num=asnNum(asn);
+  if(num&&HOSTING_ASN_NUMS[num])return true;
+  const name=String(asn).toLowerCase();
+  for(const k of HOSTING_KEYWORDS){if(name.includes(k))return true;}
+  return false; // default: treat as residential ISP
+}
 function asnNum(asn){if(!asn)return null;const m=String(asn).match(/AS\d+/);return m?m[0]:null;}
 function asnName(asn){if(!asn)return "";return String(asn).replace(/^AS\d+\s*/,"").trim();}
 function asnSaturated(asn){const n=asnNum(asn);return n&&SATURATED_ASN[n]?SATURATED_ASN[n]:null;}
@@ -673,35 +695,72 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","
 function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just now";if(d<3600)return Math.round(d/60)+" min ago";if(d<86400)return Math.round(d/3600)+" h ago";return Math.round(d/86400)+" d ago";}
 function fmtShort(ts){try{const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":00";}catch(e){return ts;}}
 // ===== ASN Intelligence view =====
+function asnIntelState(){ if(!window._asnSearch)window._asnSearch=""; return window._asnSearch; }
 function renderAsnIntel(){
   const box=document.getElementById("view-asnintel");
   const act=NODES.filter(n=>n.status==="active"&&n.asn);
+  // aggregate per ASN, tracking score/uptime for stats
   const agg={};
   act.forEach(n=>{
     const num=asnNum(n.asn);if(!num)return;
-    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{}};
+    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{},hosting:isHosting(n.asn),scores:[],uptimes:[]};
     agg[num].total++;
     if(n.country&&n.country!=="\u2014")agg[num].countries[n.country]=1;
+    if(typeof n.score==="number")agg[num].scores.push(n.score);
+    if(n.samples&&typeof n.uptime==="number")agg[num].uptimes.push(n.uptime);
   });
-  let rows=Object.values(agg).sort((a,b)=>b.total-a.total);
-  const totAsn=rows.length, totNodes=act.length;
+  let rows=Object.values(agg);
+  const totNodes=act.length, totAsn=rows.length;
+  // --- Residential vs Hosting comparison (historical stats) ---
+  function statBlock(filterHost){
+    const ns=act.filter(n=>isHosting(n.asn)===filterHost);
+    const sc=ns.map(n=>n.score).filter(v=>typeof v==="number");
+    const up=ns.filter(n=>n.samples).map(n=>n.uptime).filter(v=>typeof v==="number");
+    const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+    return {count:ns.length,avgScore:avg(sc),avgUptime:avg(up)};
+  }
+  const H=statBlock(true), R=statBlock(false);
+  let cmp='<div class="cmp">'+
+    '<div class="cmp-card host"><h4>\ud83c\udfe2 Hosting / Datacenter</h4>'+
+      '<div class="cmp-row"><span class="ck">Active nodes</span><span class="cv">'+H.count+'</span></div>'+
+      '<div class="cmp-row"><span class="ck">Avg score</span><span class="cv">'+H.avgScore+'</span></div>'+
+      '<div class="cmp-row"><span class="ck">Avg uptime</span><span class="cv">'+H.avgUptime+'%</span></div></div>'+
+    '<div class="cmp-card resi"><h4>\ud83c\udfe0 Residential</h4>'+
+      '<div class="cmp-row"><span class="ck">Active nodes</span><span class="cv">'+R.count+'</span></div>'+
+      '<div class="cmp-row"><span class="ck">Avg score</span><span class="cv">'+R.avgScore+'</span></div>'+
+      '<div class="cmp-row"><span class="ck">Avg uptime</span><span class="cv">'+R.avgUptime+'%</span></div></div>'+
+    '</div>';
+  // --- search filter ---
+  const q=asnIntelState().toLowerCase();
+  if(q)rows=rows.filter(r=>(r.num&&r.num.toLowerCase().includes(q))||(r.name&&r.name.toLowerCase().includes(q)));
+  rows.sort((a,b)=>b.total-a.total);
   let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). '+
     'Saturated ASNs are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased. '+
-    'Pick a low-count ASN for a new node. Based on '+totNodes+' active nodes across '+totAsn+' ASNs.</div>';
+    'Pick a low-count, non-saturated ASN for a new node. Based on '+totNodes+' active nodes across '+totAsn+' ASNs.</div>';
+  html+=cmp;
+  html+='<div class="asn-search"><input type="search" id="asn-q" placeholder="search ASN number or provider (e.g. AS8560 or IONOS)\u2026" value="'+esc(asnIntelState())+'"></div>';
   html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
-    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
+    '<th>#</th><th>ASN</th><th>Provider</th><th>Type</th><th>Nodes</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
   rows.forEach((r,i)=>{
     const sat=SATURATED_ASN[r.num];
     const pct=Math.round(r.total/totNodes*100);
     html+='<tr><td class="rank">'+(i+1)+'</td>'+
       '<td class="mono '+(sat?'asn-sat':'asn-ok')+'">'+r.num+'</td>'+
       '<td>'+esc(r.name||"\u2014")+'</td>'+
+      '<td>'+(r.hosting?'<span class="asn-badge host">Hosting</span>':'<span class="asn-badge resi">Residential</span>')+'</td>'+
       '<td class="mono">'+r.total+' <span style="color:var(--dim);font-size:10px">('+pct+'%)</span></td>'+
       '<td class="mono">'+Object.keys(r.countries).length+'</td>'+
       '<td>'+(sat?'<span class="asn-badge sat">SATURATED</span>':'<span class="asn-badge ok">OK</span>')+'</td></tr>';
   });
+  if(!rows.length)html+='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--dim)">no ASN matches "'+esc(asnIntelState())+'"</td></tr>';
   html+='</tbody></table></div></div>';
   box.innerHTML=html;
+  // wire search input (preserve focus/caret across re-render)
+  const inp=document.getElementById("asn-q");
+  if(inp){
+    inp.oninput=(e)=>{window._asnSearch=e.target.value;renderAsnIntel();};
+    if(q){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  }
 }
 function switchView(v){
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
