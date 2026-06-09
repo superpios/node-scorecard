@@ -171,7 +171,7 @@
         <input type="search" id="search" placeholder="search moniker, address, city&hellip;">
         <select id="country"><option value="">All countries</option></select>
         <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
-        <div class="chip-filters"><div class="cf" data-f="active">Active only</div><div class="cf" data-f="api">API reachable</div><div class="cf" id="cf-stale">Inactive only</div></div>
+        <div class="chip-filters"><div class="cf" id="cf-stale">Inactive only</div><div class="cf" data-f="api">API reachable</div></div>
       </div>
       <div class="showing" id="showing"></div>
       <div class="tablewrap">
@@ -309,7 +309,6 @@ function renderStats(){
 function filtered(){let r=NODES.slice();
   if(state.showInactive)r=r.filter(n=>n.status!=="active");
   else r=r.filter(n=>n.status==="active");
-  if(state.filters.active){r=r.filter(n=>n.status==="active");}
   if(state.filters.api)r=r.filter(n=>n.api_ok);
   if(state.country)r=r.filter(n=>n.country===state.country);
   if(state.protocol)r=r.filter(n=>n.protocol===state.protocol);
@@ -324,7 +323,6 @@ function updateShowing(total){
   const el=document.getElementById("showing");if(!el)return;
   let what="active nodes";
   if(state.showInactive)what="inactive nodes (inactive + stale)";
-  if(state.filters.active)what="active nodes";
   if(state.filters.api)what=what.replace("nodes","API-reachable nodes");
   const parts=[];
   if(state.country)parts.push("in "+state.country);
@@ -653,14 +651,8 @@ function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;s
 document.getElementById("search").oninput=e=>{state.search=e.target.value;state.page=0;render();};
 document.getElementById("country").onchange=e=>{state.country=e.target.value;state.page=0;render();};
 document.getElementById("protocol").onchange=e=>{state.protocol=e.target.value;state.page=0;render();};
-document.querySelectorAll(".cf[data-f]").forEach(c=>c.onclick=()=>{const f=c.dataset.f;state.filters[f]=!state.filters[f];c.classList.toggle("on",state.filters[f]);
-  // "Active only" e "Inactive only" sono mutuamente esclusivi
-  if(f==="active"&&state.filters.active&&state.showInactive){state.showInactive=false;document.getElementById("cf-stale").classList.remove("on");}
-  state.page=0;render();});
-document.getElementById("cf-stale").onclick=function(){state.showInactive=!state.showInactive;this.classList.toggle("on",state.showInactive);
-  // spegne "Active only" se acceso
-  if(state.showInactive&&state.filters.active){state.filters.active=false;document.querySelector('.cf[data-f="active"]').classList.remove("on");}
-  state.page=0;render();};
+document.querySelectorAll(".cf[data-f]").forEach(c=>c.onclick=()=>{const f=c.dataset.f;state.filters[f]=!state.filters[f];c.classList.toggle("on",state.filters[f]);state.page=0;render();});
+document.getElementById("cf-stale").onclick=function(){state.showInactive=!state.showInactive;this.classList.toggle("on",state.showInactive);state.page=0;render();};
 document.getElementById("prev").onclick=()=>{if(state.page>0){state.page--;render();}};
 document.getElementById("next").onclick=()=>{state.page++;render();};
 document.getElementById("perpage").onchange=e=>{state.perPage=+e.target.value;state.page=0;render();};
