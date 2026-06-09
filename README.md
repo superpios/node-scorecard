@@ -18,6 +18,7 @@ The whole network at a glance. Every node, sortable and filterable by:
 - **Protocol** (V2Ray / WireGuard / OpenVPN)
 - **Price** (P2P/hr and P2P/GB)
 - **Peers**, historical **uptime %**, **country / city**
+- **ASN / hosting provider** — which network each node runs on, with saturation flags
 
 Search by moniker, address or city. Click any node to open its full diagnostic inline.
 
@@ -40,6 +41,16 @@ The data tells you how a node *behaves*; NodeAdvisor tells you how it *feels to 
 - **Light anti-abuse** — one vote per node per browser, plus server-side de-duplication. Not bulletproof (nothing browser-side is), but it keeps casual self-voting down, and comments can be moderated.
 
 Feedback is stored in a free Supabase table read directly from the static page — still no server of your own to run.
+
+### 🌐 ASN Intelligence
+Every other explorer shows ASN saturation *right now*. The Scorecard adds the angle that matters when you're deciding **where to put a new node**: a dedicated view that groups active nodes by hosting provider (ASN), counts how many run on each, and flags the saturated ones.
+
+- **Per-ASN node counts** — see at a glance which providers are crowded
+- **Saturation flags** — ASNs over the PlanWizard whitelist limit are marked `SATURATED`; nodes there are unlikely to get leased and earn
+- **Hosting column + diagnostic** — every node shows its ASN in the table, and a node on a saturated ASN gets a clear warning in its diagnostic ("may not get leased/earn")
+- **Pick a clean ASN** — low-count, non-saturated providers are the smart choice for a new node
+
+This turns a painful, learned-the-hard-way lesson (datacenter ASNs like IONOS, Oracle and OVH are saturated; residential ASNs are not) into something you can *see* before spending a cent.
 
 ---
 
@@ -68,6 +79,8 @@ Everything runs on a single always-on device (e.g. a Raspberry Pi). No server, n
 collector.py     -> samples every node from the Sentinel LCD (status, price, protocol,
                     peers, bandwidth), appends to history.jsonl. Retries each node's
                     API twice to minimise blank fields from transient timeouts.
+                    Enriches active nodes with their ASN (IP->ASN lookup, cached on
+                    disk so each IP is resolved only once).
 make-summary.py  -> aggregates history.jsonl into history-summary.json (uptime %,
                     stability, longevity + a compact per-node timeline). Soft-purges
                     nodes not seen for 30+ days to keep the files lean.
@@ -108,6 +121,7 @@ Returns an array of node objects:
 | `dl_mbps` / `ul_mbps` | number\|null | Measured bandwidth |
 | `version` | string\|null | Node software version |
 | `country` / `city` | string\|null | Geolocation |
+| `asn` | string\|null | Hosting ASN + provider (e.g. `AS8560 IONOS SE`); active nodes only |
 | `gb_tokens` | int | Number of accepted payment denoms |
 | `api_ok` | bool | Whether the node's API answered the collector |
 
@@ -186,6 +200,7 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 ## Roadmap
 
 - ✅ Public read-only JSON API (done — see API section)
+- ✅ ASN intelligence — per-provider saturation, hosting column, "where to host" view (done)
 - On-chain earnings trend per node (opt-in, by wallet)
 - Clean versioned API endpoint with developer-friendly field names
 - Multi-network support (agnostic core - Sentinel first, others later)
