@@ -261,7 +261,7 @@ function enrich(n){
     stale:stale,age_h:h.age_h||null,
     price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
     protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
-    dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",asn:n.asn||null,
+    dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",asn:n.asn||null,hosting:(typeof n.hosting==="boolean"?n.hosting:null),
     tl:h.tl||"",tl_from:h.tl_from,tl_to:h.tl_to,
     score:Math.max(0,Math.min(100,score)),comps:comps};
 }
@@ -680,7 +680,12 @@ function isHosting(asn){
   if(num&&HOSTING_ASN_NUMS[num])return true;
   const name=String(asn).toLowerCase();
   for(const k of HOSTING_KEYWORDS){if(name.includes(k))return true;}
-  return false; // default: treat as residential ISP
+  return false; // fallback heuristic when no real data
+}
+// Prefer the real ip-api hosting flag stored on the node; fall back to the ASN-name heuristic.
+function nodeIsHosting(n){
+  if(n&&typeof n.hosting==="boolean")return n.hosting;
+  return isHosting(n&&n.asn);
 }
 function asnNum(asn){if(!asn)return null;const m=String(asn).match(/AS\d+/);return m?m[0]:null;}
 function asnName(asn){if(!asn)return "";return String(asn).replace(/^AS\d+\s*/,"").trim();}
@@ -703,7 +708,7 @@ function renderAsnIntel(){
   const agg={};
   act.forEach(n=>{
     const num=asnNum(n.asn);if(!num)return;
-    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{},hosting:isHosting(n.asn),scores:[],uptimes:[]};
+    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{},hosting:nodeIsHosting(n),scores:[],uptimes:[]};
     agg[num].total++;
     if(n.country&&n.country!=="\u2014")agg[num].countries[n.country]=1;
     if(typeof n.score==="number")agg[num].scores.push(n.score);
@@ -713,7 +718,7 @@ function renderAsnIntel(){
   const totNodes=act.length, totAsn=rows.length;
   // --- Residential vs Hosting comparison (historical stats) ---
   function statBlock(filterHost){
-    const ns=act.filter(n=>isHosting(n.asn)===filterHost);
+    const ns=act.filter(n=>nodeIsHosting(n)===filterHost);
     const sc=ns.map(n=>n.score).filter(v=>typeof v==="number");
     const up=ns.filter(n=>n.samples).map(n=>n.uptime).filter(v=>typeof v==="number");
     const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
