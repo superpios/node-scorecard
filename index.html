@@ -672,20 +672,25 @@ document.getElementById("insp-input").addEventListener("keydown",e=>{if(e.key===
 // ===== ASN helpers =====
 const SATURATED_ASN={"AS31898":"Oracle","AS8560":"IONOS","AS36352":"OVH"};
 // Known hosting/datacenter ASNs (by number or provider-name keyword). Everything else = residential ISP.
-const HOSTING_ASN_NUMS={"AS31898":1,"AS8560":1,"AS36352":1,"AS24940":1,"AS16276":1,"AS51167":1,"AS20473":1,"AS14061":1,"AS16509":1,"AS14618":1,"AS15169":1,"AS396982":1,"AS8075":1,"AS63949":1,"AS45102":1,"AS37963":1,"AS132203":1,"AS9009":1,"AS49981":1,"AS60781":1,"AS200490":1,"AS207990":1,"AS135377":1};
-const HOSTING_KEYWORDS=["hosting","datacenter","data center","cloud","server","ovh","hetzner","contabo","vultr","digitalocean","linode","amazon","aws","google","microsoft","azure","oracle","ionos","leaseweb","choopa","scaleway","alibaba","tencent","hostpapa","limestone","colocrossing","m247","datacamp","ggcore","ColoCrossing"];
+// Known large RESIDENTIAL ISPs (telecom). Always residential regardless of other signals.
+const RESI_ISP=["comcast","fastweb","vodafone","telecom italia","tim ","deutsche telekom","orange","telefonica","at&t","verizon","jio","airtel","china telecom","china unicom","china mobile","ntt","kddi"," bt ","sky ","virgin media","charter","cox ","centurylink","telstra","rogers","bell canada","swisscom","telenor","telia","kpn","proximus","wind tre","iliad","free sas","movistar","claro","vivo","spectrum","frontier","optimum","libertel","turk telekom","telkom","mtn","etisalat"];
+// Strong HOSTING keywords (datacenter/cloud providers).
+const HOST_KW=["cloud","host","datacenter","data center","vps","colocation","colo ","dedicated","dedi","server","virtual","m247","leaseweb","ovh","hetzner","contabo","vultr","digitalocean","linode","akile","massivegrid","grid","byte","data","infra"];
+function asnName2(asn){ return String(asn||"").replace(/^AS\d+\s*/i,"").toLowerCase(); }
 function isHosting(asn){
-  if(!asn)return null;
-  const num=asnNum(asn);
-  if(num&&HOSTING_ASN_NUMS[num])return true;
-  const name=String(asn).toLowerCase();
-  for(const k of HOSTING_KEYWORDS){if(name.includes(k))return true;}
-  return false; // fallback heuristic when no real data
+  // heuristic used as one signal / fallback
+  const name=asnName2(asn);
+  for(const r of RESI_ISP){if(name.includes(r))return false;}
+  for(const k of HOST_KW){if(name.includes(k))return true;}
+  return null; // unknown from name alone
 }
-// Prefer the real ip-api hosting flag stored on the node; fall back to the ASN-name heuristic.
+// Decide hosting vs residential combining: known residential ISP > hosting keyword > ip-api flag.
 function nodeIsHosting(n){
-  if(n&&typeof n.hosting==="boolean")return n.hosting;
-  return isHosting(n&&n.asn);
+  const name=asnName2(n&&n.asn);
+  for(const r of RESI_ISP){if(name.includes(r))return false;}   // known residential ISP
+  for(const k of HOST_KW){if(name.includes(k))return true;}     // strong hosting keyword
+  if(n&&typeof n.hosting==="boolean")return n.hosting;          // ip-api objective flag
+  return false;                                                  // default residential
 }
 function asnNum(asn){if(!asn)return null;const m=String(asn).match(/AS\d+/);return m?m[0]:null;}
 function asnName(asn){if(!asn)return "";return String(asn).replace(/^AS\d+\s*/,"").trim();}
