@@ -137,17 +137,7 @@
   .asn-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
   .asn-badge.sat{background:rgba(239,75,87,.13);color:var(--bad)}
   .asn-badge.ok{background:rgba(45,212,167,.13);color:var(--accent)}
-  .asn-badge.host{background:rgba(75,139,244,.13);color:var(--accent-2)}
-  .asn-badge.resi{background:rgba(245,197,24,.13);color:var(--gold)}
   .asn-search{margin:0 0 13px}
-  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0 18px}
-  @media(max-width:560px){.cmp{grid-template-columns:1fr}}
-  .cmp-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden}
-  .cmp-card::after{content:"";position:absolute;inset:0 auto 0 0;width:3px}
-  .cmp-card.host::after{background:var(--accent-2)} .cmp-card.resi::after{background:var(--gold)}
-  .cmp-card h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;font-weight:600}
-  .cmp-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;font-family:'Space Mono',monospace}
-  .cmp-row .ck{color:var(--muted)} .cmp-row .cv{font-weight:700}
 </style>
 </head>
 <body>
@@ -261,7 +251,7 @@ function enrich(n){
     stale:stale,age_h:h.age_h||null,
     price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
     protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
-    dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",asn:n.asn||null,hosting:(typeof n.hosting==="boolean"?n.hosting:null),
+    dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",asn:n.asn||null,
     tl:h.tl||"",tl_from:h.tl_from,tl_to:h.tl_to,
     score:Math.max(0,Math.min(100,score)),comps:comps};
 }
@@ -672,26 +662,6 @@ document.getElementById("insp-input").addEventListener("keydown",e=>{if(e.key===
 // ===== ASN helpers =====
 const SATURATED_ASN={"AS31898":"Oracle","AS8560":"IONOS","AS36352":"OVH"};
 // Known hosting/datacenter ASNs (by number or provider-name keyword). Everything else = residential ISP.
-// Known large RESIDENTIAL ISPs (telecom). Always residential regardless of other signals.
-const RESI_ISP=["comcast","fastweb","vodafone","telecom italia","tim ","deutsche telekom","orange","telefonica","at&t","verizon","jio","airtel","china telecom","china unicom","china mobile","ntt","kddi"," bt ","sky ","virgin media","charter","cox ","centurylink","telstra","rogers","bell canada","swisscom","telenor","telia","kpn","proximus","wind tre","iliad","free sas","movistar","claro","vivo","spectrum","frontier","optimum","libertel","turk telekom","telkom","mtn","etisalat"];
-// Strong HOSTING keywords (datacenter/cloud providers).
-const HOST_KW=["cloud","host","datacenter","data center","vps","colocation","colo ","dedicated","dedi","server","virtual","m247","leaseweb","ovh","hetzner","contabo","vultr","digitalocean","linode","akile","massivegrid","grid","byte","data","infra"];
-function asnName2(asn){ return String(asn||"").replace(/^AS\d+\s*/i,"").toLowerCase(); }
-function isHosting(asn){
-  // heuristic used as one signal / fallback
-  const name=asnName2(asn);
-  for(const r of RESI_ISP){if(name.includes(r))return false;}
-  for(const k of HOST_KW){if(name.includes(k))return true;}
-  return null; // unknown from name alone
-}
-// Decide hosting vs residential combining: known residential ISP > hosting keyword > ip-api flag.
-function nodeIsHosting(n){
-  const name=asnName2(n&&n.asn);
-  for(const r of RESI_ISP){if(name.includes(r))return false;}   // known residential ISP
-  for(const k of HOST_KW){if(name.includes(k))return true;}     // strong hosting keyword
-  if(n&&typeof n.hosting==="boolean")return n.hosting;          // ip-api objective flag
-  return false;                                                  // default residential
-}
 function asnNum(asn){if(!asn)return null;const m=String(asn).match(/AS\d+/);return m?m[0]:null;}
 function asnName(asn){if(!asn)return "";return String(asn).replace(/^AS\d+\s*/,"").trim();}
 function asnSaturated(asn){const n=asnNum(asn);return n&&SATURATED_ASN[n]?SATURATED_ASN[n]:null;}
@@ -713,7 +683,7 @@ function renderAsnIntel(){
   const agg={};
   act.forEach(n=>{
     const num=asnNum(n.asn);if(!num)return;
-    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{},hosting:nodeIsHosting(n),scores:[],uptimes:[]};
+    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{},scores:[],uptimes:[]};
     agg[num].total++;
     if(n.country&&n.country!=="\u2014")agg[num].countries[n.country]=1;
     if(typeof n.score==="number")agg[num].scores.push(n.score);
@@ -721,25 +691,6 @@ function renderAsnIntel(){
   });
   let rows=Object.values(agg);
   const totNodes=act.length, totAsn=rows.length;
-  // --- Residential vs Hosting comparison (historical stats) ---
-  function statBlock(filterHost){
-    const ns=act.filter(n=>nodeIsHosting(n)===filterHost);
-    const sc=ns.map(n=>n.score).filter(v=>typeof v==="number");
-    const up=ns.filter(n=>n.samples).map(n=>n.uptime).filter(v=>typeof v==="number");
-    const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
-    return {count:ns.length,avgScore:avg(sc),avgUptime:avg(up)};
-  }
-  const H=statBlock(true), R=statBlock(false);
-  let cmp='<div class="cmp">'+
-    '<div class="cmp-card host"><h4>\ud83c\udfe2 Hosting / Datacenter</h4>'+
-      '<div class="cmp-row"><span class="ck">Active nodes</span><span class="cv">'+H.count+'</span></div>'+
-      '<div class="cmp-row"><span class="ck">Avg score</span><span class="cv">'+H.avgScore+'</span></div>'+
-      '<div class="cmp-row"><span class="ck">Avg uptime</span><span class="cv">'+H.avgUptime+'%</span></div></div>'+
-    '<div class="cmp-card resi"><h4>\ud83c\udfe0 Residential</h4>'+
-      '<div class="cmp-row"><span class="ck">Active nodes</span><span class="cv">'+R.count+'</span></div>'+
-      '<div class="cmp-row"><span class="ck">Avg score</span><span class="cv">'+R.avgScore+'</span></div>'+
-      '<div class="cmp-row"><span class="ck">Avg uptime</span><span class="cv">'+R.avgUptime+'%</span></div></div>'+
-    '</div>';
   // --- search filter ---
   const q=asnIntelState().toLowerCase();
   if(q)rows=rows.filter(r=>(r.num&&r.num.toLowerCase().includes(q))||(r.name&&r.name.toLowerCase().includes(q)));
@@ -747,22 +698,20 @@ function renderAsnIntel(){
   let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). '+
     'Saturated ASNs are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased. '+
     'Pick a low-count, non-saturated ASN for a new node. Based on '+totNodes+' active nodes across '+totAsn+' ASNs.</div>';
-  html+=cmp;
   html+='<div class="asn-search"><input type="search" id="asn-q" placeholder="search ASN number or provider (e.g. AS8560 or IONOS)\u2026" value="'+esc(asnIntelState())+'"></div>';
   html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
-    '<th>#</th><th>ASN</th><th>Provider</th><th>Type</th><th>Nodes</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
+    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
   rows.forEach((r,i)=>{
     const sat=SATURATED_ASN[r.num];
     const pct=Math.round(r.total/totNodes*100);
     html+='<tr><td class="rank">'+(i+1)+'</td>'+
       '<td class="mono '+(sat?'asn-sat':'asn-ok')+'">'+r.num+'</td>'+
       '<td>'+esc(r.name||"\u2014")+'</td>'+
-      '<td>'+(r.hosting?'<span class="asn-badge host">Hosting</span>':'<span class="asn-badge resi">Residential</span>')+'</td>'+
       '<td class="mono">'+r.total+' <span style="color:var(--dim);font-size:10px">('+pct+'%)</span></td>'+
       '<td class="mono">'+Object.keys(r.countries).length+'</td>'+
       '<td>'+(sat?'<span class="asn-badge sat">SATURATED</span>':'<span class="asn-badge ok">OK</span>')+'</td></tr>';
   });
-  if(!rows.length)html+='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--dim)">no ASN matches "'+esc(asnIntelState())+'"</td></tr>';
+  if(!rows.length)html+='<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--dim)">no ASN matches "'+esc(asnIntelState())+'"</td></tr>';
   html+='</tbody></table></div></div>';
   box.innerHTML=html;
   // wire search input (preserve focus/caret across re-render)
