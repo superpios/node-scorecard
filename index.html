@@ -25,12 +25,20 @@
   .panel-desc{color:var(--dim);font-size:12px;font-family:'Space Mono',monospace;margin:13px 0}
   .controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
   input[type=text],select{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
-  input[type=text]{flex:1;min-width:200px} input[type=text]:focus,select:focus{border-color:var(--accent)}
+  input[type=text]{flex:1;min-width:200px}
+  input[type=search]{flex:1;min-width:200px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
+  input[type=search]:focus{border-color:var(--accent)}
+  input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;height:14px;width:14px;background:var(--muted);cursor:pointer;border-radius:50%;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6L6 18M6 6l12 12' stroke='black' stroke-width='3'/%3E%3C/svg%3E") center/contain no-repeat}
+  input[type=search]::-webkit-search-cancel-button:hover{background:var(--txt)} input[type=text]:focus,select:focus{border-color:var(--accent)}
   .chip-filters{display:flex;gap:6px;flex-wrap:wrap}
   .cf{padding:9px 14px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
   .cf:hover{color:var(--txt)} .cf.on{background:rgba(45,212,167,.13);border-color:var(--accent);color:var(--accent)}
   .tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:15px;overflow:hidden}
-  .tscroll{overflow-x:auto}
+  .tscroll{overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .tscroll::-webkit-scrollbar{height:8px}
+  .tscroll::-webkit-scrollbar-track{background:var(--panel-2);border-radius:4px}
+  .tscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .tscroll::-webkit-scrollbar-thumb:hover{background:var(--dim)}
   table{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
   thead th{text-align:left;padding:12px 13px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:var(--panel-2);border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
   thead th:hover{color:var(--txt)} thead th .ar{opacity:.5;font-size:9px}
@@ -110,12 +118,12 @@
   .na-note{font-size:10.5px;color:var(--dim);margin-top:8px}
   .na-privacy{font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5;opacity:.85;border-top:1px solid var(--line);padding-top:7px}
   .na-voted{font-size:12.5px;color:var(--accent);padding:8px 0}
-  /* medref: contesto mediana accanto ai valori */
+  /* medref: median context next to values */
   .medref{font-size:9.5px;color:var(--dim);font-family:'Space Mono',monospace;margin-left:6px;opacity:.8}
   /* tooltip score breakdown */
   .qm{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:9px;margin-left:5px;cursor:help;position:relative;font-family:'Space Mono',monospace;vertical-align:middle}
   .qm:hover{border-color:var(--accent);color:var(--accent)}
-  .qm::after{content:attr(data-tip);position:absolute;left:50%;bottom:140%;transform:translateX(-50%);width:210px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;line-height:1.5;color:var(--txt);font-family:inherit;text-align:left;opacity:0;pointer-events:none;transition:opacity .15s;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .qm::after{content:attr(data-tip);position:absolute;left:50%;bottom:140%;transform:translateX(-50%);width:240px;white-space:normal;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;line-height:1.5;color:var(--txt);font-family:inherit;text-align:left;opacity:0;pointer-events:none;transition:opacity .15s;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.5)}
   .qm:hover::after{opacity:1}
   @media(max-width:600px){.qm::after{width:160px}}
   .asn-intro{color:var(--dim);font-size:12px;font-family:'Space Mono',monospace;margin:13px 0}
@@ -143,10 +151,10 @@
   </div>
   <div id="view-asnintel" style="display:none"></div>
   <div id="view-explorer">
-    <!-- INSPECTOR PANEL: nascosto finché non si clicca un nodo -->
+    <!-- INSPECTOR PANEL: hidden until a node is clicked -->
     <div id="view-inspector" style="display:none">
       <div class="insp-search">
-        <input type="text" id="insp-input" placeholder="paste a node address (sentnode1&hellip;) or moniker">
+        <input type="search" id="insp-input" placeholder="paste a node address (sentnode1&hellip;) or moniker">
         <button class="pg" id="insp-go">Inspect</button>
       </div>
       <div id="insp-body"></div>
@@ -155,7 +163,7 @@
     <!-- LISTA: controlli + tabella -->
     <div id="explorer-list">
       <div class="controls">
-        <input type="text" id="search" placeholder="search moniker, address, city&hellip;">
+        <input type="search" id="search" placeholder="search moniker, address, city&hellip;">
         <select id="country"><option value="">All countries</option></select>
         <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
         <div class="chip-filters"><div class="cf" data-f="active">Active only</div><div class="cf" data-f="api">API reachable</div><div class="cf" id="cf-stale">Show inactive</div></div>
@@ -199,6 +207,14 @@ async function load(){
   const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
   if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
   if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
+  // Filter out long-dead nodes (>30 days since last sample) from the whole view.
+  // Active + recently-seen inactive nodes are kept; nodes unseen for 30+ days drop off.
+  const NOW=Date.now(), MAXAGE=30*24*3600*1000;
+  latest=latest.filter(n=>{
+    if(!n.ts)return true;
+    const age=NOW-new Date(n.ts).getTime();
+    return age<=MAXAGE;
+  });
   NODES=latest.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
   computeMedians();
   buildCountry();renderStats();render();
@@ -211,23 +227,23 @@ function enrich(n){
   const uptime=(typeof h.uptime==="number")?h.uptime:(active?100:0);
   const stab=(typeof h.stab==="number")?h.stab:(active?100:0);
   const longevity=h.n?Math.min(100,(h.n/MAXN)*100):0;
-  // stale: il summary marca stale=true se ultimo campione > 24h vecchio
+  // stale: summary marks stale=true if last sample > 24h old
   const stale=h.stale===true;
-  // freshness: confronto inactive_at col MOMENTO DEL CAMPIONE (n.ts), non con adesso.
-  // Il collector gira ogni ~3h, quindi confrontare con Date.now() darebbe sempre "scaduto".
-  // Quello che conta: al momento in cui il collector ha visto il nodo, l'heartbeat era valido?
+  // freshness: compare inactive_at with SAMPLE TIME (n.ts), not with now.
+  // The collector runs every ~3h, so comparing with Date.now() would always read "expired".
+  // What matters: at the moment the collector saw the node, was the heartbeat valid?
   let fresh=0;
   if(n.inactive_at && n.ts){
     const sampleTime=new Date(n.ts).getTime();
-    const m=(new Date(n.inactive_at)-sampleTime)/60000; // min di margine AL CAMPIONAMENTO
+    const m=(new Date(n.inactive_at)-sampleTime)/60000; // margin in minutes AT SAMPLE TIME
     if(m>=15)fresh=100;else if(m>=0)fresh=70+(m/15)*30;else if(m>=-60)fresh=Math.max(0,70+(m/60)*70);else fresh=0;
   }else fresh=active?70:0;
-  if(stale) fresh=0;  // un nodo davvero stale (>24h) non può essere fresh
+  if(stale) fresh=0;  // a truly stale node (>24h) cannot be fresh
   let health=(active && !stale)?60:0;if(n.api_ok===true && !stale)health+=40;
   const tok=Math.min(100,((n.gb_tokens||0)/3)*100);
   const comps={uptime:uptime*0.32,stability:stab*0.15,longevity:longevity*0.25,freshness:fresh*0.13,health:health*0.10,tokens:tok*0.05};
   const score=Math.round(Object.values(comps).reduce((a,b)=>a+b,0));
-  // displayStatus: se il summary dice stale -> "stale" (override del status del latest che può essere obsoleto)
+  // displayStatus: if summary says stale -> "stale" (overrides latest status which may be outdated)
   const displayStatus = stale ? "stale" : n.status;
   const dispMoniker = n.moniker || (n.addr ? "("+n.addr.slice(0,11)+"\u2026"+n.addr.slice(-4)+")" : "(unnamed)");
   return {addr:n.addr,moniker:dispMoniker,hasName:!!n.moniker,status:displayStatus,country:n.country||"\u2014",city:n.city||"\u2014",
@@ -347,15 +363,15 @@ function detectProblems(n){
   if(!n.api_ok&&n.status!=="stale")P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
   if(n.freshness<40&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
   if(n.peers===0&&n.status==="active")P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
-  // --- regole basate sul confronto con la rete (mediane) ---
+  // --- rules based on network comparison (medians) ---
   if(n.status==="active"&&n.price_hr!=null&&MED.price_hr){
     if(n.price_hr>MED.price_hr*2.5)P.push(["warn","\ud83d\udfe0","Price/hr ("+n.price_hr+") is far above the network median ("+MED.price_hr+") \u2014 fewer clients will pick this node."]);
     else if(n.price_hr>0&&n.price_hr<MED.price_hr*0.4)P.push(["info","\u2139\ufe0f","Price/hr ("+n.price_hr+") well below median ("+MED.price_hr+") \u2014 you may be leaving rewards on the table."]);
   }
   if(n.status==="active"&&n.ul_mbps!=null){
-    // Soglia ASSOLUTA, non relativa alla mediana: la mediana di rete è gonfiata dai datacenter
-    // (fibra simmetrica). Un nodo residenziale serve clienti benissimo con pochi Mbps.
-    // Segnaliamo solo banda così bassa da compromettere davvero il servizio.
+    // ABSOLUTE threshold, not relative to median: network median is inflated by datacenters
+    // (symmetric fiber). A residential node serves clients fine with few Mbps.
+    // Flag only bandwidth so low it actually harms service.
     if(n.ul_mbps>0&&n.ul_mbps<5)P.push(["warn","\ud83d\udfe0","Upload "+n.ul_mbps+" Mbps is very low \u2014 may struggle to serve client sessions."]);
   }
   if(n.status==="active"&&n.version&&MED.topVersion&&n.version!==MED.topVersion){
@@ -424,13 +440,13 @@ function renderInspector(n){
       '<div class="report" id="report"></div>'+
       '<div id="nodeadvisor" style="margin-top:22px"><h3>NodeAdvisor \u2014 community feedback</h3><div id="na-body" class="na-loading">loading feedback\u2026</div></div>'+
     '</div></div>';
-  // fetch LIVE diretto all'API del nodo: aggiorna "Peers (now)" col valore reale di adesso
+  // direct LIVE fetch to node API: updates "Peers (now)" with the real current value
   livePeers(n.remote);
   loadFeedback(n.addr);
 }
 function livePeers(remote){
   if(!remote){return;}
-  // remote è tipo "host:porta" — costruisco l'url https
+  // remote is like "host:port" - build the https url
   const url="https://"+remote.replace(/^https?:\/\//,"")+"/";
   const badge=document.getElementById("peers-badge");
   const cell=document.getElementById("peers-live");
@@ -451,17 +467,17 @@ function livePeers(remote){
     })
     .catch(()=>{
       clearTimeout(to);
-      // cert self-signed o CORS o nodo non raggiungibile dal browser -> resta il dato collector
+      // self-signed cert or CORS or node unreachable from browser -> keep collector value
       if(badge)badge.textContent="\u00b7 collector (live blocked)";
     });
 }
 
 // ===== NodeAdvisor =====
-// voter hash: fingerprint STABILE del browser (sopravvive alla cancellazione cache).
-// Calcolato da segnali che non cambiano: user-agent, lingua, timezone, schermo, piattaforma,
-// core CPU, memoria. NON usa l'IP (privacy) e NON dipende da localStorage.
-// Ferma il refresh+cancella-cache (genera lo stesso hash); non ferma browser diversi o incognito
-// con impostazioni alterate — limite dichiarato di qualsiasi anti-spam senza login.
+// voter hash: STABLE browser fingerprint (survives cache clearing).
+// Computed from signals that do not change: user-agent, language, timezone, screen, platform,
+// CPU cores, memory. Does NOT use IP (privacy) and does NOT depend on localStorage.
+// Stops refresh+clear-cache (same hash); does not stop different browsers or incognito
+// with altered settings - a stated limit of any anti-spam without login.
 function fnv1a(str){
   let h=0x811c9dc5;
   for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193); }
@@ -483,10 +499,10 @@ function voterHash(){
       (navigator.deviceMemory||""),
       (navigator.maxTouchPoints||0)
     ].join("|");
-    // doppio hash su due slice per ridurre collisioni
+    // double hash on two slices to reduce collisions
     return "fp"+fnv1a(parts)+fnv1a(parts.split("").reverse().join(""));
   }catch(e){
-    // fallback: vecchio metodo localStorage se il fingerprint non è calcolabile
+    // fallback: old localStorage method if fingerprint cannot be computed
     let v=null;
     try{ v=localStorage.getItem("na_voter"); }catch(_){}
     if(!v){ v="v"+Math.random().toString(36).slice(2)+Date.now().toString(36); try{ localStorage.setItem("na_voter",v); }catch(_){} }
@@ -517,7 +533,7 @@ function renderFeedback(addr,rows){
   const body=document.getElementById("na-body");
   if(!body)return;
   rows=Array.isArray(rows)?rows:[];
-  // conteggio aggregato dei tag
+  // aggregated tag count
   const counts={};
   rows.forEach(r=>(r.tags||[]).forEach(t=>{counts[t]=(counts[t]||0)+1;}));
   const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
@@ -529,14 +545,14 @@ function renderFeedback(addr,rows){
       sorted.map(([id,c])=>{const t=NA_TAGMAP[id];const lbl=t?t.label:id;const cls=t?(t.pos?"pos":"neg"):"";
         return '<span class="na-tagchip '+cls+'">'+esc(lbl)+' <b>'+c+'</b></span>';}).join("")+'</div>';
   }
-  // commenti recenti (solo quelli con testo)
+  // recent comments (only those with text)
   const comments=rows.filter(r=>r.comment&&r.comment.trim()).slice(0,8);
   let clist="";
   if(comments.length){
     clist='<div class="na-comments"><div class="na-sub">Recent comments</div>'+
       comments.map(r=>'<div class="na-comment"><span class="na-ctext">'+esc(r.comment)+'</span><span class="na-cdate">'+fmtShort(r.created_at)+'</span></div>').join("")+'</div>';
   }
-  // form o "gia votato"
+  // form or "already voted"
   let form="";
   if(votedNodes().includes(addr)){
     form='<div class="na-voted">\u2713 You\u2019ve already given feedback on this node.</div>';
@@ -573,7 +589,7 @@ function submitFeedback(addr){
   })
   .then(r=>{
     if(r.ok){ markVoted(addr); loadFeedback(addr); }
-    else if(r.status===409){ // vincolo unique: questo fingerprint ha già votato questo nodo
+    else if(r.status===409){ // unique constraint: this fingerprint already voted this node
       markVoted(addr);
       alert("You\u2019ve already voted on this node from this device.");
       loadFeedback(addr);
