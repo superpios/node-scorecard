@@ -14,8 +14,11 @@
   h1{font-size:29px;font-weight:800;letter-spacing:-.6px;line-height:1} h1 .dot{color:var(--accent)}
   .tagline{color:var(--muted);font-size:12.5px;margin-top:6px;font-family:'Space Mono',monospace}
   .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6} .updated b{color:var(--accent)}
+  .livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:5px;box-shadow:0 0 0 0 rgba(45,212,167,.6);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,167,.5)}70%{box-shadow:0 0 0 7px rgba(45,212,167,0)}100%{box-shadow:0 0 0 0 rgba(45,212,167,0)}}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin:18px 0}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
+  .stat:hover{transform:translateY(-2px);border-color:var(--dim)}
   .stat::after{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);opacity:.75}
   .stat .v{font-size:25px;font-weight:800;font-family:'Space Mono',monospace} .stat .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
   .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)} .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--bad)}
@@ -220,7 +223,7 @@ async function load(){
   buildCountry();renderStats();render();
   const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
   const ts=allTs.length?allTs[allTs.length-1]:new Date().toISOString();
-  document.getElementById("updated").innerHTML="updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.length+" nodes &middot; "+Object.keys(HIST).length+" with history";
+  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.length+" nodes &middot; "+Object.keys(HIST).length+" with history";
 }
 function enrich(n){
   const h=HIST[n.addr]||{};const active=n.status==="active";
@@ -284,16 +287,26 @@ function computeMedians(){
 function buildCountry(){const sel=document.getElementById("country");const c={};
   NODES.forEach(n=>{if(n.country&&n.country!=="\u2014")c[n.country]=(c[n.country]||0)+1;});
   Object.entries(c).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=k+" ("+v+")";sel.appendChild(o);});}
+function animateCount(el,target){
+  const dur=900,t0=performance.now();
+  function step(now){
+    const p=Math.min(1,(now-t0)/dur);
+    const eased=1-Math.pow(1-p,3);
+    el.textContent=Math.round(target*eased);
+    if(p<1)requestAnimationFrame(step);else el.textContent=target;
+  }
+  requestAnimationFrame(step);
+}
 function renderStats(){
   const active=NODES.filter(n=>n.status==="active").length,avg=Math.round(NODES.reduce((s,n)=>s+n.score,0)/NODES.length);
   const top=NODES.filter(n=>n.score>=85).length,reach=NODES.filter(n=>n.api_ok).length;
-  const stale=NODES.filter(n=>n.status==="stale").length;
   document.getElementById("stats").innerHTML=
-    '<div class="stat"><div class="v">'+NODES.length+'</div><div class="l">Total nodes</div></div>'+
-    '<div class="stat b2"><div class="v">'+active+'</div><div class="l">Active</div></div>'+
-    '<div class="stat b3"><div class="v">'+avg+'</div><div class="l">Avg score</div></div>'+
-    '<div class="stat b4"><div class="v">'+top+'</div><div class="l">Score &ge; 85</div></div>'+
-    '<div class="stat b5"><div class="v">'+reach+'</div><div class="l">API reachable</div></div>';
+    '<div class="stat"><div class="v" data-c="'+NODES.length+'">0</div><div class="l">Total nodes</div></div>'+
+    '<div class="stat b2"><div class="v" data-c="'+active+'">0</div><div class="l">Active</div></div>'+
+    '<div class="stat b3"><div class="v" data-c="'+avg+'">0</div><div class="l">Avg score</div></div>'+
+    '<div class="stat b4"><div class="v" data-c="'+top+'">0</div><div class="l">Score &ge; 85</div></div>'+
+    '<div class="stat b5"><div class="v" data-c="'+reach+'">0</div><div class="l">API reachable</div></div>';
+  document.querySelectorAll("#stats .v[data-c]").forEach(el=>animateCount(el,+el.dataset.c));
 }
 function filtered(){let r=NODES.slice();
   if(state.filters.active)r=r.filter(n=>n.status==="active");
