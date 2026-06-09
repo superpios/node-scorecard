@@ -210,20 +210,12 @@ async function load(){
   const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
   if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
   if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
-  // Filter out long-dead nodes (>30 days since last sample) from the whole view.
-  // Active + recently-seen inactive nodes are kept; nodes unseen for 30+ days drop off.
-  const NOW=Date.now(), MAXAGE=30*24*3600*1000;
-  const fresh=latest.filter(n=>{
-    if(!n.ts)return true;
-    const age=NOW-new Date(n.ts).getTime();
-    return age<=MAXAGE;
-  });
-  NODES=fresh.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
+  NODES=latest.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
   computeMedians();
   buildCountry();renderStats();render();
   const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
   const ts=allTs.length?allTs[allTs.length-1]:new Date().toISOString();
-  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.length+" nodes &middot; "+Object.keys(HIST).length+" with history";
+  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.filter(n=>n.status==="active").length+" active &middot; "+NODES.length+" registered";
 }
 function enrich(n){
   const h=HIST[n.addr]||{};const active=n.status==="active";
@@ -300,12 +292,15 @@ function animateCount(el,target){
 function renderStats(){
   const active=NODES.filter(n=>n.status==="active").length,avg=Math.round(NODES.reduce((s,n)=>s+n.score,0)/NODES.length);
   const top=NODES.filter(n=>n.score>=85).length,reach=NODES.filter(n=>n.api_ok).length;
+  const activeReach=NODES.filter(n=>n.status==="active"&&n.api_ok).length;
+  const activeTop=NODES.filter(n=>n.status==="active"&&n.score>=85).length;
+  const activeAvg=active?Math.round(NODES.filter(n=>n.status==="active").reduce((s,n)=>s+n.score,0)/active):0;
   document.getElementById("stats").innerHTML=
-    '<div class="stat"><div class="v" data-c="'+NODES.length+'">0</div><div class="l">Total nodes</div></div>'+
-    '<div class="stat b2"><div class="v" data-c="'+active+'">0</div><div class="l">Active</div></div>'+
-    '<div class="stat b3"><div class="v" data-c="'+avg+'">0</div><div class="l">Avg score</div></div>'+
-    '<div class="stat b4"><div class="v" data-c="'+top+'">0</div><div class="l">Score &ge; 85</div></div>'+
-    '<div class="stat b5"><div class="v" data-c="'+reach+'">0</div><div class="l">API reachable</div></div>';
+    '<div class="stat"><div class="v" data-c="'+active+'">0</div><div class="l">Active nodes</div></div>'+
+    '<div class="stat b2"><div class="v" data-c="'+activeReach+'">0</div><div class="l">API reachable</div></div>'+
+    '<div class="stat b3"><div class="v" data-c="'+activeAvg+'">0</div><div class="l">Avg score</div></div>'+
+    '<div class="stat b4"><div class="v" data-c="'+activeTop+'">0</div><div class="l">Score &ge; 85</div></div>'+
+    '<div class="stat b5"><div class="v" data-c="'+NODES.length+'">0</div><div class="l">Registered total</div></div>';
   document.querySelectorAll("#stats .v[data-c]").forEach(el=>animateCount(el,+el.dataset.c));
 }
 function filtered(){let r=NODES.slice();
@@ -655,8 +650,8 @@ function asnSaturated(asn){const n=asnNum(asn);return n&&SATURATED_ASN[n]?SATURA
 function asnCell(asn){
   const num=asnNum(asn);if(!num)return '<span class="na">\u2014</span>';
   const sat=asnSaturated(asn);
-  const tip=esc(asnName(asn))+(sat?" \u2014 SATURATED, hard to whitelist":" \u2014 not saturated, good for new nodes");
-  return '<span class="qm" data-tip="'+tip+'" style="border:none;width:auto;color:'+(sat?'var(--bad)':'var(--accent)')+'">'+num+'</span>';
+  const tip=asnName(asn)+(sat?" \u2014 SATURATED, hard to whitelist":" \u2014 not saturated, good for new nodes");
+  return '<span title="'+esc(tip)+'" style="cursor:help;color:'+(sat?'var(--bad)':'var(--accent)')+'">'+num+'</span>';
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just now";if(d<3600)return Math.round(d/60)+" min ago";if(d<86400)return Math.round(d/3600)+" h ago";return Math.round(d/86400)+" d ago";}
