@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-# Sentinel Scorecard Collector v3.4 (global --all)
+# Sentinel Scorecard Collector v3.5 (global --all)
 # v3: aggiunge price_hr/price_gb (da LCD), protocol/peers/version/banda (da API locale)
 # v3.1: retry API nodo (2 tentativi) per ridurre nodi con moniker/peers None
 # v3.2: ASN enrichment con cache su file (lookup IP->ASN via ip-api, 1 call per IP nuovo)
 # v3.4: enrich_asn solo nodi attivi (status==active) - meno lookup, piu utile
+# v3.5: aggiunge campo hosting (datacenter true/false) da ip-api; cache come dict {asn,hosting}
 import json, os, sys, time, urllib.request, urllib.parse, ssl, socket
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__))
@@ -15,21 +16,31 @@ def now_iso(): return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 def fetch(url,timeout=TIMEOUT):
     req=urllib.request.Request(url,headers={"User-Agent":"scorecard/3.4"})
     with urllib.request.urlopen(req,timeout=timeout,context=CTX) as r: return json.loads(r.read().decode())
+def _cache_get(cache, ip):
+    # Cache entries can be legacy strings (asn only) or dicts {asn,hosting}.
+    v=cache.get(ip)
+    if v is None: return None
+    if isinstance(v,str): return {"asn":v,"hosting":None}  # legacy entry, hosting unknown
+    return v
 def lookup_asn(remote, cache):
-    # remote = 'host:port' o 'ip:port' -> 'AS#### Org' (cache su IP, 1 call per IP nuovo)
+    # remote = 'host:port' o 'ip:port' -> dict {asn,hosting} (cache su IP, 1 call per IP nuovo)
     if not remote: return None
     host=remote.split(":")[0].strip()
     if not host: return None
     try: ip=socket.gethostbyname(host)
     except Exception: return None
-    if ip in cache: return cache[ip]
+    cached=_cache_get(cache, ip)
+    if cached is not None and cached.get("hosting") is not None: return cached  # full entry
     try:
-        d=fetch(f"http://ip-api.com/json/{ip}?fields=status,as,isp",timeout=8)
+        d=fetch(f"http://ip-api.com/json/{ip}?fields=status,as,isp,hosting",timeout=8)
         if d.get("status")=="success":
-            cache[ip]=d.get("as") or d.get("isp"); return cache[ip]
+            entry={"asn":d.get("as") or d.get("isp"),"hosting":bool(d.get("hosting"))}
+            cache[ip]=entry; return entry
     except Exception: pass
-    cache[ip]=None
-    return None
+    if cached is not None:
+        cache[ip]=cached; return cached  # keep legacy asn, hosting stays None
+    cache[ip]={"asn":None,"hosting":None}
+    return cache[ip]
 def load_watch():
     if os.path.exists(WATCH):
         try: return json.load(open(WATCH))
@@ -63,7 +74,7 @@ def price_udvpn(arr):
 def sample(addr):
     rec={"ts":now_iso(),"addr":addr,"status":None,"inactive_at":None,"remote":None,"moniker":None,
          "dl_mbps":None,"ul_mbps":None,"api_ok":False,"gb_tokens":0,
-         "price_hr":None,"price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,"asn":None}
+         "price_hr":None,"price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,"asn":None,"hosting":None}
     try:
         n=fetch(f"{LCD}/sentinel/node/v3/nodes/{addr}").get("node",{})
         rec["status"]=n.get("status"); rec["inactive_at"]=n.get("inactive_at")
@@ -119,19 +130,23 @@ def enrich_asn():
     if not os.path.exists(LATEST): print("Nessun latest.json."); return
     cache=json.load(open(ASNCACHE)) if os.path.exists(ASNCACHE) else {}
     nodes=json.load(open(LATEST))
-    todo=[n for n in nodes if not n.get("asn") and n.get("remote") and n.get("status")=="active"]
+    todo=[n for n in nodes if n.get("remote") and n.get("status")=="active" and (not n.get("asn") or n.get("hosting") is None)]
     print(f"[{now_iso()}] ASN enrich: {len(todo)} nodi ATTIVI da risolvere (cache: {len(cache)} IP)")
     new_lookups=0; done=0
     for n in nodes:
-        if n.get("asn") or not n.get("remote") or n.get("status")!="active": continue
+        # process active nodes missing asn OR missing hosting (so legacy entries get hosting filled)
+        if not n.get("remote") or n.get("status")!="active": continue
+        if n.get("asn") and n.get("hosting") is not None: continue
         host=n["remote"].split(":")[0].strip()
         try: ip=socket.gethostbyname(host)
         except Exception: ip=None
         if not ip: continue
-        if ip in cache:
-            n["asn"]=cache[ip]
+        cached=_cache_get(cache, ip)
+        if cached is not None and cached.get("hosting") is not None:
+            n["asn"]=cached.get("asn"); n["hosting"]=cached.get("hosting")
         else:
-            n["asn"]=lookup_asn(n["remote"],cache); new_lookups+=1
+            entry=lookup_asn(n["remote"],cache); new_lookups+=1
+            if entry: n["asn"]=entry.get("asn"); n["hosting"]=entry.get("hosting")
             if new_lookups%40==0:
                 json.dump(cache,open(ASNCACHE,"w"))
                 json.dump(nodes,open(LATEST,"w"))
