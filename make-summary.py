@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# make-summary v3.4: v3.3 + moniker = last non-null (light inactive records have moniker None)
+# make-summary v3.5: v3.4 + lease stats: l_pos (% recent samples with a lease = "lease uptime"), l_now
 import json, os
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__)) or "."
@@ -34,6 +34,10 @@ for a,recs in by.items():
     tl="".join("1" if r.get("status")=="active" else "0" for r in win)
     tl_from=win[0].get("ts") if win else None
     tl_to=win[-1].get("ts") if win else None
+    # recent lease stats (last ~7 days): l_pos = "lease uptime" (% of samples with an active lease)
+    lr=[r.get("leases") for r in recs[-56:] if r.get("leases") is not None]
+    l_pos=round(sum(1 for v in lr if v>0)/len(lr)*100) if lr else None
+    l_now=recs[-1].get("leases") if recs[-1].get("leases") is not None else None
     # recent peers stats (last ~7 days): for the "healthy but no clients" lease check
     pr=[r.get("peers") for r in recs[-56:] if r.get("peers") is not None]
     p_pos=round(sum(1 for v in pr if v>0)/len(pr)*100) if pr else None
@@ -51,9 +55,9 @@ for a,recs in by.items():
     summary.append({"a":a,"mon":mon,"n":n,
         "uptime":round(uptime,1),"trans":trans,"stab":round(stab,1),"ul":ul,
         "country":country,"sc":sc,"tl":tl,"tl_from":tl_from,"tl_to":tl_to,
-        "stale":stale,"age_h":age_h,"p_pos":p_pos,"p_avg":p_avg})
+        "stale":stale,"age_h":age_h,"p_pos":p_pos,"p_avg":p_avg,"l_pos":l_pos,"l_now":l_now})
 
 json.dump(summary,open(OUT,"w"))
 stale_count=sum(1 for s in summary if s.get("stale"))
 purged=len(by)-len(summary)
-print(f"summary v3.4: {len(summary)} nodi ({stale_count} stale, {purged} purged >30d) -> {OUT}")
+print(f"summary v3.5: {len(summary)} nodi ({stale_count} stale, {purged} purged >30d) -> {OUT}")
