@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-# make-trends v1: network time-series + movers for the Trends tab.
+# make-trends v1.1: network time-series + movers for the Trends tab.
+# v1.1: registra anche chain_total/chain_active (conteggio nativo on-chain via count_total):
+#       campo "nascosto" nei dati, non mostrato in UI - storico per noi.
 # Runs after make-summary.py. Appends one snapshot per run to trends.jsonl,
 # writes trends.json (site file) and pushes it to GitHub reusing the token
 # already stored in push-latest.sh (never hardcode the token here).
@@ -40,6 +42,15 @@ for n in act:
     c=n.get("country")
     if c: snap["country"][c]=snap["country"].get(c,0)+1
 # keep file small: ASNs with >=3 nodes, top 40 countries
+# hidden metric: lifetime on-chain registrations + native active count (1 cheap call each)
+def _chain_count(extra=""):
+    try:
+        req=urllib.request.Request(f"https://lcd.sentinel.co/sentinel/node/v3/nodes?pagination.limit=1&pagination.count_total=true{extra}",
+                                   headers={"User-Agent":"scorecard"})
+        return int(json.loads(urllib.request.urlopen(req,timeout=15).read())["pagination"]["total"])
+    except Exception: return None
+snap["chain_total"]=_chain_count()
+snap["chain_active"]=_chain_count("&status=1")
 snap["asn"]={k:v for k,v in snap["asn"].items() if v>=3}
 snap["country"]=dict(sorted(snap["country"].items(),key=lambda x:-x[1])[:40])
 
