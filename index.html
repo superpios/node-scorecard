@@ -439,11 +439,13 @@ function detectProblems(n){
   const ph=HIST[n.addr]||{};
   if(n.status==="active"){
     if(ph.l_now!=null){
-      // on-chain lease truth (collector v3.7+)
+      // on-chain lease truth (collector v3.7+). l_pos exists only after >=1 day of lease samples.
       if(ph.l_now===0&&ph.l_pos!=null&&ph.l_pos>=50)
         P.push(["warn","\ud83d\udce4","Lease LOST \u2014 this node was leased "+ph.l_pos+"% of recent days but currently has NO active lease from any plan provider. Nothing to fix node-side: plan rotations usually return within 1\u20133 days."]);
       else if(ph.l_now===0&&ph.l_pos!=null&&ph.l_pos<10&&n.uptime>=90&&ph.n>30)
         P.push(["warn","\ud83d\udeab","Never leased \u2014 healthy node but plan providers don\u2019t lease it (on-chain). Likely not whitelisted (PlanWizard ASN/region policy). Check this ASN in the ASN Intelligence tab."]);
+      else if(ph.l_now===0&&ph.l_pos==null&&ph.p_pos!=null&&ph.p_pos>=50&&ph.n>30)
+        P.push(["warn","\ud83d\udce4","No active lease right now (on-chain) \u2014 yet this node had client traffic in "+ph.p_pos+"% of recent days, so its lease most likely just rotated away. Nothing to fix node-side: rotations usually return within 1\u20133 days."]);
       else if(ph.l_now>0&&(n.peers||0)===0)
         P.push(["info","\ud83d\udce5","Leased \u2713 but no client sessions right now \u2014 normal lull, traffic follows demand."]);
     }else if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=5)
