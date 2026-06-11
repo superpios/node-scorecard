@@ -837,7 +837,7 @@ function renderTrends(){
   const box=document.getElementById("view-trends");
   if(!TRENDS||!TRENDS.series||TRENDS.series.length<2){
     box.innerHTML='<div class="asn-intro" style="margin-top:18px">\ud83d\udcc8 <b>Collecting history\u2026</b> The network\u2019s story starts now: every 3 hours the collector records a snapshot of active nodes, ASN saturation and country spread. '+
-      'Within a couple of days this tab will show how the network <b>moves over time</b> \u2014 which providers are filling up or emptying, which countries grow, and which nodes are improving or declining. No other Sentinel tool tracks this.</div>';
+      'Within a couple of days this tab will show how the network <b>moves over time</b> \u2014 which providers are filling up or emptying, which countries grow, and which nodes are improving or declining.</div>';
     return;
   }
   const S=TRENDS.series;
