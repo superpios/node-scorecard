@@ -165,9 +165,11 @@
     <div class="tab active" data-view="explorer">Nodes</div>
     <div class="tab" data-view="asnintel">ASN Intelligence</div>
     <div class="tab" data-view="leaderboard">Top Reliable</div>
+    <div class="tab" data-view="trends">Trends</div>
   </div>
   <div id="view-asnintel" style="display:none"></div>
   <div id="view-leaderboard" style="display:none"></div>
+  <div id="view-trends" style="display:none"></div>
   <div id="view-explorer">
     <!-- INSPECTOR PANEL: hidden until a node is clicked -->
     <div id="view-inspector" style="display:none">
@@ -218,11 +220,13 @@ const NA_TAGS=[
 ];
 const NA_TAGMAP=Object.fromEntries(NA_TAGS.map(t=>[t.id,t]));
 const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
-  history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"]};
-let NODES=[],MAP={},HIST={},MAXN=1,MED={};
+  history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"],
+  trends:["./trends.json","https://raw.githubusercontent.com/"+REPO+"/main/trends.json","https://raw.githubusercontent.com/"+REPO+"/master/trends.json"]};
+let NODES=[],MAP={},HIST={},MAXN=1,MED={},TRENDS=null;
 let state={tab:"explorer",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false},showInactive:false};
 async function tryFetch(u){for(const x of u){try{const cb=x.includes("githubusercontent")?"":"?t="+Date.now();const r=await fetch(x+cb,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
 async function load(){
+  tryFetch(SRC.trends).then(t=>{TRENDS=t;});
   const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
   if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
   if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
@@ -781,7 +785,7 @@ function renderAsnIntel(){
 }
 function switchView(v){
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-  ["explorer","asnintel","leaderboard"].forEach(k=>{
+  ["explorer","asnintel","leaderboard","trends"].forEach(k=>{
     const el=document.getElementById("view-"+k);
     const show=(v===k);
     el.style.display=show?"block":"none";
@@ -790,6 +794,7 @@ function switchView(v){
   });
   if(v==="asnintel")renderAsnIntel();
   if(v==="leaderboard")renderLeaderboard();
+  if(v==="trends")renderTrends();
 }
 document.querySelectorAll("#maintabs .tab").forEach(t=>t.onclick=()=>switchView(t.dataset.view));
 // Top Reliable — historical uptime leaderboard
@@ -815,6 +820,63 @@ function renderLeaderboard(){
   });
   if(!ranked.length)html+='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--dim)">no history yet</td></tr>';
   html+='</tbody></table></div></div>';
+  box.innerHTML=html;
+}
+
+// ===== Trends — the network over TIME (the Scorecard's unique angle) =====
+function svgLine(points,w,h,color){
+  if(points.length<2)return "";
+  const min=Math.min(...points),max=Math.max(...points),span=(max-min)||1;
+  const step=w/(points.length-1);
+  const pts=points.map((v,i)=>(i*step).toFixed(1)+","+(h-((v-min)/span)*(h-8)-4).toFixed(1)).join(" ");
+  return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:'+h+'px;display:block">'+
+    '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round"/></svg>';
+}
+function fmtDay(ts){const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate();}
+function renderTrends(){
+  const box=document.getElementById("view-trends");
+  if(!TRENDS||!TRENDS.series||TRENDS.series.length<2){
+    box.innerHTML='<div class="asn-intro" style="margin-top:18px">\ud83d\udcc8 <b>Collecting history\u2026</b> The network\u2019s story starts now: every 3 hours the collector records a snapshot of active nodes, ASN saturation and country spread. '+
+      'Within a couple of days this tab will show how the network <b>moves over time</b> \u2014 which providers are filling up or emptying, which countries grow, and which nodes are improving or declining. No other Sentinel tool tracks this.</div>';
+    return;
+  }
+  const S=TRENDS.series;
+  const first=S[0],last=S[S.length-1];
+  // 7d window for deltas (or whole series if shorter)
+  const cutoff=Date.now()-7*24*3600*1000;
+  let base=S.find(p=>new Date(p.ts).getTime()>=cutoff)||first;
+  let html='<div class="asn-intro">How the network <b>moves over time</b> \u2014 snapshots every 3h since '+fmtDay(first.ts)+'. Deltas compare now vs '+fmtDay(base.ts)+'.</div>';
+  // Network Pulse
+  const actSeries=S.map(p=>p.active);
+  const dAct=last.active-base.active;
+  html+='<div class="cmp" style="grid-template-columns:1fr">'+
+    '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\ud83d\udc9a Network Pulse \u2014 active nodes</h4>'+
+    svgLine(actSeries,600,90,"var(--good)")+
+    '<div class="cmp-row"><span class="ck">'+fmtDay(first.ts)+' \u2192 now</span><span class="cv">'+last.active+' active <span style="color:'+(dAct>=0?"var(--good)":"var(--bad)")+'">('+(dAct>=0?"+":"")+dAct+')</span></span></div></div></div>';
+  // ASN movers (base vs last)
+  const asnDelta=[];
+  const keys=new Set([...Object.keys(base.asn||{}),...Object.keys(last.asn||{})]);
+  keys.forEach(k=>{const d=(last.asn[k]||0)-(base.asn[k]||0);if(d!==0)asnDelta.push({k:k,now:last.asn[k]||0,d:d});});
+  asnDelta.sort((a,b)=>b.d-a.d);
+  const gain=asnDelta.filter(x=>x.d>0).slice(0,8), loss=asnDelta.filter(x=>x.d<0).reverse().slice(0,8);
+  html+='<div class="cmp"><div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\ud83d\udcc8 ASNs gaining nodes</h4>';
+  gain.forEach(x=>{html+='<div class="cmp-row"><span class="ck">'+esc(x.k)+'</span><span class="cv">'+x.now+' <span style="color:var(--good)">+'+x.d+'</span></span></div>';});
+  if(!gain.length)html+='<div class="cmp-row"><span class="ck">no gains yet</span></div>';
+  html+='</div><div class="cmp-card" style="border-left:3px solid var(--bad)"><h4>\ud83d\udcc9 ASNs losing nodes</h4>';
+  loss.forEach(x=>{html+='<div class="cmp-row"><span class="ck">'+esc(x.k)+'</span><span class="cv">'+x.now+' <span style="color:var(--bad)">'+x.d+'</span></span></div>';});
+  if(!loss.length)html+='<div class="cmp-row"><span class="ck">no losses yet</span></div>';
+  html+='</div></div>';
+  // Node movers (computed on the Pi from raw history)
+  const up=TRENDS.movers_up||[],down=TRENDS.movers_down||[];
+  if(up.length||down.length){
+    html+='<div class="cmp"><div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\u2b06\ufe0f Nodes improving (7d uptime vs prior)</h4>';
+    up.forEach(mv=>{html+='<div class="cmp-row" style="cursor:pointer" onclick="inspect(\''+mv.a+'\')"><span class="ck">'+esc(mv.mon||mv.a.slice(0,14)+"\u2026")+'</span><span class="cv">'+mv.d7+'% <span style="color:var(--good)">+'+mv.delta+'</span></span></div>';});
+    if(!up.length)html+='<div class="cmp-row"><span class="ck">\u2014</span></div>';
+    html+='</div><div class="cmp-card" style="border-left:3px solid var(--bad)"><h4>\u2b07\ufe0f Nodes declining</h4>';
+    down.forEach(mv=>{html+='<div class="cmp-row" style="cursor:pointer" onclick="inspect(\''+mv.a+'\')"><span class="ck">'+esc(mv.mon||mv.a.slice(0,14)+"\u2026")+'</span><span class="cv">'+mv.d7+'% <span style="color:var(--bad)">'+mv.delta+'</span></span></div>';});
+    if(!down.length)html+='<div class="cmp-row"><span class="ck">\u2014</span></div>';
+    html+='</div></div>';
+  }
   box.innerHTML=html;
 }
 
