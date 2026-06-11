@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# make-summary v3: aggregati + timeline compatta + stale flag (anti-fantasmi)
+# make-summary v3.2: aggregates + compact timeline + stale flag + recent peers stats (lease check)
 import json, os
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__)) or "."
@@ -33,6 +33,10 @@ for a,recs in by.items():
     tl="".join("1" if r.get("status")=="active" else "0" for r in win)
     tl_from=win[0].get("ts") if win else None
     tl_to=win[-1].get("ts") if win else None
+    # recent peers stats (last ~7 days): for the "healthy but no clients" lease check
+    pr=[r.get("peers") for r in recs[-56:] if r.get("peers") is not None]
+    p_pos=round(sum(1 for v in pr if v>0)/len(pr)*100) if pr else None
+    p_avg=round(sum(pr)/len(pr),1) if pr else None
     # stale check: età ultimo campione
     age_h=None; stale=False
     last_ts=recs[-1].get("ts","")
@@ -44,8 +48,8 @@ for a,recs in by.items():
     summary.append({"a":a,"mon":recs[-1].get("moniker") or a,"n":n,
         "uptime":round(uptime,1),"trans":trans,"stab":round(stab,1),"ul":ul,
         "country":country,"sc":sc,"tl":tl,"tl_from":tl_from,"tl_to":tl_to,
-        "stale":stale,"age_h":age_h})
+        "stale":stale,"age_h":age_h,"p_pos":p_pos,"p_avg":p_avg})
 
 json.dump(summary,open(OUT,"w"))
 stale_count=sum(1 for s in summary if s.get("stale"))
-print(f"summary v3: {len(summary)} nodi (con timeline, {stale_count} stale) -> {OUT}")
+print(f"summary v3.2: {len(summary)} nodi (con timeline, {stale_count} stale) -> {OUT}")
