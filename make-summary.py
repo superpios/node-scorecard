@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# make-summary v3.5: v3.4 + lease stats: l_pos (% recent samples with a lease = "lease uptime"), l_now
+# make-summary v3.5.1: l_pos richiede >=8 campioni (evita falsi "never leased" a storico giovane). v3.5: v3.4 + lease stats: l_pos (% recent samples with a lease = "lease uptime"), l_now
 import json, os
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__)) or "."
@@ -36,7 +36,7 @@ for a,recs in by.items():
     tl_to=win[-1].get("ts") if win else None
     # recent lease stats (last ~7 days): l_pos = "lease uptime" (% of samples with an active lease)
     lr=[r.get("leases") for r in recs[-56:] if r.get("leases") is not None]
-    l_pos=round(sum(1 for v in lr if v>0)/len(lr)*100) if lr else None
+    l_pos=round(sum(1 for v in lr if v>0)/len(lr)*100) if len(lr)>=8 else None  # serve >=1 giorno di campioni lease
     l_now=recs[-1].get("leases") if recs[-1].get("leases") is not None else None
     # recent peers stats (last ~7 days): for the "healthy but no clients" lease check
     pr=[r.get("peers") for r in recs[-56:] if r.get("peers") is not None]
