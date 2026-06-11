@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# Sentinel Scorecard Collector v3.6 (active-first)
+# Sentinel Scorecard Collector v3.7 (active-first + leases)
+# v3.7: campiona anche le LEASE on-chain (chi e' affittato dai provider dei piani).
+#       2 richieste per giro -> campo "leases" (conteggio) in ogni record attivo.
+#       Nel tempo costruisce il "lease uptime": in che % del tempo un nodo e' affittato.
 # v3.6: la chain ha 76k+ registrazioni storiche (per lo piu' morte). Ora scarichiamo
 #       SOLO gli attivi (status=1, ~8 pagine) + scriviamo un record leggero "inactive"
 #       per i nodi tracciati che escono dalla lista attivi (li segue la purga 30gg).
@@ -70,16 +73,33 @@ def all_nodes(lim=200,maxp=40,status=None):
         if not key or not ns: break
         time.sleep(0.5)
     return out
+def fetch_leases():
+    # Tutte le lease attive della rete (poche centinaia) -> {node_address: count}
+    out={}; key=None
+    for _ in range(10):
+        url=f"{LCD}/sentinel/lease/v1/leases?pagination.limit=500"
+        if key: url+=f"&pagination.key={urllib.parse.quote(key)}"
+        try: d=fetch(url,timeout=20)
+        except Exception as e: print(f"  ! leases: {e}"); break
+        ls=d.get("leases",[])
+        for l in ls:
+            na=l.get("node_address")
+            if na: out[na]=out.get(na,0)+1
+        key=(d.get("pagination") or {}).get("next_key")
+        if not key or not ls: break
+        time.sleep(0.3)
+    return out
 def price_udvpn(arr):
     for p in (arr or []):
         if p.get("denom")=="udvpn":
             try: return round(int(p["quote_value"])/1e6,2)
             except: return None
     return None
-def sample(addr):
+def sample(addr,leases=None):
     rec={"ts":now_iso(),"addr":addr,"status":None,"inactive_at":None,"remote":None,"moniker":None,
          "dl_mbps":None,"ul_mbps":None,"api_ok":False,"gb_tokens":0,
-         "price_hr":None,"price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,"asn":None,"hosting":None}
+         "price_hr":None,"price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,"asn":None,"hosting":None,
+         "leases":(leases or {}).get(addr,0)}
     try:
         n=fetch(f"{LCD}/sentinel/node/v3/nodes/{addr}").get("node",{})
         rec["status"]=n.get("status"); rec["inactive_at"]=n.get("inactive_at")
@@ -196,6 +216,9 @@ def main():
                         tracked_inactive.append(n["addr"])
             except Exception: pass
         print(f"[{now_iso()}] {len(t)} attivi on-chain | {len(tracked_inactive)} tracked diventati inattivi")
+        LEASES=fetch_leases()
+        nl=sum(1 for v in LEASES.values() if v>0)
+        print(f"[{now_iso()}] lease attive: {sum(LEASES.values())} su {nl} nodi affittati")
     else:
         t=load_watch()["nodes"]
         if not t: print("Vuoto. Usa --add o --all"); return
@@ -204,7 +227,8 @@ def main():
     from concurrent.futures import ThreadPoolExecutor, as_completed
     with open(DATA,"a") as f:
         with ThreadPoolExecutor(max_workers=60) as ex:
-            futs={ex.submit(sample,addr):addr for addr in t}
+            LM=LEASES if "--all" in a else {}
+            futs={ex.submit(sample,addr,LM):addr for addr in t}
             for fut in as_completed(futs):
                 try: rec=fut.result()
                 except Exception as e: rec={"ts":now_iso(),"addr":futs[fut],"error":str(e)}
