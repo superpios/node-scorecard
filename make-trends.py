@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# make-trends v1.1: network time-series + movers for the Trends tab.
+# make-trends v1.2: v1.1 + lease series (leases_total, nodes_leased) per the lease-coverage trend.
 # v1.1: registra anche chain_total/chain_active (conteggio nativo on-chain via count_total):
 #       campo "nascosto" nei dati, non mostrato in UI - storico per noi.
 # Runs after make-summary.py. Appends one snapshot per run to trends.jsonl,
@@ -49,6 +49,11 @@ def _chain_count(extra=""):
                                    headers={"User-Agent":"scorecard"})
         return int(json.loads(urllib.request.urlopen(req,timeout=15).read())["pagination"]["total"])
     except Exception: return None
+# lease coverage from latest.json (campo scritto dal collector v3.7)
+_act=[n for n in latest if disp_status(n)=="active"]
+_lv=[n.get("leases") for n in _act if n.get("leases") is not None]
+snap["nodes_leased"]=sum(1 for v in _lv if v>0) if _lv else None
+snap["leases_total"]=sum(v for v in _lv if v) if _lv else None
 snap["chain_total"]=_chain_count()
 snap["chain_active"]=_chain_count("&status=1")
 snap["asn"]={k:v for k,v in snap["asn"].items() if v>=3}
