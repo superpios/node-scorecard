@@ -51,7 +51,7 @@ def add_node(a):
     w=load_watch()
     if a not in w["nodes"]: w["nodes"].append(a); save_watch(w); print(f"Aggiunto {a}")
     else: print("Gia' presente")
-def all_nodes(lim=200,maxp=15):
+def all_nodes(lim=200,maxp=40):
     out=[]; key=None
     for p in range(maxp):
         url=f"{LCD}/sentinel/node/v3/nodes?pagination.limit={lim}"
