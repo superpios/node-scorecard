@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# make-summary v3.2: aggregates + compact timeline + stale flag + recent peers stats (lease check)
+# make-summary v3.3: aggregates + timeline + stale flag + peers stats (lease check) + 30d purge of delisted nodes
 import json, os
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__)) or "."
@@ -7,6 +7,7 @@ DATA=os.path.join(HERE,"history.jsonl")
 OUT=os.path.join(HERE,"history-summary.json")
 WINDOW=168           # ultimi N campioni nella timeline (1 settimana orari)
 STALE_HOURS=24       # se l'ultimo campione > 24h -> nodo considerato stale
+PURGE_DAYS=30        # nodes unseen for 30+ days (delisted from chain) drop out of the summary
 NOW=datetime.now(timezone.utc)
 
 by={}
@@ -45,6 +46,7 @@ for a,recs in by.items():
         age_h=round((NOW-last_dt).total_seconds()/3600, 1)
         stale=age_h > STALE_HOURS
     except: pass
+    if age_h is not None and age_h > PURGE_DAYS*24: continue  # purge: delisted/dead for 30+ days
     summary.append({"a":a,"mon":recs[-1].get("moniker") or a,"n":n,
         "uptime":round(uptime,1),"trans":trans,"stab":round(stab,1),"ul":ul,
         "country":country,"sc":sc,"tl":tl,"tl_from":tl_from,"tl_to":tl_to,
@@ -52,4 +54,5 @@ for a,recs in by.items():
 
 json.dump(summary,open(OUT,"w"))
 stale_count=sum(1 for s in summary if s.get("stale"))
-print(f"summary v3.2: {len(summary)} nodi (con timeline, {stale_count} stale) -> {OUT}")
+purged=len(by)-len(summary)
+print(f"summary v3.3: {len(summary)} nodi ({stale_count} stale, {purged} purged >30d) -> {OUT}")
