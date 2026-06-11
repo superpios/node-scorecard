@@ -772,7 +772,7 @@ function renderAsnIntel(){
   const ASN_LIMIT=50;
   let rows=Object.values(agg);
   const q=asnIntelState().toLowerCase().trim();
-  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). <b>Check before you pay</b>: saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
+  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN).saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
   html+='<div class="asn-search"><input type="search" id="asn-q" placeholder="Search ASN or Country (e.g. AS24940, Hetzner, Italy)\u2026" value="'+esc(asnIntelState())+'"></div>';
   if(q){
     // filter ASNs by number, provider name, or country presence
