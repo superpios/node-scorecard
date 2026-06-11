@@ -74,9 +74,10 @@
   .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--good);border-radius:50%;margin:0 auto 15px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   footer{margin-top:16px;text-align:center;color:var(--dim);font-size:11px;font-family:'Space Mono',monospace}
-  .ecolinks{margin-top:18px;text-align:center;font-size:12px;font-family:'Space Mono',monospace;color:var(--dim)}
-  .ecolinks a{color:var(--muted);text-decoration:none;margin:0 7px;transition:color .15s}
-  .ecolinks a:hover{color:var(--good)}
+  .ecolinks{margin:26px auto 0;max-width:680px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 18px;text-align:center}
+  .ecolinks .et{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:11px;font-weight:600}
+  .ecolinks a{display:inline-block;color:var(--txt);text-decoration:none;font-size:12.5px;font-family:'Space Mono',monospace;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:7px 13px;margin:3px 4px;transition:all .15s}
+  .ecolinks a:hover{border-color:var(--good);color:var(--good);transform:translateY(-1px)}
   /* ===== INSPECTOR ===== */
   .insp-search{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap}
   .insp-empty{padding:50px;text-align:center;color:var(--dim);font-family:'Space Mono',monospace}
@@ -208,11 +209,11 @@
     </div>
   </div>
 
-  <div class="ecolinks">ecosystem:
-    <a href="https://hub.bluefrens.xyz" target="_blank" rel="noopener">BlueFrens Hub</a> &middot;
-    <a href="https://sentnodes.com" target="_blank" rel="noopener">SentNodes</a> &middot;
-    <a href="https://nodes.suchnode.net" target="_blank" rel="noopener">SuchNode</a> &middot;
-    <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a> &middot;
+  <div class="ecolinks"><div class="et">\ud83d\udd17 Sentinel Ecosystem \u2014 friends &amp; tools</div>
+    <a href="https://hub.bluefrens.xyz" target="_blank" rel="noopener">\ud83d\udc99 BlueFrens Hub</a>
+    <a href="https://sentnodes.com" target="_blank" rel="noopener">SentNodes</a>
+    <a href="https://nodes.suchnode.net" target="_blank" rel="noopener">SuchNode</a>
+    <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a>
     <a href="https://stats.sentinel.co" target="_blank" rel="noopener">stats.sentinel.co</a></div>
   <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators</footer>
 </div>
@@ -251,7 +252,7 @@ async function load(){
   buildCountry();renderStats();render();
   const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
   const ts=allTs.length?allTs[allTs.length-1]:new Date().toISOString();
-  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.filter(n=>n.status==="active").length+" active &middot; "+NODES.length+" registered";
+  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.filter(n=>n.status==="active").length+" active &middot; "+NODES.length+" tracked";
 }
 function enrich(n){
   const h=HIST[n.addr]||{};const active=n.status==="active";
@@ -336,7 +337,7 @@ function renderStats(){
     '<div class="stat b2"><div class="v" data-c="'+activeReach+'">0</div><div class="l">API reachable</div></div>'+
     '<div class="stat b3"><div class="v" data-c="'+activeAvg+'">0</div><div class="l">Avg score</div></div>'+
     '<div class="stat b4"><div class="v" data-c="'+activeTop+'">0</div><div class="l">Score &ge; 85</div></div>'+
-    '<div class="stat b5"><div class="v" data-c="'+NODES.length+'">0</div><div class="l">Registered total</div></div>';
+    '<div class="stat b5" title="Nodes seen on-chain in the last 30 days. The chain holds 76k+ lifetime registrations, mostly long-dead \u2014 we track the living network."><div class="v" data-c="'+NODES.length+'">0</div><div class="l">Tracked (30d)</div></div>';
   document.querySelectorAll("#stats .v[data-c]").forEach(el=>animateCount(el,+el.dataset.c));
 }
 function filtered(){let r=NODES.slice();
