@@ -2,9 +2,9 @@
 
 **Network intelligence & historical diagnostics for Sentinel dVPN nodes.**
 
-Most node explorers (SentNodes, suchnode, the official explorer) show you a *snapshot*: is the node active right now, what's its price, how many peers. Useful — but they can't tell you the thing that actually matters to a node operator: **how has this node behaved over time, and how does it compare to the rest of the network?**
+The Scorecard answers the question that matters most to a node operator: **how has my node behaved over time, and how does it compare to the rest of the network?**
 
-The Scorecard fills that gap. It samples every node on the network on a schedule, builds a historical record, and turns it into an actionable score, a country ranking, and a node-by-node diagnostic.
+It samples every node on the Sentinel network on a schedule, builds a historical record measured in hundreds of thousands of samples, and turns it into an actionable reliability score, a country ranking, time-series trends, and a node-by-node diagnostic — all from data collected on-device, with no backend.
 
 ---
 
@@ -28,7 +28,8 @@ Click any node (or paste an address) to deep-dive:
 - **Historical uptime timeline** — a visual active/inactive bar for every sample collected over time
 - **Measured uptime %** and **stability** (how often it flaps offline)
 - **Country ranking** — "#12 of 47 in Italy", not a meaningless absolute number
-- **Detected problems** — rule-based diagnostics (inactive, low uptime, unstable, API unreachable, stale heartbeat, zero peers)
+- **Detected problems** — 16 rule-based diagnostics: inactive, low uptime, unstable, API unreachable, stale heartbeat, zero peers, price outliers (per hr **and** per GB vs network median), very low bandwidth, outdated version, saturated ASN, crowded country, young node, missing speedtest — plus a **historical uptime trend** check (declining / recovering, computed from the node's own timeline), a **lease check** that catches the most frustrating case — a perfectly healthy node that gets *no client traffic* because it isn't whitelisted for plans (peers ≈ 0 across recent history) — and an **elite badge** for top-20 ranked nodes
+- **Reliability grade** — an A+/A/B/C/D/E letter from the historical score, with a global rank ("#12 of 1,594 active nodes")
 - **Score breakdown** — how each weighted component contributes
 - **Generate support report** — a ready-to-paste summary for the Sentinel support Telegram or a GitHub issue, so a node's problems actually reach the people who can help
 
@@ -43,14 +44,27 @@ The data tells you how a node *behaves*; NodeAdvisor tells you how it *feels to 
 Feedback is stored in a free Supabase table read directly from the static page — still no server of your own to run.
 
 ### 🌐 ASN Intelligence
-Every other explorer shows ASN saturation *right now*. The Scorecard adds the angle that matters when you're deciding **where to put a new node**: a dedicated view that groups active nodes by hosting provider (ASN), counts how many run on each, and flags the saturated ones.
+A dedicated view for deciding **where to put a new node**: it groups active nodes by hosting provider (ASN), counts how many run on each, and flags the saturated ones.
 
 - **Per-ASN node counts** — see at a glance which providers are crowded
 - **Saturation flags** — ASNs over the PlanWizard whitelist limit are marked `SATURATED`; nodes there are unlikely to get leased and earn
 - **Hosting column + diagnostic** — every node shows its ASN in the table, and a node on a saturated ASN gets a clear warning in its diagnostic ("may not get leased/earn")
 - **Pick a clean ASN** — low-count, non-saturated providers are the smart choice for a new node
 
-This turns a painful, learned-the-hard-way lesson (datacenter ASNs like IONOS, Oracle and OVH are saturated; residential ASNs are not) into something you can *see* before spending a cent.
+This turns a painful, learned-the-hard-way lesson (datacenter ASNs like IONOS, Oracle and OVH are saturated; residential ASNs are not) into something you can *see* before spending a cent. The same view doubles as a **node placement advisor**: search an ASN or a country and get an instant verdict (⛔ saturated / ⚠️ filling up / ✅ room available) with capacity-used %, plus the least- and most-crowded countries.
+
+### 🏆 Top Reliable
+The 25 most reliable active nodes ranked by **historical** uptime, stability and track record — not by who happens to be online right now. A node only ranks here by being consistently up across many samples.
+
+### 📈 Trends — the network over time
+The Scorecard records a snapshot of the network every 3 hours and shows how it **moves over time**:
+
+- **Network Pulse** — active-node count over time
+- **ASNs gaining / losing nodes** — watch providers fill up or empty out (IONOS went 285 → 188 active nodes in two days; this view catches that)
+- **Node movers** — nodes whose 7-day uptime improved or declined the most vs their own history
+
+### 🧊 Time Capsule — on Walrus (Sui)
+Once a day the network's historical snapshot is archived on **Walrus**, the decentralized storage protocol on Sui — currently on testnet as a proof of concept. Each capsule is an immutable, content-addressed blob with a verifiable hash and a public link shown in the Trends tab. The history of a decentralized VPN, stored on decentralized storage.
 
 ---
 
@@ -84,6 +98,11 @@ collector.py     -> samples every node from the Sentinel LCD (status, price, pro
 make-summary.py  -> aggregates history.jsonl into history-summary.json (uptime %,
                     stability, longevity + a compact per-node timeline). Soft-purges
                     nodes not seen for 30+ days to keep the files lean.
+make-trends.py   -> appends a network snapshot per run (active count, per-ASN and
+                    per-country totals) and computes node movers (7d uptime vs prior)
+                    from raw history. Writes + publishes trends.json.
+walrus-capsule.py-> once a day, archives trends.json on Walrus (Sui) and publishes
+                    capsule.json with the blob ID, hash and verification link.
 push-latest.sh   -> publishes latest.json + history-summary.json to this repo
 index.html       -> static UI, fetches the two JSON files and renders everything
                     client-side. Community feedback (NodeAdvisor) is read/written
@@ -150,6 +169,20 @@ GET https://superpios.github.io/node-scorecard/history-summary.json
 
 > The on-page score uses a richer weighting than the `sc` field above; `sc` is a lightweight pre-computed approximation. To reproduce the full score, see the weights table under [The score](#the-score).
 
+### Network time series — `trends.json`
+One snapshot every ~3 hours: `{ts,total,active,stale,api_ok,asn:{...},country:{...}}` per point, plus `movers_up`/`movers_down` (nodes whose 7-day uptime changed most vs their prior history).
+
+```
+GET https://superpios.github.io/node-scorecard/trends.json
+```
+
+### Walrus archive index — `capsule.json`
+The latest and last 30 daily Walrus capsules: `{date,blobId,sha256,bytes,url,network}`. Fetch the `url` to retrieve the archived snapshot from a Walrus aggregator and verify its `sha256`.
+
+```
+GET https://superpios.github.io/node-scorecard/capsule.json
+```
+
 ### Community feedback (NodeAdvisor)
 Feedback is stored in Supabase and is **readable** via its auto-generated REST API (read policy only). Example — fetch visible feedback for one node:
 
@@ -190,7 +223,11 @@ python3 make-summary.py
 # schedule collection (crontab -e) - every 3 hours is plenty
 0 */3 * * * /usr/bin/python3 /path/to/collector.py --all >> collector.log 2>&1 && \
             /usr/bin/python3 /path/to/make-summary.py >> collector.log 2>&1 && \
+            /usr/bin/python3 /path/to/make-trends.py >> collector.log 2>&1 && \
             /bin/bash /path/to/push-latest.sh >> collector.log 2>&1
+
+# daily Walrus capsule (optional)
+50 23 * * * /usr/bin/python3 /path/to/walrus-capsule.py >> capsule.log 2>&1
 ```
 
 Then publish `latest.json` and `history-summary.json` to the repo (see `push-latest.sh`) and open `index.html`.
@@ -200,12 +237,21 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 ## Roadmap
 
 - ✅ Public read-only JSON API (done — see API section)
-- ✅ ASN intelligence — per-provider saturation, hosting column, "where to host" view (done)
+- ✅ ASN intelligence — per-provider saturation + placement advisor (done)
+- ✅ Reliability grade + global rank, Top Reliable leaderboard (done)
+- ✅ Trends — network time series, ASN movers, node movers (done — accumulating history)
+- ✅ Walrus Time Capsule on Sui testnet (done — mainnet under evaluation)
 - On-chain earnings trend per node (opt-in, by wallet)
 - Clean versioned API endpoint with developer-friendly field names
 - Multi-network support (agnostic core - Sentinel first, others later)
 - Alerting hooks for operators
 - Integration with the Sentinel Scout / AI data layer
+
+---
+
+## Ecosystem
+
+Friends & complementary tools: [BlueFrens Hub](https://hub.bluefrens.xyz) · [SentNodes](https://sentnodes.com) · [SuchNode](https://nodes.suchnode.net) · [p2pscan](https://p2pscan.com) · [stats.sentinel.co](https://stats.sentinel.co)
 
 ---
 
