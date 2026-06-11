@@ -22,7 +22,7 @@
   .stat:hover{transform:translateY(-2px);border-color:var(--dim)}
   .stat::after{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--good);opacity:.75}
   .stat .v{font-size:25px;font-weight:800;font-family:'Space Mono',monospace} .stat .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
-  .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)} .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--bad)}
+  .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)} .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--good)}
   .tabs{display:flex;gap:4px;margin:16px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
   .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;transition:color .15s,border-color .2s;position:relative;top:1px}
   @keyframes viewfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -209,8 +209,8 @@
     </div>
   </div>
 
-  <div class="ecolinks"><div class="et">\ud83d\udd17 Sentinel Ecosystem \u2014 friends &amp; tools</div>
-    <a href="https://hub.bluefrens.xyz" target="_blank" rel="noopener">\ud83d\udc99 BlueFrens Hub</a>
+  <div class="ecolinks"><div class="et">Sentinel Ecosystem &mdash; friends &amp; tools</div>
+    <a href="https://hub.bluefrens.xyz" target="_blank" rel="noopener">&#128153; BlueFrens Hub</a>
     <a href="https://sentnodes.com" target="_blank" rel="noopener">SentNodes</a>
     <a href="https://nodes.suchnode.net" target="_blank" rel="noopener">SuchNode</a>
     <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a>
@@ -337,6 +337,11 @@ function renderStats(){
     '<div class="stat b2"><div class="v" data-c="'+activeReach+'">0</div><div class="l">API reachable</div></div>'+
     '<div class="stat b3"><div class="v" data-c="'+activeAvg+'">0</div><div class="l">Avg score</div></div>'+
     '<div class="stat b4"><div class="v" data-c="'+activeTop+'">0</div><div class="l">Score &ge; 85</div></div>';
+  const leaseData=NODES.some(n=>(HIST[n.addr]||{}).l_now!=null);
+  if(leaseData){
+    const leased=NODES.filter(n=>n.status==="active"&&((HIST[n.addr]||{}).l_now||0)>0).length;
+    document.getElementById("stats").innerHTML+='<div class="stat b5" title="Active nodes currently leased by a plan provider (on-chain). Leases rotate every 2\u20133 days \u2014 only leased nodes earn from plans."><div class="v" data-c="'+leased+'">0</div><div class="l">Leased now</div></div>';
+  }
   document.querySelectorAll("#stats .v[data-c]").forEach(el=>animateCount(el,+el.dataset.c));
 }
 function filtered(){let r=NODES.slice();
@@ -433,7 +438,15 @@ function detectProblems(n){
   if(n.freshness<40&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
   const ph=HIST[n.addr]||{};
   if(n.status==="active"){
-    if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=5)
+    if(ph.l_now!=null){
+      // on-chain lease truth (collector v3.7+)
+      if(ph.l_now===0&&ph.l_pos!=null&&ph.l_pos>=50)
+        P.push(["warn","\ud83d\udce4","Lease LOST \u2014 this node was leased "+ph.l_pos+"% of recent days but currently has NO active lease from any plan provider. Nothing to fix node-side: plan rotations usually return within 1\u20133 days."]);
+      else if(ph.l_now===0&&ph.l_pos!=null&&ph.l_pos<10&&n.uptime>=90&&ph.n>30)
+        P.push(["warn","\ud83d\udeab","Never leased \u2014 healthy node but plan providers don\u2019t lease it (on-chain). Likely not whitelisted (PlanWizard ASN/region policy). Check this ASN in the ASN Intelligence tab."]);
+      else if(ph.l_now>0&&(n.peers||0)===0)
+        P.push(["info","\ud83d\udce5","Leased \u2713 but no client sessions right now \u2014 normal lull, traffic follows demand."]);
+    }else if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=5)
       P.push(["warn","\ud83d\udeab","Healthy node but NO client traffic \u2014 peers were 0 in "+(100-ph.p_pos)+"% of recent samples. Usually NOT a node fault: the node likely isn\u2019t whitelisted for plans (PlanWizard ASN/region policy), so it never gets leases. Check this ASN in the ASN Intelligence tab."]);
     else if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=30)
       P.push(["info","\ud83d\udc65","Sparse client traffic \u2014 peers seen in only "+ph.p_pos+"% of recent samples (avg "+(ph.p_avg!=null?ph.p_avg:"?")+"). Whitelisted but low demand, or borderline placement."]);
@@ -535,6 +548,8 @@ function renderInspector(n){
         '<span class="k">Historical uptime</span><span class="v">'+(n.samples?n.uptime.toFixed(1)+"%":"\u2014")+'</span>'+
         '<span class="k">Stability</span><span class="v">'+(n.samples?n.stab.toFixed(0):"\u2014")+'</span>'+
         '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
+        ((HIST[n.addr]||{}).l_now!=null?'<span class="k">Leased (now)</span><span class="v" style="color:'+(((HIST[n.addr]||{}).l_now||0)>0?'var(--good)':'var(--warn)')+'">'+(((HIST[n.addr]||{}).l_now||0)>0?'\u2713 yes ('+HIST[n.addr].l_now+')':'no')+'</span>':'')+
+        ((HIST[n.addr]||{}).l_pos!=null?'<span class="k">Lease uptime (7d)</span><span class="v">'+HIST[n.addr].l_pos+'%</span>':'')+
         '<span class="k">Peers (now)</span><span class="v" id="peers-live">'+(n.peers!=null?n.peers:"\u2014")+' <span id="peers-badge" style="font-size:10px;color:var(--muted);font-family:Space Mono">\u00b7 collector</span></span>'+
         '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+medRef("price_hr",n.price_hr):"\u2014")+'</span>'+
         '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P"+medRef("price_gb",n.price_gb):"\u2014")+'</span>'+
@@ -767,8 +782,10 @@ function renderAsnIntel(){
   const agg={}, byCountry={};
   act.forEach(n=>{
     const num=asnNum(n.asn);if(!num)return;
-    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,countries:{}};
+    if(!agg[num])agg[num]={num:num,name:asnName(n.asn),total:0,leased:0,hasL:false,countries:{}};
     agg[num].total++;
+    const _lh=HIST[n.addr]||{};
+    if(_lh.l_now!=null){agg[num].hasL=true;if(_lh.l_now>0)agg[num].leased++;}
     if(n.country&&n.country!=="\u2014"){agg[num].countries[n.country]=1;}
   });
   NODES.filter(n=>n.status==="active").forEach(n=>{
@@ -778,7 +795,7 @@ function renderAsnIntel(){
   const ASN_LIMIT=50;
   let rows=Object.values(agg);
   const q=asnIntelState().toLowerCase().trim();
-  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). <b>Check before you pay</b>: saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
+  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
   html+='<div class="asn-search"><input type="search" id="asn-q" placeholder="Search ASN or Country (e.g. AS24940, Hetzner, Italy)\u2026" value="'+esc(asnIntelState())+'"></div>';
   if(q){
     // filter ASNs by number, provider name, or country presence
@@ -818,7 +835,7 @@ function renderAsnIntel(){
   }
   rows.sort((a,b)=>b.total-a.total);
   html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
-    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
+    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Leased</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
   rows.forEach((r,i)=>{
     const sat=SATURATED_ASN[r.num]||r.total>=ASN_LIMIT;
     const pct=Math.round(r.total/totNodes*100);
@@ -826,10 +843,11 @@ function renderAsnIntel(){
       '<td class="mono '+(sat?'asn-sat':'asn-ok')+'">'+r.num+'</td>'+
       '<td>'+esc(r.name||"\u2014")+'</td>'+
       '<td class="mono">'+r.total+' <span style="color:var(--dim);font-size:10px">('+pct+'%)</span></td>'+
+      '<td class="mono" '+(r.hasL?'title="'+r.leased+' of '+r.total+' nodes on this ASN currently hold an on-chain lease \u2014 the real demand signal" style="color:'+(r.leased/r.total>=0.5?'var(--good)':r.leased>0?'var(--warn)':'var(--bad)')+'">'+Math.round(r.leased/r.total*100)+'%':'>\u2014')+'</td>'+
       '<td class="mono" title="'+esc(Object.keys(r.countries).slice(0,12).join(", "))+'">'+Object.keys(r.countries).length+'</td>'+
       '<td>'+(sat?'<span class="asn-badge sat" title="Over the ~'+ASN_LIMIT+'-node PlanWizard soft limit \u2014 hard to get whitelisted here">SATURATED</span>':'<span class="asn-badge ok" title="Below the whitelist limit \u2014 room for new nodes">OK</span>')+'</td></tr>';
   });
-  if(!rows.length)html+='<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--dim)">no ASN matches</td></tr>';
+  if(!rows.length)html+='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--dim)">no ASN matches</td></tr>';
   html+='</tbody></table></div></div>';
   box.innerHTML=html;
   const inp=document.getElementById("asn-q");
@@ -907,7 +925,9 @@ function renderTrends(){
   html+='<div class="cmp" style="grid-template-columns:1fr">'+
     '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\ud83d\udc9a Network Pulse \u2014 active nodes</h4>'+
     svgLine(actSeries,600,90,"var(--good)")+
-    '<div class="cmp-row"><span class="ck">'+fmtDay(first.ts)+' \u2192 now</span><span class="cv">'+last.active+' active <span style="color:'+(dAct>=0?"var(--good)":"var(--bad)")+'">('+(dAct>=0?"+":"")+dAct+')</span></span></div></div></div>';
+    '<div class="cmp-row"><span class="ck">'+fmtDay(first.ts)+' \u2192 now</span><span class="cv">'+last.active+' active <span style="color:'+(dAct>=0?"var(--good)":"var(--bad)")+'">('+(dAct>=0?"+":"")+dAct+')</span></span></div>'+
+    (last.nodes_leased!=null?'<div class="cmp-row"><span class="ck">Leased by plan providers</span><span class="cv">'+last.nodes_leased+' nodes \u00b7 '+(last.leases_total||0)+' leases</span></div>':'')+
+    '</div></div>';
   // ASN movers (base vs last)
   const asnDelta=[];
   const keys=new Set([...Object.keys(base.asn||{}),...Object.keys(last.asn||{})]);
