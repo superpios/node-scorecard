@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# Sentinel Scorecard Collector v3.5 (global --all)
+# Sentinel Scorecard Collector v3.6 (active-first)
+# v3.6: la chain ha 76k+ registrazioni storiche (per lo piu' morte). Ora scarichiamo
+#       SOLO gli attivi (status=1, ~8 pagine) + scriviamo un record leggero "inactive"
+#       per i nodi tracciati che escono dalla lista attivi (li segue la purga 30gg).
+#       export_latest applica lo stesso taglio 30gg.
 # v3: aggiunge price_hr/price_gb (da LCD), protocol/peers/version/banda (da API locale)
 # v3.1: retry API nodo (2 tentativi) per ridurre nodi con moniker/peers None
 # v3.2: ASN enrichment con cache su file (lookup IP->ASN via ip-api, 1 call per IP nuovo)
@@ -51,10 +55,11 @@ def add_node(a):
     w=load_watch()
     if a not in w["nodes"]: w["nodes"].append(a); save_watch(w); print(f"Aggiunto {a}")
     else: print("Gia' presente")
-def all_nodes(lim=200,maxp=40):
+def all_nodes(lim=200,maxp=40,status=None):
     out=[]; key=None
     for p in range(maxp):
         url=f"{LCD}/sentinel/node/v3/nodes?pagination.limit={lim}"
+        if status is not None: url+=f"&status={status}"
         if key: url+=f"&pagination.key={urllib.parse.quote(key)}"
         try: d=fetch(url,timeout=15)
         except Exception as e: print(f"  ! pagina {p}: {e}"); break
@@ -117,13 +122,17 @@ def sample(addr):
     return rec
 def export_latest():
     if not os.path.exists(DATA): print("Nessuno storico."); return
+    from datetime import timedelta
+    cut=(datetime.now(timezone.utc)-timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
     latest={}
     for l in open(DATA):
         if l.strip():
             try: r=json.loads(l); latest[r["addr"]]=r
             except: pass
+    before=len(latest)
+    latest={a:r for a,r in latest.items() if (r.get("ts") or "")>=cut}
     json.dump(list(latest.values()),open(LATEST,"w"))
-    print(f"Esportati {len(latest)} nodi in {LATEST}")
+    print(f"Esportati {len(latest)} nodi in {LATEST} ({before-len(latest)} oltre 30gg esclusi)")
 def enrich_asn():
     # v3.4: ASN enrichment solo nodi ATTIVI. Salva cache ogni 40 lookup (a prova di interruzione),
     # stampa progresso, riprende dalla cache se rilanciato. Rate-limit ip-api 45/min.
@@ -171,8 +180,22 @@ def main():
     if "--report" in a: report(); return
     if "--export-latest" in a: export_latest(); return
     if "--asn" in a: enrich_asn(); return
+    tracked_inactive=[]
     if "--all" in a:
-        print(f"[{now_iso()}] Scarico lista globale nodi..."); t=all_nodes(); print(f"[{now_iso()}] {len(t)} nodi da campionare")
+        print(f"[{now_iso()}] Scarico nodi ATTIVI dalla chain (status=1)...")
+        t=all_nodes(status=1)
+        if not t:
+            print("! lista attivi vuota (LCD giu'?), esco senza scrivere"); return
+        # nodi che tracciavamo come attivi e ora non sono piu' nella lista: un record
+        # leggero li marca inactive; poi smettiamo di campionarli (purge 30gg li elimina)
+        act_set=set(t)
+        if os.path.exists(LATEST):
+            try:
+                for n in json.load(open(LATEST)):
+                    if n.get("status")=="active" and n["addr"] not in act_set:
+                        tracked_inactive.append(n["addr"])
+            except Exception: pass
+        print(f"[{now_iso()}] {len(t)} attivi on-chain | {len(tracked_inactive)} tracked diventati inattivi")
     else:
         t=load_watch()["nodes"]
         if not t: print("Vuoto. Usa --add o --all"); return
@@ -188,7 +211,12 @@ def main():
                 f.write(json.dumps(rec)+"\n"); w+=1; done+=1
                 if rec.get("status")=="active": act+=1
                 if "--all" in a and done%200==0: print(f"  ...{done}/{total} ({act} active)")
-    print(f"[{now_iso()}] {w} campioni ({act} active)")
+        for a2 in tracked_inactive:
+            f.write(json.dumps({"ts":now_iso(),"addr":a2,"status":"inactive","inactive_at":None,"remote":None,
+                "moniker":None,"dl_mbps":None,"ul_mbps":None,"api_ok":False,"gb_tokens":0,"price_hr":None,
+                "price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,
+                "asn":None,"hosting":None})+"\n")
+    print(f"[{now_iso()}] {w} campioni attivi + {len(tracked_inactive)} transizioni inactive")
     export_latest()
     enrich_asn()   # v3.4: aggiunge ASN dopo l'export
 if __name__=="__main__": main()
