@@ -8,15 +8,15 @@
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap');
   :root{--bg:#0a0e14;--panel:#111722;--panel-2:#0d121a;--line:#1e2937;--txt:#e6edf3;--muted:#8a97a4;--dim:#5a6675;--accent:#ff4d5e;--accent-2:#4b8bf4;--good:#2dd4a7;--warn:#f5a524;--bad:#e0303f;--gold:#f5c518;--chip:#192230}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:radial-gradient(1000px 520px at 88% -8%,rgba(255,77,94,.08),transparent 60%),radial-gradient(820px 600px at -5% 105%,rgba(75,139,244,.06),transparent 55%),var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-height:100vh;padding:22px}
+  body{background:radial-gradient(1000px 520px at 88% -8%,rgba(45,212,167,.07),transparent 60%),radial-gradient(820px 600px at -5% 105%,rgba(75,139,244,.06),transparent 55%),var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-height:100vh;padding:22px}
   .wrap{max-width:1320px;margin:0 auto}
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
   h1{font-size:29px;font-weight:800;letter-spacing:-.6px;line-height:1}
   h1 .it-g{color:#2dd4a7} h1 .it-w{color:#fff} h1 .it-r{color:#ff4d5e}
   .tagline{color:var(--txt);opacity:.82;font-size:13px;margin-top:7px;font-family:'Sora',sans-serif;letter-spacing:.2px}
-  .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6} .updated b{color:var(--accent)}
-  .livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:5px;box-shadow:0 0 0 0 rgba(255,77,94,.6);animation:pulse 2s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,77,94,.5)}70%{box-shadow:0 0 0 7px rgba(255,77,94,0)}100%{box-shadow:0 0 0 0 rgba(255,77,94,0)}}
+  .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6} .updated b{color:var(--good)}
+  .livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:5px;box-shadow:0 0 0 0 rgba(45,212,167,.6);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,167,.5)}70%{box-shadow:0 0 0 7px rgba(45,212,167,0)}100%{box-shadow:0 0 0 0 rgba(45,212,167,0)}}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin:18px 0}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
   .stat:hover{transform:translateY(-2px);border-color:var(--dim)}
@@ -31,17 +31,17 @@
   .panel-desc{color:var(--txt);opacity:.78;font-size:13px;line-height:1.5;font-family:'Sora',sans-serif;margin:14px 0;max-width:780px}
   .net-label{color:var(--good);font-weight:700;opacity:1}
   .showing{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;margin:0 0 10px 2px}
-  .showing b{color:var(--accent);font-weight:700}
+  .showing b{color:var(--good);font-weight:700}
   .controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
   input[type=text],select{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
   input[type=text]{flex:1;min-width:200px}
   input[type=search]{flex:1;min-width:200px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
   input[type=search]:focus{border-color:var(--good);box-shadow:0 0 0 3px rgba(45,212,167,.12)}
   input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;height:14px;width:14px;background:var(--muted);cursor:pointer;border-radius:50%;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6L6 18M6 6l12 12' stroke='black' stroke-width='3'/%3E%3C/svg%3E") center/contain no-repeat}
-  input[type=search]::-webkit-search-cancel-button:hover{background:var(--txt)} input[type=text]:focus,select:focus{border-color:var(--accent)}
+  input[type=search]::-webkit-search-cancel-button:hover{background:var(--txt)} input[type=text]:focus,select:focus{border-color:var(--good)}
   .chip-filters{display:flex;gap:6px;flex-wrap:wrap}
   .cf{padding:9px 14px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
-  .cf:hover{color:var(--txt)} .cf.on{background:rgba(255,77,94,.13);border-color:var(--accent);color:var(--accent)}
+  .cf:hover{color:var(--txt)} .cf.on{background:rgba(45,212,167,.13);border-color:var(--good);color:var(--good)}
   .tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:15px;overflow:hidden}
   .tscroll{overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
   .tscroll::-webkit-scrollbar{height:8px}
@@ -58,7 +58,7 @@
   .rank{color:var(--muted);font-family:'Space Mono',monospace;width:30px} .rank.top{color:var(--gold);font-weight:700}
   .score{display:inline-flex;align-items:center;justify-content:center;min-width:42px;padding:5px 9px;border-radius:7px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px}
   .s-hi{background:rgba(45,212,167,.15);color:var(--good)} .s-mid{background:rgba(245,165,36,.15);color:var(--warn)} .s-lo{background:rgba(224,48,63,.15);color:var(--bad)}
-  .sbar{height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;width:80px} .sbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
+  .sbar{height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;width:80px} .sbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--good))}
   .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600}
   .b-act{background:rgba(45,212,167,.15);color:var(--good)} .b-ina{background:rgba(239,75,87,.13);color:var(--bad)} .b-sta{background:rgba(245,165,36,.14);color:var(--warn)}
   .proto{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600;background:var(--chip);color:var(--muted)}
@@ -68,12 +68,15 @@
   .pager .info{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace}
   .pager .btns{display:flex;gap:6px;align-items:center}
   .pg{padding:7px 13px;border-radius:8px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);cursor:pointer;font-size:13px;font-family:'Space Mono',monospace}
-  .pg:hover:not(:disabled){border-color:var(--accent)} .pg:disabled{opacity:.35;cursor:not-allowed}
+  .pg:hover:not(:disabled){border-color:var(--good)} .pg:disabled{opacity:.35;cursor:not-allowed}
   .pp{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 9px;font-size:12px}
   .loading,.err{padding:56px;text-align:center;color:var(--muted);font-family:'Space Mono',monospace} .err{color:var(--bad)}
-  .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto 15px;animation:spin 1s linear infinite}
+  .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--good);border-radius:50%;margin:0 auto 15px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   footer{margin-top:16px;text-align:center;color:var(--dim);font-size:11px;font-family:'Space Mono',monospace}
+  .ecolinks{margin-top:18px;text-align:center;font-size:12px;font-family:'Space Mono',monospace;color:var(--dim)}
+  .ecolinks a{color:var(--muted);text-decoration:none;margin:0 7px;transition:color .15s}
+  .ecolinks a:hover{color:var(--good)}
   /* ===== INSPECTOR ===== */
   .insp-search{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap}
   .insp-empty{padding:50px;text-align:center;color:var(--dim);font-family:'Space Mono',monospace}
@@ -88,17 +91,17 @@
   .kv{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px}
   .kv .k{color:var(--muted)} .kv .v{font-family:'Space Mono',monospace;text-align:right;word-break:break-all}
   .br{display:flex;align-items:center;gap:9px;margin-bottom:8px;font-size:12px}
-  .br .lbl{width:92px;color:var(--muted)} .br .bar{flex:1;height:7px;background:var(--line);border-radius:4px;overflow:hidden} .br .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent))} .br .pct{width:34px;text-align:right;font-family:'Space Mono',monospace}
+  .br .lbl{width:92px;color:var(--muted)} .br .bar{flex:1;height:7px;background:var(--line);border-radius:4px;overflow:hidden} .br .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--good))} .br .pct{width:34px;text-align:right;font-family:'Space Mono',monospace}
   .timeline{display:flex;gap:2px;flex-wrap:wrap;margin-top:6px}
   .tlc{width:7px;height:20px;border-radius:2px} .tlc.a{background:var(--good)} .tlc.i{background:var(--bad)}
-  .rankbox{font-size:14px} .rankbox b{font-size:28px;font-family:'Space Mono',monospace;color:var(--accent)}
+  .rankbox{font-size:14px} .rankbox b{font-size:28px;font-family:'Space Mono',monospace;color:var(--good)}
   .problem{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
   .problem:last-child{border:none} .problem .pic{font-size:15px} .problem.ok .pic{filter:none}
-  .repbtn{margin-top:12px;width:100%;padding:12px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif}
+  .repbtn{margin-top:12px;width:100%;padding:12px;border-radius:10px;background:var(--good);color:#04241a;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif}
   .repbtn:hover{filter:brightness(1.08)}
   .report{margin-top:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:13px;font-family:'Space Mono',monospace;font-size:11.5px;white-space:pre-wrap;color:var(--txt);display:none;line-height:1.55}
   .back{cursor:pointer;color:var(--accent-2);font-size:12px;font-family:'Space Mono',monospace;margin-bottom:10px;display:inline-block}
-  @media(max-width:760px){.hide-sm{display:none}h1{font-size:22px}}
+  @media(max-width:760px){.hide-sm{display:none}h1{font-size:22px}body{padding:12px}.stat{padding:11px 13px}.stat .v{font-size:20px}.tab{padding:10px 12px;font-size:12.5px}.updated{font-size:10.5px}}
   /* NodeAdvisor */
   #nodeadvisor h3{margin-bottom:10px}
   .na-loading,.na-err,.na-empty{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)}
@@ -108,7 +111,7 @@
   .na-tagchip{font-size:11.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--txt)}
   .na-tagchip.pos{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
   .na-tagchip.neg{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.08)}
-  .na-tagchip b{color:var(--accent)}
+  .na-tagchip b{color:var(--good)}
   .na-tagchip.neg b{color:var(--bad)}
   .na-sub{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 8px}
   .na-comments{margin:10px 0}
@@ -120,18 +123,18 @@
   .na-chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;user-select:none}
   .na-chk.pos:hover{border-color:rgba(52,211,153,.5)}
   .na-chk.neg:hover{border-color:rgba(248,113,113,.5)}
-  .na-chk input{accent-color:var(--accent);cursor:pointer}
+  .na-chk input{accent-color:var(--good);cursor:pointer}
   #na-comment{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;min-height:54px}
-  .na-submit{margin-top:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:13px}
+  .na-submit{margin-top:10px;background:var(--good);color:#04110b;border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:13px}
   .na-submit:disabled{opacity:.6;cursor:default}
   .na-note{font-size:10.5px;color:var(--dim);margin-top:8px}
   .na-privacy{font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5;opacity:.85;border-top:1px solid var(--line);padding-top:7px}
-  .na-voted{font-size:12.5px;color:var(--accent);padding:8px 0}
+  .na-voted{font-size:12.5px;color:var(--good);padding:8px 0}
   /* medref: median context next to values */
   .medref{font-size:9.5px;color:var(--dim);font-family:'Space Mono',monospace;margin-left:6px;opacity:.8}
   /* tooltip score breakdown */
   .qm{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:9px;margin-left:5px;cursor:help;position:relative;font-family:'Space Mono',monospace;vertical-align:middle}
-  .qm:hover{border-color:var(--accent);color:var(--accent)}
+  .qm:hover{border-color:var(--good);color:var(--good)}
   .qm::after{content:attr(data-tip);position:absolute;left:50%;bottom:140%;transform:translateX(-50%);width:240px;white-space:normal;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;line-height:1.5;color:var(--txt);font-family:inherit;text-align:left;opacity:0;pointer-events:none;transition:opacity .15s;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.5)}
   .qm:hover::after{opacity:1}
   @media(max-width:600px){.qm::after{width:160px}}
@@ -200,6 +203,12 @@
     </div>
   </div>
 
+  <div class="ecolinks">ecosystem:
+    <a href="https://hub.bluefrens.xyz" target="_blank" rel="noopener">BlueFrens Hub</a> &middot;
+    <a href="https://sentnodes.com" target="_blank" rel="noopener">SentNodes</a> &middot;
+    <a href="https://nodes.suchnode.net" target="_blank" rel="noopener">SuchNode</a> &middot;
+    <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a> &middot;
+    <a href="https://stats.sentinel.co" target="_blank" rel="noopener">stats.sentinel.co</a></div>
   <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators</footer>
 </div>
 <script>
@@ -396,7 +405,7 @@ function inspect(addr){
   showInspector();
   const n=MAP[addr]||NODES.find(x=>x.moniker&&x.moniker.toLowerCase()===(""+addr).toLowerCase());
   document.getElementById("insp-input").value=addr;
-  if(!n){document.getElementById("insp-body").innerHTML='<div class="insp-empty"><a href="#" onclick="backToExplorer();return false" style="color:var(--accent)">&lsaquo; back to list</a><br><br>Node not found: '+esc(addr)+'</div>';return;}
+  if(!n){document.getElementById("insp-body").innerHTML='<div class="insp-empty"><a href="#" onclick="backToExplorer();return false" style="color:var(--good)">&lsaquo; back to list</a><br><br>Node not found: '+esc(addr)+'</div>';return;}
   renderInspector(n);
 }
 function showInspector(){
@@ -417,7 +426,15 @@ function detectProblems(n){
   if(n.samples>3&&n.stab<80)P.push(["warn","\ud83d\udfe0","Low stability ("+n.stab.toFixed(0)+") \u2014 frequent active/inactive transitions."]);
   if(!n.api_ok&&n.status!=="stale")P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
   if(n.freshness<40&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
-  if(n.peers===0&&n.status==="active")P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
+  const ph=HIST[n.addr]||{};
+  if(n.status==="active"){
+    if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=5)
+      P.push(["warn","\ud83d\udeab","Healthy node but NO client traffic \u2014 peers were 0 in "+(100-ph.p_pos)+"% of recent samples. Usually NOT a node fault: the node likely isn\u2019t whitelisted for plans (PlanWizard ASN/region policy), so it never gets leases. Check this ASN in the ASN Intelligence tab."]);
+    else if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=30)
+      P.push(["info","\ud83d\udc65","Sparse client traffic \u2014 peers seen in only "+ph.p_pos+"% of recent samples (avg "+(ph.p_avg!=null?ph.p_avg:"?")+"). Whitelisted but low demand, or borderline placement."]);
+    else if(n.peers===0)
+      P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
+  }
   // --- rules based on network comparison (medians) ---
   if(n.status==="active"&&n.price_hr!=null&&MED.price_hr){
     if(n.price_hr>MED.price_hr*2.5)P.push(["warn","\ud83d\udfe0","Price/hr ("+n.price_hr+") is far above the network median ("+MED.price_hr+") \u2014 fewer clients will pick this node."]);
@@ -434,6 +451,33 @@ function detectProblems(n){
     if(top>mine*3)P.push(["info","\u2139\ufe0f","Running v"+n.version+" while most active nodes run v"+MED.topVersion+" \u2014 consider updating."]);
   }
   if(asnSaturated(n.asn))P.push(["warn","\ud83d\udfe0","On a saturated ASN ("+asnSaturated(n.asn)+") \u2014 over the PlanWizard whitelist limit, may not get leased/earn."]);
+  // --- HISTORICAL trend from the per-node timeline (unique to the Scorecard) ---
+  const h=HIST[n.addr];
+  if(h&&h.tl&&h.tl.length>=60&&n.status!=="stale"){
+    const tl=h.tl, third=Math.floor(tl.length/3);
+    const up=(s)=>{let a=0;for(const c of s)if(c==="1")a++;return a/s.length*100;};
+    const recent=up(tl.slice(-third)), earlier=up(tl.slice(0,tl.length-third));
+    if(recent-earlier<=-12)P.push(["warn","\ud83d\udcc9","Uptime is DECLINING \u2014 "+earlier.toFixed(0)+"% earlier vs "+recent.toFixed(0)+"% in recent samples. Something changed: check power, network, watchdog."]);
+    else if(recent-earlier>=12&&n.uptime<97)P.push(["ok","\ud83d\udcc8","Recovering \u2014 recent uptime "+recent.toFixed(0)+"% vs "+earlier.toFixed(0)+"% earlier. Keep it up."]);
+  }
+  // price per GB vs network
+  if(n.status==="active"&&n.price_gb!=null&&MED.price_gb){
+    if(n.price_gb>MED.price_gb*2.5)P.push(["warn","\ud83d\udfe0","Price/GB ("+n.price_gb+") far above median ("+MED.price_gb+") \u2014 clients comparing prices will skip this node."]);
+  }
+  // young node: track record still forming
+  if(n.status==="active"&&n.samples>0&&n.samples<=10)P.push(["info","\ud83c\udf31","Young node ("+n.samples+" samples) \u2014 grade and uptime not meaningful yet, check back in a few days."]);
+  // active + API ok but no speedtest data
+  if(n.status==="active"&&n.api_ok&&n.ul_mbps==null&&n.dl_mbps==null)P.push(["info","\u2139\ufe0f","No bandwidth data \u2014 the node hasn\u2019t reported a speedtest yet (runs on its own schedule)."]);
+  // crowded country: heavy competition for leases
+  if(n.status==="active"&&n.country){
+    const cc=NODES.filter(x=>x.status==="active"&&x.country===n.country).length;
+    if(cc>=200)P.push(["info","\ud83c\udfd9\ufe0f","Crowded country \u2014 "+cc+" active nodes in "+n.country+". More competition for client sessions."]);
+  }
+  // elite recognition
+  if(n.status==="active"&&n.score>=90){
+    const gr2=globalRank(n);
+    if(gr2&&gr2.pos<=20)P.push(["ok","\ud83c\udfc6","Elite node \u2014 grade "+grade(n.score)+", ranked #"+gr2.pos+" of "+gr2.total+" network-wide."]);
+  }
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
@@ -519,7 +563,7 @@ function livePeers(remote){
       if(!cell)return;
       const p=d&&d.result?d.result.peers:null;
       if(p!=null){
-        cell.innerHTML=p+' <span style="font-size:10px;color:var(--accent);font-family:Space Mono">\u00b7 \ud83d\udd34 LIVE</span>';
+        cell.innerHTML=p+' <span style="font-size:10px;color:var(--good);font-family:Space Mono">\u00b7 \ud83d\udfe2 LIVE</span>';
       }else if(badge){
         badge.textContent="\u00b7 collector (live n/d)";
       }
@@ -728,7 +772,7 @@ function renderAsnIntel(){
   const ASN_LIMIT=50;
   let rows=Object.values(agg);
   const q=asnIntelState().toLowerCase().trim();
-  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
+  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). <b>Check before you pay</b>: saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
   html+='<div class="asn-search"><input type="search" id="asn-q" placeholder="Search ASN or Country (e.g. AS24940, Hetzner, Italy)\u2026" value="'+esc(asnIntelState())+'"></div>';
   if(q){
     // filter ASNs by number, provider name, or country presence
