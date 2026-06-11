@@ -151,6 +151,11 @@
   .cmp-card h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;font-weight:600}
   .cmp-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;font-family:'Space Mono',monospace}
   .cmp-row .ck{color:var(--muted)} .cmp-row .cv{font-weight:700;text-align:right}
+  .cscroll{max-height:300px;overflow-y:auto;padding-right:6px}
+  .cscroll::-webkit-scrollbar{width:8px} .cscroll::-webkit-scrollbar-track{background:var(--panel-2);border-radius:5px}
+  .cscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px} .cscroll::-webkit-scrollbar-thumb:hover{background:var(--dim)}
+  .crow{cursor:pointer;border-radius:6px;padding:4px 6px;margin:0 -6px;transition:background .12s}
+  .crow:hover{background:rgba(45,212,167,.08)} .crow:hover .ck{color:var(--txt)}
 </style>
 </head>
 <body>
@@ -754,6 +759,7 @@ function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just n
 function fmtShort(ts){try{const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":00";}catch(e){return ts;}}
 // ===== ASN Intelligence view =====
 function asnIntelState(){ if(!window._asnSearch)window._asnSearch=""; return window._asnSearch; }
+function searchCountry(enc){ window._asnSearch=decodeURIComponent(enc); renderAsnIntel(); window.scrollTo({top:0,behavior:"smooth"}); }
 function renderAsnIntel(){
   const box=document.getElementById("view-asnintel");
   const act=NODES.filter(n=>n.status==="active"&&n.asn);
@@ -772,7 +778,7 @@ function renderAsnIntel(){
   const ASN_LIMIT=50;
   let rows=Object.values(agg);
   const q=asnIntelState().toLowerCase().trim();
-  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN).saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
+  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). <b>Check before you pay</b>: saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
   html+='<div class="asn-search"><input type="search" id="asn-q" placeholder="Search ASN or Country (e.g. AS24940, Hetzner, Italy)\u2026" value="'+esc(asnIntelState())+'"></div>';
   if(q){
     // filter ASNs by number, provider name, or country presence
@@ -800,12 +806,15 @@ function renderAsnIntel(){
   }else{
     // no query: country opportunity boxes (least vs most crowded)
     const cs=Object.entries(byCountry).sort((a,b)=>a[1]-b[1]);
-    const fewest=cs.slice(0,10), most=cs.slice(-8).reverse();
-    html+='<div class="cmp"><div class="cmp-card" style="border-left:3px solid var(--good)" title="Countries with the fewest active nodes \u2014 good places for a new node"><h4>\ud83c\udf31 Least crowded countries (opportunity)</h4>';
-    fewest.forEach(([c,n])=>{html+='<div class="cmp-row"><span class="ck">'+esc(c)+'</span><span class="cv">'+n+'</span></div>';});
-    html+='</div><div class="cmp-card" style="border-left:3px solid var(--bad)" title="Countries already packed with nodes \u2014 harder to stand out"><h4>\ud83d\udd25 Most crowded (avoid)</h4>';
-    most.forEach(([c,n])=>{html+='<div class="cmp-row"><span class="ck">'+esc(c)+'</span><span class="cv">'+n+'</span></div>';});
-    html+='</div></div>';
+    const most=cs.slice().reverse();
+    const crow=([c,n])=>'<div class="cmp-row crow" onclick="searchCountry(\''+encodeURIComponent(c)+'\')" title="Click to see which providers (ASNs) serve '+esc(c)+'"><span class="ck">'+esc(c)+'</span><span class="cv">'+n+'</span></div>';
+    html+='<div class="cmp"><div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\ud83c\udf31 Least crowded countries (opportunity) \u00b7 '+cs.length+'</h4>'+
+      '<div style="font-size:11px;color:var(--dim);margin-bottom:8px">click a country to see which providers serve it</div><div class="cscroll">';
+    cs.forEach(e=>{html+=crow(e);});
+    html+='</div></div><div class="cmp-card" style="border-left:3px solid var(--bad)"><h4>\ud83d\udd25 Most crowded (avoid)</h4>'+
+      '<div style="font-size:11px;color:var(--dim);margin-bottom:8px">click a country to see which providers serve it</div><div class="cscroll">';
+    most.forEach(e=>{html+=crow(e);});
+    html+='</div></div></div>';
   }
   rows.sort((a,b)=>b.total-a.total);
   html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
