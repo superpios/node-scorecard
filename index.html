@@ -24,7 +24,9 @@
   .stat .v{font-size:25px;font-weight:800;font-family:'Space Mono',monospace} .stat .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
   .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)} .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--bad)}
   .tabs{display:flex;gap:4px;margin:16px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;transition:.15s;position:relative;top:1px}
+  .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;transition:color .15s,border-color .2s;position:relative;top:1px}
+  @keyframes viewfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .viewfade{animation:viewfade .25s ease-out}
   .tab:hover{color:var(--txt)} .tab.active{color:var(--good);border-bottom-color:var(--good)}
   .panel-desc{color:var(--txt);opacity:.78;font-size:13px;line-height:1.5;font-family:'Sora',sans-serif;margin:14px 0;max-width:780px}
   .net-label{color:var(--good);font-weight:700;opacity:1}
@@ -34,7 +36,7 @@
   input[type=text],select{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
   input[type=text]{flex:1;min-width:200px}
   input[type=search]{flex:1;min-width:200px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
-  input[type=search]:focus{border-color:var(--accent)}
+  input[type=search]:focus{border-color:var(--good);box-shadow:0 0 0 3px rgba(45,212,167,.12)}
   input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;height:14px;width:14px;background:var(--muted);cursor:pointer;border-radius:50%;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6L6 18M6 6l12 12' stroke='black' stroke-width='3'/%3E%3C/svg%3E") center/contain no-repeat}
   input[type=search]::-webkit-search-cancel-button:hover{background:var(--txt)} input[type=text]:focus,select:focus{border-color:var(--accent)}
   .chip-filters{display:flex;gap:6px;flex-wrap:wrap}
@@ -47,11 +49,11 @@
   .tscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
   .tscroll::-webkit-scrollbar-thumb:hover{background:var(--dim)}
   table{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
-  thead th{text-align:left;padding:12px 13px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:var(--panel-2);border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+  thead th{text-align:left;padding:12px 13px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:var(--panel-2);border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:2}
   thead th:hover{color:var(--txt)} thead th .ar{opacity:.5;font-size:9px}
   tbody td{padding:11px 13px;border-bottom:1px solid var(--line);white-space:nowrap}
   tbody tr:last-child td{border-bottom:none}
-  tbody tr.node-row{cursor:pointer} tbody tr.node-row:hover{background:rgba(255,255,255,.022)}
+  tbody tr.node-row{cursor:pointer;transition:background .12s} tbody tr.node-row:hover{background:rgba(255,255,255,.035)}
   .mono{font-family:'Space Mono',monospace} .addr{color:var(--dim);font-size:10.5px} .mon{font-weight:600}
   .rank{color:var(--muted);font-family:'Space Mono',monospace;width:30px} .rank.top{color:var(--gold);font-weight:700}
   .score{display:inline-flex;align-items:center;justify-content:center;min-width:42px;padding:5px 9px;border-radius:7px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px}
@@ -779,9 +781,13 @@ function renderAsnIntel(){
 }
 function switchView(v){
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-  document.getElementById("view-explorer").style.display=(v==="explorer")?"block":"none";
-  document.getElementById("view-asnintel").style.display=(v==="asnintel")?"block":"none";
-  document.getElementById("view-leaderboard").style.display=(v==="leaderboard")?"block":"none";
+  ["explorer","asnintel","leaderboard"].forEach(k=>{
+    const el=document.getElementById("view-"+k);
+    const show=(v===k);
+    el.style.display=show?"block":"none";
+    el.classList.remove("viewfade");
+    if(show){void el.offsetWidth;el.classList.add("viewfade");}
+  });
   if(v==="asnintel")renderAsnIntel();
   if(v==="leaderboard")renderLeaderboard();
 }
