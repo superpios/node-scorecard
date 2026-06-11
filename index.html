@@ -252,7 +252,7 @@ async function load(){
   buildCountry();renderStats();render();
   const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
   const ts=allTs.length?allTs[allTs.length-1]:new Date().toISOString();
-  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.filter(n=>n.status==="active").length+" active &middot; "+NODES.length+" tracked";
+  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.filter(n=>n.status==="active").length+" active";
 }
 function enrich(n){
   const h=HIST[n.addr]||{};const active=n.status==="active";
@@ -336,8 +336,7 @@ function renderStats(){
     '<div class="stat"><div class="v" data-c="'+active+'">0</div><div class="l">Active nodes</div></div>'+
     '<div class="stat b2"><div class="v" data-c="'+activeReach+'">0</div><div class="l">API reachable</div></div>'+
     '<div class="stat b3"><div class="v" data-c="'+activeAvg+'">0</div><div class="l">Avg score</div></div>'+
-    '<div class="stat b4"><div class="v" data-c="'+activeTop+'">0</div><div class="l">Score &ge; 85</div></div>'+
-    '<div class="stat b5" title="Nodes seen on-chain in the last 30 days. The chain holds 76k+ lifetime registrations, mostly long-dead \u2014 we track the living network."><div class="v" data-c="'+NODES.length+'">0</div><div class="l">Tracked (30d)</div></div>';
+    '<div class="stat b4"><div class="v" data-c="'+activeTop+'">0</div><div class="l">Score &ge; 85</div></div>';
   document.querySelectorAll("#stats .v[data-c]").forEach(el=>animateCount(el,+el.dataset.c));
 }
 function filtered(){let r=NODES.slice();
