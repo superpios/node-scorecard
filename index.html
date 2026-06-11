@@ -221,12 +221,14 @@ const NA_TAGS=[
 const NA_TAGMAP=Object.fromEntries(NA_TAGS.map(t=>[t.id,t]));
 const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
   history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"],
-  trends:["./trends.json","https://raw.githubusercontent.com/"+REPO+"/main/trends.json","https://raw.githubusercontent.com/"+REPO+"/master/trends.json"]};
-let NODES=[],MAP={},HIST={},MAXN=1,MED={},TRENDS=null;
+  trends:["./trends.json","https://raw.githubusercontent.com/"+REPO+"/main/trends.json","https://raw.githubusercontent.com/"+REPO+"/master/trends.json"],
+  capsule:["./capsule.json","https://raw.githubusercontent.com/"+REPO+"/main/capsule.json","https://raw.githubusercontent.com/"+REPO+"/master/capsule.json"]};
+let NODES=[],MAP={},HIST={},MAXN=1,MED={},TRENDS=null,CAPSULE=null;
 let state={tab:"explorer",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false},showInactive:false};
 async function tryFetch(u){for(const x of u){try{const cb=x.includes("githubusercontent")?"":"?t="+Date.now();const r=await fetch(x+cb,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
 async function load(){
   tryFetch(SRC.trends).then(t=>{TRENDS=t;});
+  tryFetch(SRC.capsule).then(c=>{CAPSULE=c;});
   const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
   if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
   if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
@@ -876,6 +878,12 @@ function renderTrends(){
     down.forEach(mv=>{html+='<div class="cmp-row" style="cursor:pointer" onclick="inspect(\''+mv.a+'\')"><span class="ck">'+esc(mv.mon||mv.a.slice(0,14)+"\u2026")+'</span><span class="cv">'+mv.d7+'% <span style="color:var(--bad)">'+mv.delta+'</span></span></div>';});
     if(!down.length)html+='<div class="cmp-row"><span class="ck">\u2014</span></div>';
     html+='</div></div>';
+  }
+  if(CAPSULE&&CAPSULE.latest){
+    const c=CAPSULE.latest;
+    html+='<div class="asn-intro" style="margin-top:4px;font-size:12px">\ud83e\uddca <b>Time Capsule</b> \u2014 daily snapshot archived on <b>Walrus</b> decentralized storage (Sui ecosystem): '+
+      '<a href="'+esc(c.url)+'" target="_blank" rel="noopener" style="color:var(--good)">'+esc(c.date)+' \u00b7 blob '+esc((c.blobId||"").slice(0,10))+'\u2026</a>'+
+      ' <span style="color:var(--dim)">sha256 '+esc((c.sha256||"").slice(0,12))+'\u2026 \u00b7 immutable &amp; verifiable</span></div>';
   }
   box.innerHTML=html;
 }
