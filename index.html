@@ -74,6 +74,9 @@
   .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--good);border-radius:50%;margin:0 auto 15px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   footer{margin-top:16px;text-align:center;color:var(--dim);font-size:11px;font-family:'Space Mono',monospace}
+  .support{margin:14px auto 0;max-width:680px;text-align:center;font-size:11.5px;color:var(--dim);line-height:1.6}
+  .support .addr{display:inline-block;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 11px;margin-top:5px;cursor:pointer;transition:all .15s}
+  .support .addr:hover{border-color:var(--good);color:var(--good)}
   .ecolinks{margin:26px auto 0;max-width:680px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 18px;text-align:center}
   .ecolinks .et{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:11px;font-weight:600}
   .ecolinks a{display:inline-block;color:var(--txt);text-decoration:none;font-size:12.5px;font-family:'Space Mono',monospace;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:7px 13px;margin:3px 4px;transition:all .15s}
@@ -96,6 +99,20 @@
   .timeline{display:flex;gap:2px;flex-wrap:wrap;margin-top:6px}
   .tlc{width:7px;height:20px;border-radius:2px} .tlc.a{background:var(--good)} .tlc.i{background:var(--bad)}
   .rankbox{font-size:14px} .rankbox b{font-size:28px;font-family:'Space Mono',monospace;color:var(--good)}
+  .pchip{display:inline-block;font-size:11px;font-family:'Space Mono',monospace;background:rgba(45,212,167,.09);color:var(--good);border:1px solid rgba(45,212,167,.22);border-radius:7px;padding:3px 9px;margin:2px 3px 2px 0}
+  .lchk{margin-top:14px;border:1px solid var(--line);border-radius:11px;background:var(--panel-2)}
+  .lchk summary{cursor:pointer;padding:11px 14px;font-size:12px;font-weight:700;color:var(--txt);user-select:none;list-style:none}
+  .lchk summary::-webkit-details-marker{display:none}
+  .lchk summary:hover{color:var(--good)}
+  .lchk[open] summary{border-bottom:1px solid var(--line)}
+  .lc-intro{padding:10px 14px 2px;font-size:11.5px;color:var(--muted);line-height:1.5}
+  .lc-item{padding:9px 14px;border-bottom:1px solid rgba(30,41,55,.5)}
+  .lc-item:last-child{border-bottom:none}
+  .lc-item.hot{border-left:3px solid var(--warn);background:rgba(245,165,36,.04)}
+  .lc-name{font-size:12px;font-weight:600;cursor:help}
+  .lc-name .why{color:var(--dim);font-weight:400;font-size:11px}
+  .lc-item code{display:block;margin-top:5px;font-family:'Space Mono',monospace;font-size:11px;color:var(--good);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 9px;cursor:pointer;overflow-x:auto;white-space:nowrap;transition:border-color .15s}
+  .lc-item code:hover{border-color:var(--good)}
   .problem{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
   .problem:last-child{border:none} .problem .pic{font-size:15px} .problem.ok .pic{filter:none}
   .repbtn{margin-top:12px;width:100%;padding:12px;border-radius:10px;background:var(--good);color:#04241a;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif}
@@ -215,6 +232,7 @@
     <a href="https://nodes.suchnode.net" target="_blank" rel="noopener">SuchNode</a>
     <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a>
     <a href="https://stats.sentinel.co" target="_blank" rel="noopener">stats.sentinel.co</a></div>
+  <div class="support" id="support"></div>
   <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators</footer>
 </div>
 <script>
@@ -508,6 +526,27 @@ function detectProblems(n){
     const gr2=globalRank(n);
     if(gr2&&gr2.pos<=20)P.push(["ok","\ud83c\udfc6","Elite node \u2014 grade "+grade(n.score)+", ranked #"+gr2.pos+" of "+gr2.total+" network-wide."]);
   }
+  // --- IP condiviso: piu' nodi sullo stesso host dividono attenzione e affidabilita' percepita ---
+  if(n.status==="active"&&n.remote){
+    if(!window._ipdup){
+      window._ipdup={};
+      NODES.forEach(x=>{if(x.status==="active"&&x.remote){const h=x.remote.split(":")[0];window._ipdup[h]=(window._ipdup[h]||0)+1;}});
+    }
+    const others=(window._ipdup[n.remote.split(":")[0]]||1)-1;
+    if(others>=1)P.push(["info","\ud83d\udc65","Shares its IP/host with "+others+" other active node"+(others===1?"":"s")+" \u2014 multiple nodes on one address split traffic and can look suspicious to plan providers."]);
+  }
+  // --- remote = IP grezzo su rete residenziale: alla prima rotazione IP il nodo sparisce ---
+  if(n.status==="active"&&n.hosting===false&&n.remote&&/^\d+\.\d+\.\d+\.\d+/.test(n.remote))
+    P.push(["warn","\ud83c\udfe0","Remote announced as a RAW IP on a residential-class network \u2014 when the ISP rotates the IP, the node becomes unreachable. Use a DDNS hostname instead."]);
+  // --- prezzo zero: configurazione rotta, il nodo lavora gratis o viene scartato ---
+  if(n.status==="active"&&(n.price_hr===0||n.price_gb===0))
+    P.push(["warn","\ud83d\udcb8","A price is set to ZERO ("+(n.price_hr===0?"hourly":"per-GB")+") \u2014 likely a misconfiguration."]);
+  // --- token di pagamento incompleti ---
+  if(n.status==="active"&&typeof n.gb_tokens==="number"&&n.gb_tokens>0&&n.gb_tokens<3)
+    P.push(["info","\ud83e\udd1d","Accepts only "+n.gb_tokens+"/3 payment tokens \u2014 plans paying with the missing tokens can\u2019t use this node."]);
+  // --- moniker assente ---
+  if(n.status==="active"&&!n.hasName)
+    P.push(["info","\ud83c\udff7\ufe0f","No moniker set \u2014 anonymous nodes are harder to find, trust and get feedback on. Set one in config.toml."]);
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
@@ -522,6 +561,58 @@ function ulRef(v){
   const p=pctRank(MED.ulArr,v);if(p==null)return "";
   const lbl=p>=75?"top "+(100-p)+"%":p<=25?"bottom "+p+"%":"median "+MED.ul_mbps.toFixed(0);
   return ' <span class="medref">'+lbl+'</span>';
+}
+// Full checkup: every external check the Scorecard runs, with its pass state.
+function passedChecks(n){
+  const ph=HIST[n.addr]||{};
+  const out=[];
+  const add=(ok,name)=>{if(ok)out.push(name);};
+  add(n.status==="active","On-chain active");
+  add(n.status!=="stale","Heartbeat fresh");
+  add(!!n.api_ok,"API reachable");
+  add(n.uptime>=90,"Uptime \u226590%");
+  add(n.stab>=80,"Stability");
+  add(n.samples>10,"Track record");
+  if(ph.tl&&ph.tl.length>=60){
+    const third=Math.floor(ph.tl.length/3);
+    const up=(s)=>{let a=0;for(const c of s)if(c==="1")a++;return a/s.length*100;};
+    add(up(ph.tl.slice(-third))-up(ph.tl.slice(0,ph.tl.length-third))>-12,"Uptime trend");
+  }
+  add(!(asnSaturated(n.asn)),"ASN not saturated");
+  if(n.price_hr!=null&&MED.price_hr)add(n.price_hr>0&&n.price_hr<=MED.price_hr*2.5,"Price /hr sane");
+  if(n.price_gb!=null&&MED.price_gb)add(n.price_gb>0&&n.price_gb<=MED.price_gb*2.5,"Price /GB sane");
+  if(n.ul_mbps!=null)add(n.ul_mbps>=1,"Bandwidth");
+  if(typeof n.gb_tokens==="number")add(n.gb_tokens>=3,"Payment tokens 3/3");
+  add(!!n.hasName,"Moniker set");
+  if(ph.l_now!=null)add(ph.l_now>0,"Leased (on-chain)");
+  if(ph.p_pos!=null)add(ph.p_pos>30,"Client traffic");
+  if(n.remote){if(!window._ipdup){window._ipdup={};NODES.forEach(x=>{if(x.status==="active"&&x.remote){const h=x.remote.split(":")[0];window._ipdup[h]=(window._ipdup[h]||0)+1;}});}
+    add((window._ipdup[n.remote.split(":")[0]]||1)<=1,"Dedicated IP");}
+  if(n.hosting===false&&n.remote)add(!/^\d+\.\d+\.\d+\.\d+/.test(n.remote),"DDNS hostname");
+  return out;
+}
+// Community support: set the operator wallet below to show a discreet support line.
+// Leave empty and the section simply does not exist. No popups, no nags - this tool
+// is free infrastructure for the Sentinel community, support is optional and quiet.
+const DONATE_ADDR="";   // e.g. "sent1..." (operator wallet)
+const DONATE_DENOM="P2P";
+function renderSupport(){
+  if(!DONATE_ADDR)return;
+  document.getElementById("support").innerHTML=
+    'Independent &amp; community-run \u2014 no ads, no trackers, no backend. '+
+    'If the Scorecard saved you a bad VPS or a lost lease, you can fuel its servers:'+
+    '<br><span class="addr" title="Click to copy" onclick="copyAddr(this)" data-a="'+esc(DONATE_ADDR)+'">'+esc(DONATE_DENOM)+' \u00b7 '+esc(DONATE_ADDR)+' \u29c9</span>';
+}
+function copyAddr(el){
+  if(navigator.clipboard)navigator.clipboard.writeText(el.dataset.a);
+  const o=el.innerHTML; el.innerHTML="\u2713 address copied \u2014 thank you";
+  setTimeout(()=>{el.innerHTML=o;},1500);
+}
+function copyCmd(el){
+  const t=el.dataset.cmd||el.textContent;
+  if(navigator.clipboard)navigator.clipboard.writeText(t);
+  const old=el.textContent; el.textContent="\u2713 copied \u2014 paste it on the node\u2019s machine";
+  setTimeout(()=>{el.textContent=old;},1400);
 }
 function renderInspector(n){
   const rank=countryRank(n);
@@ -541,6 +632,27 @@ function renderInspector(n){
   if(n.tl){tl='<div class="timeline">'+n.tl.split("").map(c=>'<span class="tlc '+(c==="1"?"a":"i")+'" title="'+(c==="1"?"active":"inactive")+'"></span>').join("")+'</div>'+
     '<div style="font-size:10.5px;color:var(--dim);font-family:Space Mono;margin-top:6px">'+(n.tl_from?fmtShort(n.tl_from):"")+' \u2192 '+(n.tl_to?fmtShort(n.tl_to):"")+' &middot; '+n.tl.length+' samples</div>';}
   const probs=detectProblems(n).map(([cl,ic,t])=>'<div class="problem '+cl+'"><span class="pic">'+ic+'</span><span>'+t+'</span></div>').join("");
+  const pc=passedChecks(n);
+  // Local checkup: the Scorecard sees the node from the OUTSIDE. For the inside,
+  // it hands the operator the exact commands - highlighted by detected problems.
+  const ptxt=detectProblems(n).map(p=>p[2]).join(" ");
+  const hotC=/not reachable|INACTIVE|stale/i.test(ptxt);          // container/clock issues
+  const hotP=/DECLINING|flaps|Stability|unstable/i.test(ptxt);    // power/heat/sd
+  const LC=[
+    ["\ud83e\udeC0","Container alive","no container, no node \u2014 rule it out first","docker ps --format '{{.Names}} {{.Status}}'",hotC],
+    ["\ud83d\udd01","Crash loops","silent restarts show up here","docker inspect --format '{{.RestartCount}}' $(docker ps -q | head -1)",hotC||hotP],
+    ["\ud83d\udcdc","Recent errors","the container\u2019s own words, last hour","docker logs $(docker ps -q | head -1) --since 1h 2>&1 | grep -iE \"error|fatal\" | tail -10",hotC],
+    ["\ud83c\udf21\ufe0f","Power & heat (Pi)","get_throttled MUST say 0x0 \u2014 anything else is bad power or overheating","vcgencmd measure_temp; vcgencmd get_throttled",hotP],
+    ["\ud83d\udcbe","Disk space","a full disk kills databases quietly","df -h /",hotP],
+    ["\ud83e\udde0","Memory","swapping = stutters = dropped sessions","free -h",false],
+    ["\u23f0","Clock sync","a skewed clock breaks TLS and on-chain timing","timedatectl | grep -i synchron",hotC]
+  ];
+  const anyHot=LC.some(x=>x[4]);
+  const localChk='<details class="lchk"'+(anyHot?' open':'')+'><summary>\ud83e\ude7a Operator\u2019s local checkup \u2014 the parts no external scanner can see'+(anyHot?' <span style="color:var(--warn)">(suggested for the issues above)</span>':'')+'</summary>'+
+    '<div class="lc-intro">The Scorecard watches this node from the outside. These commands check the <b>inside</b> \u2014 run them on the node\u2019s machine. Click a command to copy it. (Adjust the container name if needed.)</div>'+
+    LC.map(([ic,name,why,cmd,hot])=>'<div class="lc-item'+(hot?' hot':'')+'"><div class="lc-name" title="'+esc(why)+'">'+ic+' '+name+' <span class="why">\u2014 '+esc(why)+'</span></div><code onclick="copyCmd(this)" data-cmd="'+esc(cmd)+'">'+esc(cmd)+'</code></div>').join("")+
+    '</details>';
+  const passedHtml=pc.length?'<div style="margin-top:11px;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">'+pc.length+' checks passed</div><div style="margin-top:6px">'+pc.map(c=>'<span class="pchip">\u2713 '+c+'</span>').join("")+'</div>':"";
   document.getElementById("insp-body").innerHTML=
     '<span class="back" onclick="backToExplorer()">\u2039 back to list</span>'+
     '<div class="insp-grid"><div class="card">'+
@@ -570,7 +682,7 @@ function renderInspector(n){
         '<span class="k">Hosting</span><span class="v">'+(n.asn?esc(asnNum(n.asn))+" \u00b7 "+esc(asnName(n.asn)):"\u2014")+'</span></div>'+
     '</div><div class="card">'+
       '<h3>Score breakdown</h3>'+br+
-      '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+
+      '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+passedHtml+localChk+
       '<button class="repbtn" onclick="genReport(\''+n.addr+'\')">\ud83d\udccb Generate support report</button>'+
       '<div class="report" id="report"></div>'+
       '<div id="nodeadvisor" style="margin-top:22px"><h3>NodeAdvisor \u2014 community feedback</h3><div id="na-body" class="na-loading">loading feedback\u2026</div></div>'+
@@ -974,7 +1086,7 @@ function renderTrends(){
   box.innerHTML=html;
 }
 
-setPanelDesc();load();
+setPanelDesc();renderSupport();load();
 </script>
 </body>
 </html>
