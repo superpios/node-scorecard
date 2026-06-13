@@ -1022,11 +1022,13 @@ function renderAsnIntel(){
   }else{
     const cs=Object.entries(byCountry).sort((a,b)=>a[1]-b[1]);
     const crow=([c,n],mx)=>{const w=Math.round(n/mx*100);return '<div class="ccol" onclick="searchCountry(\''+encodeURIComponent(c)+'\')" title="Click to see which providers (ASNs) serve '+esc(c)+'"><span class="ccol-c">'+esc(c)+'</span><span class="ccol-bar"><span style="width:'+w+'%"></span></span><span class="ccol-n">'+n+'</span></div>';};
-    const mxLeast=Math.max(...cs.slice(0,18).map(e=>e[1]),1);
+    const OPP_MAX=14;  // soglia "free slots": paesi sotto questa sono opportunita'
+    const least=cs.filter(e=>e[1]<=OPP_MAX);
+    const mxLeast=Math.max(...least.map(e=>e[1]),1);
     const mxMost=Math.max(...cs.map(e=>e[1]),1);
     html+='<div class="oppgrid">'+
-      '<div class="oppcard good"><div class="oppcard-h"><span class="oppcard-ic">\ud83c\udf31</span><div><div class="oppcard-t">Least crowded \u2014 opportunity</div><div class="oppcard-s">fewest nodes \u00b7 best chance of a free slot</div></div></div><div class="cscroll">';
-    cs.slice(0,18).forEach(e=>{html+=crow(e,mxLeast);});
+      '<div class="oppcard good"><div class="oppcard-h"><span class="oppcard-ic">\ud83c\udf31</span><div><div class="oppcard-t">Least crowded \u2014 opportunity</div><div class="oppcard-s">'+least.length+' countries with \u226414 nodes \u00b7 best chance of a free slot</div></div></div><div class="cscroll">';
+    least.forEach(e=>{html+=crow(e,mxLeast);});
     html+='</div></div>'+
       '<div class="oppcard bad"><div class="oppcard-h"><span class="oppcard-ic">\ud83d\udd25</span><div><div class="oppcard-t">Most crowded \u2014 avoid</div><div class="oppcard-s">saturated \u00b7 hard to get leased</div></div></div><div class="cscroll">';
     cs.slice().reverse().slice(0,18).forEach(e=>{html+=crow(e,mxMost);});
