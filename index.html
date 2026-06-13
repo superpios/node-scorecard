@@ -198,13 +198,13 @@
   .oppcard-ic{font-size:20px}
   .oppcard-t{font-size:13.5px;font-weight:700;color:var(--txt)}
   .oppcard-s{font-size:11px;color:var(--dim);margin-top:2px}
-  .ccol{display:grid;grid-template-columns:1fr 70px 28px;align-items:center;gap:9px;padding:5px 7px;margin:0 -7px;border-radius:7px;cursor:pointer;transition:background .12s}
+  .ccol{display:grid;grid-template-columns:1fr 64px 30px;align-items:center;gap:10px;padding:6px 8px;margin:0;border-radius:8px;cursor:pointer;transition:background .12s}
   .ccol:hover{background:rgba(45,212,167,.07)}
   .ccol-c{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ccol:hover .ccol-c{color:var(--txt)}
-  .ccol-bar{height:5px;background:var(--panel-2);border-radius:3px;overflow:hidden}
-  .ccol-bar span{display:block;height:100%;background:var(--dim);border-radius:3px}
-  .oppcard.good .ccol-bar span{background:var(--good);opacity:.55} .oppcard.bad .ccol-bar span{background:var(--bad);opacity:.55}
+  .ccol-bar{height:6px;background:rgba(127,140,160,.12);border-radius:4px;overflow:hidden;width:100%}
+  .ccol-bar span{display:block;height:100%;border-radius:4px;min-width:3px;transition:width .3s}
+  .oppcard.good .ccol-bar span{background:linear-gradient(90deg,var(--good),rgba(45,212,167,.5))} .oppcard.bad .ccol-bar span{background:linear-gradient(90deg,rgba(224,48,63,.5),var(--bad))}
   .ccol-n{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right}
   .asn-table-h{font-size:13px;font-weight:700;color:var(--muted);margin:0 0 10px;text-transform:uppercase;letter-spacing:.8px}
   .asn-table-c{display:inline-block;background:var(--chip);color:var(--dim);font-family:'Space Mono',monospace;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px}
@@ -212,6 +212,9 @@
   .asn-tbl .tdim{color:var(--dim);font-size:10px}
   .asn-badge.warn{background:rgba(245,165,36,.13);color:var(--warn)}
   .asn-badge.cloud{background:rgba(245,165,36,.13);color:var(--warn);cursor:help}
+  .asn-badge.isp{background:rgba(224,48,63,.12);color:var(--bad);cursor:help}
+  .asn-badge.unver{background:rgba(127,140,160,.12);color:var(--muted);cursor:help}
+  .cloudwarn.unver{color:var(--muted);background:rgba(127,140,160,.06);border-color:rgba(127,140,160,.2)}
   .cloudwarn{margin-top:8px;font-size:10.5px;color:var(--warn);background:rgba(245,165,36,.07);border:1px solid rgba(245,165,36,.2);border-radius:7px;padding:4px 8px;cursor:help;line-height:1.3}
   .provlink{display:inline-block;margin-left:5px;color:var(--good);text-decoration:none;font-weight:700;font-size:12px;opacity:.75;transition:opacity .15s}
   .provlink:hover{opacity:1}
@@ -230,7 +233,11 @@
   .cmp-card h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;font-weight:600}
   .cmp-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;font-family:'Space Mono',monospace}
   .cmp-row .ck{color:var(--muted)} .cmp-row .cv{font-weight:700;text-align:right}
-  .cscroll{max-height:300px;overflow-y:auto;padding-right:6px}
+  .cscroll{max-height:300px;overflow-y:auto;overflow-x:hidden;padding-right:8px}
+  .cscroll::-webkit-scrollbar{width:7px}
+  .cscroll::-webkit-scrollbar-track{background:transparent}
+  .cscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .cscroll::-webkit-scrollbar-thumb:hover{background:var(--dim)}
   .cscroll::-webkit-scrollbar{width:8px} .cscroll::-webkit-scrollbar-track{background:var(--panel-2);border-radius:5px}
   .cscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px} .cscroll::-webkit-scrollbar-thumb:hover{background:var(--dim)}
   .crow{cursor:pointer;border-radius:6px;padding:4px 6px;margin:0 -6px;transition:background .12s}
@@ -981,6 +988,18 @@ const TRUSTED_PROV=[
 // Major cloud providers the Sentinel docs advise against \u2014 often NOT whitelisted
 // for plans, even if a few existing nodes there are leased. New nodes risk getting none.
 const DISCOURAGED=["amazon","aws ","google","g cloud","azure","microsoft","oracle","alibaba","vultr","linode","digitalocean","digital ocean","colocrossing","tencent","huawei"];
+// National telecom/ISP carriers \u2014 not hosting providers; a node here makes no sense.
+const NATIONAL_ISP=["magticom","chunghwa","hinet","data communication business","kazakhtelecom","korea telecom","administracion nacional de telecom","comcast","bouygues","telefonica","vodafone","deutsche telekom","orange s.a","telecom italia","telstra","at&t","verizon","china mobile","china unicom","china telecom","rostelecom","turk telekom","bharti airtel","national telecom","jsc ","pjsc","ojsc","gtpl","bsnl","mtnl"];
+// Known, reputable hosting/VPS providers (anything outside this AND not a major cloud
+// AND not a national ISP = "unverified" \u2014 caution before buying).
+const KNOWN_HOSTS=["hetzner","netcup","ovh","scaleway","leaseweb","akile","racknerd","hosthatch"];
+function providerClass(name){
+  if(!name)return null;
+  const n=name.toLowerCase();
+  if(NATIONAL_ISP.some(t=>n.includes(t)))return "isp";
+  if(KNOWN_HOSTS.some(h=>n.includes(h)))return "known";
+  return "unverified";
+}
 function isMajorCloud(name){
   if(!name)return false;
   const n=name.toLowerCase();
@@ -1038,7 +1057,9 @@ function renderAsnIntel(){
         const lpct=a.hasL?Math.round(a.leased/a.total*100):null;
         html+='<div class="vcard '+vk+'">'+
           '<div class="vcard-top"><div class="vcard-asn">'+esc(a.num)+'</div><div class="vbadge '+vk+'">'+verdict+'</div></div>'+
-          (isMajorCloud(a.name)?'<div class="cloudwarn" title="Major cloud provider \u2014 the Sentinel docs advise against these, as they are frequently not whitelisted for plans. A few existing nodes may be leased, but a new node here risks never getting a lease.">\u26a0 Major cloud \u2014 may not be whitelisted</div>':'')+
+          (isMajorCloud(a.name)?'<div class="cloudwarn" title="Major cloud provider \u2014 the Sentinel docs advise against these, as they are frequently not whitelisted for plans. A few existing nodes may be leased, but a new node here risks never getting a lease.">\u26a0 Major cloud \u2014 may not be whitelisted</div>':
+           providerClass(a.name)==="isp"?'<div class="cloudwarn" title="National telecom / ISP carrier, not a hosting provider \u2014 you cannot buy a standard VPS here.">\u26a0 National ISP \u2014 not a hosting provider</div>':
+           providerClass(a.name)==="unverified"?'<div class="cloudwarn unver" title="Not a recognized hosting brand. Could be a reseller or niche operator \u2014 verify reputation and where its datacenter actually is before buying.">? Unverified provider \u2014 check before buying</div>':'')+
           (function(){
             const tp=trustedLink(a.name);
             return '<div class="vcard-name">'+esc(a.name||"unknown provider")+(tp?' <a href="'+tp.url+'" target="_blank" rel="noopener noreferrer" class="provlink" title="'+esc(tp.label)+' \u2014 official site">\u2197</a>':'')+'</div>';
@@ -1093,7 +1114,9 @@ function renderAsnIntel(){
       '<td class="mono">'+r.total+' <span class="tdim">('+pct+'%)</span></td>'+
       '<td class="mono" '+(lpct!=null?'style="color:'+(lpct>=50?'var(--good)':lpct>0?'var(--warn)':'var(--bad)')+'">'+lpct+'%':'>\u2014')+'</td>'+
       '<td class="mono" title="'+esc(Object.keys(r.countries).slice(0,12).join(", "))+'">'+Object.keys(r.countries).length+'</td>'+
-      '<td>'+(sat?'<span class="asn-badge sat">Saturated</span>':near?'<span class="asn-badge warn">Filling</span>':'<span class="asn-badge ok">Free</span>')+(isMajorCloud(r.name)?' <span class="asn-badge cloud" title="Major cloud \u2014 Sentinel docs advise against; often not whitelisted for plans">\u26a0 major cloud</span>':'')+'</td></tr>';
+      '<td>'+(sat?'<span class="asn-badge sat">Saturated</span>':near?'<span class="asn-badge warn">Filling</span>':'<span class="asn-badge ok">Free</span>')+(isMajorCloud(r.name)?' <span class="asn-badge cloud" title="Major cloud \u2014 Sentinel docs advise against; often not whitelisted for plans">\u26a0 major cloud</span>':
+       providerClass(r.name)==="isp"?' <span class="asn-badge isp" title="National telecom / ISP carrier \u2014 not a hosting provider. \u201cFree slots\u201d here is misleading: you can\u2019t buy a normal VPS from a phone company.">\u26a0 national ISP</span>':
+       providerClass(r.name)==="unverified"?' <span class="asn-badge unver" title="Unrecognized provider \u2014 not a known hosting brand. May be fine, may be a reseller or niche operator. Verify reputation and location before buying.">? unverified</span>':'')+'</td></tr>';
   });
   if(!rows.length)html+='<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--dim)">no networks match \u201c'+esc(asnIntelState())+'\u201d</td></tr>';
   html+='</tbody></table></div></div>';
