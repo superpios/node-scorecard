@@ -739,8 +739,7 @@ function renderInspector(n){
     '</div><div class="card">'+
       '<h3>Score breakdown</h3>'+br+
       '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+passedHtml+localChk+
-      '<button class="repbtn" onclick="genReport(\''+n.addr+'\')">\ud83d\udccb Generate support report</button>'+
-      (detectProblems(n).some(p=>p[0]==="warn"||p[0]==="bad")?'<button class="repbtn tg" onclick="genTg(\''+n.addr+'\')" title="Build a ready-to-send Telegram alert for this node\u2019s issues">\ud83d\udce2 Telegram alert</button>':"")+
+      (detectProblems(n).some(p=>p[0]==="warn"||p[0]==="bad")?'<button class="repbtn" onclick="genReport(\''+n.addr+'\')" title="Build a ready-to-share report of this node\u2019s issues \u2014 for support or your Telegram alert channel">\ud83d\udce2 Generate issue report</button>':"")+
       '<div class="report" id="report"></div>'+
       '<div id="nodeadvisor" style="margin-top:22px"><h3>NodeAdvisor \u2014 community feedback</h3><div id="na-body" class="na-loading">loading feedback\u2026</div></div>'+
     '</div></div>';
@@ -905,16 +904,6 @@ function submitFeedback(addr){
     alert("Could not send feedback right now. Try again later.");
   });
 }
-function genTg(addr){
-  const n=MAP[addr];if(!n)return;
-  const issues=detectProblems(n).filter(p=>p[0]==="warn"||p[0]==="bad").map(p=>"\u26a0\ufe0f "+p[2].replace(/<[^>]*>/g,"")).join("\n");
-  if(!issues){return;}
-  const msg="\ud83d\udd14 *Sentinel Node Alert*\n"+
-    "*"+(n.moniker||"node")+"*  ("+n.country+")\n"+
-    "`"+n.addr+"`\n\n"+issues+"\n\nScore "+n.score+"/100 \u00b7 via Sentinel Scorecard";
-  const el=document.getElementById("report");el.textContent=msg;el.style.display="block";
-  if(navigator.clipboard){navigator.clipboard.writeText(msg).then(()=>{el.textContent=msg+"\n\n\u2713 copied \u2014 paste into your Telegram alert chat";}).catch(()=>{});}
-}
 function genReport(addr){
   const n=MAP[addr];if(!n)return;const rank=countryRank(n);
   const probs=detectProblems(n).map(p=>"- "+p[2].replace(/<[^>]*>/g,"")).join("\n");
@@ -997,6 +986,12 @@ function renderAsnIntel(){
   html+='<div class="asn-search"><span class="asn-search-ic">\ud83d\udd0d</span><input type="search" id="asn-q" placeholder="Search a provider, ASN or country \u2014 e.g. Hetzner, AS24940, Austria" value="'+esc(asnIntelState())+'"></div>';
   if(q){
     rows=rows.filter(r=>(r.num&&r.num.toLowerCase().includes(q))||(r.name&&r.name.toLowerCase().includes(q))||Object.keys(r.countries).some(c=>c.toLowerCase().includes(q)));
+    // exact-ASN match -> list the nodes on that ASN
+    const exactAsn=rows.find(r=>r.num&&r.num.toLowerCase()===q);
+    if(exactAsn){
+      const nodesOn=act.filter(n=>asnNum(n.asn)===exactAsn.num).sort((a,b)=>b.score-a.score);
+      window._asnNodes=nodesOn;
+    }else{window._asnNodes=null;}
     if(rows.length){
       html+='<div class="vcards">';
       rows.slice().sort((a,b)=>b.total-a.total).slice(0,6).forEach(a=>{
@@ -1057,6 +1052,24 @@ function renderAsnIntel(){
   });
   if(!rows.length)html+='<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--dim)">no networks match \u201c'+esc(asnIntelState())+'\u201d</td></tr>';
   html+='</tbody></table></div></div>';
+  // nodes-on-ASN list (when an exact ASN is selected)
+  if(window._asnNodes&&window._asnNodes.length){
+    const ns=window._asnNodes;
+    html+='<div class="asn-table-h" style="margin-top:22px">Nodes on this network <span class="asn-table-c">'+ns.length+'</span></div>';
+    html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
+      '<th>Node</th><th>Grade</th><th>Country</th><th>Leased</th><th>Uptime</th></tr></thead><tbody>';
+    ns.forEach(n=>{
+      const lh=HIST[n.addr]||{};
+      const ld=lh.l_now!=null?(lh.l_now>0?'<span style="color:var(--good)">\u2713 '+lh.l_now+'</span>':'<span style="color:var(--warn)">no</span>'):'\u2014';
+      html+='<tr class="node-row" onclick="inspect(\''+n.addr+'\')">'+
+        '<td><div class="mon'+(n.hasName?"":" na")+'">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
+        '<td><span class="score '+sc(n.score)+'" style="min-width:34px">'+grade(n.score)+'</span></td>'+
+        '<td class="flag">'+esc(n.country)+'</td>'+
+        '<td class="mono">'+ld+'</td>'+
+        '<td class="mono">'+(n.samples?n.uptime.toFixed(1)+'%':"\u2014")+'</td></tr>';
+    });
+    html+='</tbody></table></div></div>';
+  }
   box.innerHTML=html;
   const inp=document.getElementById("asn-q");
   if(inp){
