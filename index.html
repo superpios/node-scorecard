@@ -1020,7 +1020,10 @@ function renderAsnIntel(){
         const lpct=a.hasL?Math.round(a.leased/a.total*100):null;
         html+='<div class="vcard '+vk+'">'+
           '<div class="vcard-top"><div class="vcard-asn">'+esc(a.num)+'</div><div class="vbadge '+vk+'">'+verdict+'</div></div>'+
-          '<div class="vcard-name">'+esc(a.name||"unknown provider")+'</div>'+
+          (function(){
+            const tp=trustedLink(a.name);
+            return '<div class="vcard-name">'+esc(a.name||"unknown provider")+(tp?' <a href="'+tp.url+'" target="_blank" rel="noopener noreferrer" class="provlink" title="'+esc(tp.label)+' \u2014 official site">\u2197</a>':'')+'</div>';
+          })()+
           '<div class="vmeter" title="'+a.total+' of ~'+ASN_LIMIT+' soft limit"><div class="vmeter-fill '+vk+'" style="width:'+pct+'%"></div></div>'+
           '<div class="vcard-stats">'+
             '<span><b>'+a.total+'</b> / ~'+ASN_LIMIT+' nodes</span>'+
