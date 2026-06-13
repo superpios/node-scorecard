@@ -961,12 +961,12 @@ function searchCountry(enc){ window._asnSearch=decodeURIComponent(enc); renderAs
 // Provider consigliati con link UFFICIALI verificati (dominio ufficiale, giugno 2026).
 // Match per sottostringa del nome ASN -> URL. Solo provider seri/whitelist-friendly.
 const TRUSTED_PROV=[
-  {m:"hetzner", url:"https://www.hetzner.com/cloud", label:"Hetzner Cloud \u2014 DE/FI/US/SG, GDPR, ottimo prezzo"},
-  {m:"netcup", url:"https://www.netcup.com/en/server/vps", label:"netcup \u2014 DE/AT (Vienna), economico e serio"},
-  {m:"ovh", url:"https://www.ovhcloud.com/en/vps/", label:"OVHcloud \u2014 FR, grande provider europeo"},
-  {m:"scaleway", url:"https://www.scaleway.com/en/virtual-instances/", label:"Scaleway \u2014 FR, cloud europeo"},
-  {m:"leaseweb", url:"https://www.leaseweb.com/en/products-services/cloud/virtual-private-server", label:"Leaseweb \u2014 NL, IaaS globale dal 1997, datacenter anche in Asia"},
-  {m:"akile", url:"https://akile.io/", label:"AkileCloud \u2014 Asia (HK/JP/SG), grande banda; molto usato e leasato sui nodi Sentinel"}
+  {m:"hetzner", url:"https://www.hetzner.com/cloud", label:"Hetzner Cloud \u2014 DE/FI/US/SG, GDPR-compliant, great value"},
+  {m:"netcup", url:"https://www.netcup.com/en/server/vps", label:"netcup \u2014 DE/AT (Vienna), affordable and solid"},
+  {m:"ovh", url:"https://www.ovhcloud.com/en/vps/", label:"OVHcloud \u2014 FR, large European provider"},
+  {m:"scaleway", url:"https://www.scaleway.com/en/dedibox-vps/", label:"Scaleway Dedibox VPS \u2014 FR, 60+ locations, from \u20ac4.99/mo"},
+  {m:"leaseweb", url:"https://www.leaseweb.com/en/products-services/cloud/virtual-private-server", label:"Leaseweb \u2014 NL, global IaaS since 1997, also Asia datacenters"},
+  {m:"akile", url:"https://akile.io/", label:"AkileCloud \u2014 Asia (HK/JP/SG), high bandwidth; widely used and leased by Sentinel nodes"}
 ];
 function trustedLink(name){
   if(!name)return null;
