@@ -101,7 +101,7 @@ make-summary.py  -> aggregates history.jsonl into history-summary.json (uptime %
 make-trends.py   -> appends a network snapshot per run (active count, per-ASN and
                     per-country totals) and computes node movers (7d uptime vs prior)
                     from raw history. Writes + publishes trends.json.
-walrus-capsule.py-> once a day, archives trends.json on Walrus (Sui) and publishes
+walrus-capsule.py-> once a day, archives trends.json on Walrus and publishes
                     capsule.json with the blob ID, hash and verification link.
 push-latest.sh   -> publishes latest.json + history-summary.json to this repo
 index.html       -> static UI, fetches the two JSON files and renders everything
