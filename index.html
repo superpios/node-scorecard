@@ -113,6 +113,8 @@
   .lc-name .why{color:var(--dim);font-weight:400;font-size:11px}
   .lc-item code{display:block;margin-top:5px;font-family:'Space Mono',monospace;font-size:11px;color:var(--good);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 9px;cursor:pointer;overflow-x:auto;white-space:nowrap;transition:border-color .15s}
   .lc-item code:hover{border-color:var(--good)}
+  .repbtn.tg{background:rgba(75,139,244,.12);border-color:rgba(75,139,244,.35);color:var(--accent-2);margin-left:8px}
+  .repbtn.tg:hover{background:rgba(75,139,244,.2);border-color:var(--accent-2)}
   .problem{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
   .problem:last-child{border:none} .problem .pic{font-size:15px} .problem.ok .pic{filter:none}
   .repbtn{margin-top:12px;width:100%;padding:12px;border-radius:10px;background:var(--good);color:#04241a;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif}
@@ -156,6 +158,60 @@
   .qm::after{content:attr(data-tip);position:absolute;left:50%;bottom:140%;transform:translateX(-50%);width:240px;white-space:normal;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;line-height:1.5;color:var(--txt);font-family:inherit;text-align:left;opacity:0;pointer-events:none;transition:opacity .15s;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.5)}
   .qm:hover::after{opacity:1}
   @media(max-width:600px){.qm::after{width:160px}}
+  /* ASN Intelligence redesign */
+  .asn-head{margin:16px 0 18px}
+  .asn-title{font-size:21px;font-weight:800;font-family:'Sora',sans-serif;letter-spacing:-.3px}
+  .asn-sub{color:var(--muted);font-size:13px;line-height:1.55;margin-top:5px;max-width:680px}
+  .asn-kpis{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 18px;min-width:96px}
+  .kpi-v{font-size:23px;font-weight:800;font-family:'Space Mono',monospace;color:var(--good);line-height:1}
+  .kpi-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:5px}
+  .asn-search{position:relative;margin:0 0 18px}
+  .asn-search-ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.5;pointer-events:none}
+  .asn-search input{width:100%;box-sizing:border-box;padding-left:38px!important}
+  .vcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px;margin:0 0 22px}
+  .vcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
+  .vcard:hover{transform:translateY(-2px)}
+  .vcard::before{content:'';position:absolute;inset:0 auto 0 0;width:3px}
+  .vcard.good::before{background:var(--good)} .vcard.warn::before{background:var(--warn)} .vcard.bad::before{background:var(--bad)}
+  .vcard.good:hover{border-color:rgba(45,212,167,.4)} .vcard.warn:hover{border-color:rgba(245,165,36,.4)} .vcard.bad:hover{border-color:rgba(224,48,63,.4)}
+  .vcard.wide{grid-column:1/-1}
+  .vcard-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .vcard-asn{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--txt)}
+  .vbadge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:20px}
+  .vbadge.good{background:rgba(45,212,167,.14);color:var(--good)} .vbadge.warn{background:rgba(245,165,36,.14);color:var(--warn)} .vbadge.bad{background:rgba(224,48,63,.14);color:var(--bad)}
+  .vcard-name{font-size:13px;color:var(--muted);margin:7px 0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vmeter{height:6px;background:var(--panel-2);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+  .vmeter-fill{height:100%;border-radius:4px;transition:width .4s}
+  .vmeter-fill.good{background:var(--good)} .vmeter-fill.warn{background:var(--warn)} .vmeter-fill.bad{background:var(--bad)}
+  .vcard-stats{display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--muted)}
+  .vcard-stats b{color:var(--txt);font-family:'Space Mono',monospace}
+  .vcard-stats .g b{color:var(--good)} .vcard-stats .w b{color:var(--warn)} .vcard-stats .b b{color:var(--bad)}
+  .vcard-geo{margin-top:9px;font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vcard-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}
+  .oppgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:0 0 22px}
+  @media(max-width:620px){.oppgrid{grid-template-columns:1fr}}
+  .oppcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px}
+  .oppcard.good{border-top:2px solid var(--good)} .oppcard.bad{border-top:2px solid var(--bad)}
+  .oppcard-h{display:flex;gap:11px;align-items:center;margin-bottom:13px}
+  .oppcard-ic{font-size:20px}
+  .oppcard-t{font-size:13.5px;font-weight:700;color:var(--txt)}
+  .oppcard-s{font-size:11px;color:var(--dim);margin-top:2px}
+  .ccol{display:grid;grid-template-columns:1fr 70px 28px;align-items:center;gap:9px;padding:5px 7px;margin:0 -7px;border-radius:7px;cursor:pointer;transition:background .12s}
+  .ccol:hover{background:rgba(45,212,167,.07)}
+  .ccol-c{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ccol:hover .ccol-c{color:var(--txt)}
+  .ccol-bar{height:5px;background:var(--panel-2);border-radius:3px;overflow:hidden}
+  .ccol-bar span{display:block;height:100%;background:var(--dim);border-radius:3px}
+  .oppcard.good .ccol-bar span{background:var(--good);opacity:.55} .oppcard.bad .ccol-bar span{background:var(--bad);opacity:.55}
+  .ccol-n{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right}
+  .asn-table-h{font-size:13px;font-weight:700;color:var(--muted);margin:0 0 10px;text-transform:uppercase;letter-spacing:.8px}
+  .asn-table-c{display:inline-block;background:var(--chip);color:var(--dim);font-family:'Space Mono',monospace;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px}
+  .asn-tbl tr{transition:background .1s} .asn-tbl tbody tr:hover{background:rgba(45,212,167,.05)}
+  .asn-tbl .tdim{color:var(--dim);font-size:10px}
+  .asn-badge.warn{background:rgba(245,165,36,.13);color:var(--warn)}
+    .ttip{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:var(--line);color:var(--muted);font-size:9px;font-weight:700;font-family:'Sora',sans-serif;cursor:help;vertical-align:middle;margin-left:2px;transition:background .15s,color .15s}
+  *:hover>.ttip{background:var(--good);color:var(--bg)}
   .asn-intro{color:var(--txt);opacity:.75;font-size:13px;line-height:1.55;font-family:'Sora',sans-serif;margin:14px 0 16px;max-width:780px} .asn-intro b{opacity:1;color:var(--good);font-weight:600}
   .asn-sat{color:var(--bad);font-weight:700}
   .asn-ok{color:var(--good);font-weight:700}
@@ -672,7 +728,7 @@ function renderInspector(n){
         '<span class="k">Historical uptime</span><span class="v">'+(n.samples?n.uptime.toFixed(1)+"%":"\u2014")+'</span>'+
         '<span class="k">Stability</span><span class="v">'+(n.samples?n.stab.toFixed(0):"\u2014")+'</span>'+
         '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
-        ((HIST[n.addr]||{}).l_now!=null?'<span class="k">Leased (now)</span><span class="v" style="color:'+(((HIST[n.addr]||{}).l_now||0)>0?'var(--good)':'var(--warn)')+'">'+(((HIST[n.addr]||{}).l_now||0)>0?'\u2713 yes ('+HIST[n.addr].l_now+')':'no')+'</span>':'')+
+        ((HIST[n.addr]||{}).l_now!=null?'<span class="k" title="On-chain leases held right now. A node can be rented by several plan providers at once \u2014 the number in parentheses is how many simultaneous leases. More leases = more income streams, but it depends on plan demand, not node quality.">Leased (now) <span class="ttip">?</span></span><span class="v" style="color:'+(((HIST[n.addr]||{}).l_now||0)>0?'var(--good)':'var(--warn)')+'">'+(((HIST[n.addr]||{}).l_now||0)>0?'\u2713 yes ('+HIST[n.addr].l_now+(HIST[n.addr].l_now>1?' simultaneous':'')+')':'no')+'</span>':'')+
         ((HIST[n.addr]||{}).l_pos!=null?'<span class="k">Lease uptime (7d)</span><span class="v">'+HIST[n.addr].l_pos+'%</span>':'')+
         '<span class="k">Peers (now)</span><span class="v" id="peers-live">'+(n.peers!=null?n.peers:"\u2014")+' <span id="peers-badge" style="font-size:10px;color:var(--muted);font-family:Space Mono">\u00b7 collector</span></span>'+
         '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+medRef("price_hr",n.price_hr):"\u2014")+'</span>'+
@@ -684,6 +740,7 @@ function renderInspector(n){
       '<h3>Score breakdown</h3>'+br+
       '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+passedHtml+localChk+
       '<button class="repbtn" onclick="genReport(\''+n.addr+'\')">\ud83d\udccb Generate support report</button>'+
+      (detectProblems(n).some(p=>p[0]==="warn"||p[0]==="bad")?'<button class="repbtn tg" onclick="genTg(\''+n.addr+'\')" title="Build a ready-to-send Telegram alert for this node\u2019s issues">\ud83d\udce2 Telegram alert</button>':"")+
       '<div class="report" id="report"></div>'+
       '<div id="nodeadvisor" style="margin-top:22px"><h3>NodeAdvisor \u2014 community feedback</h3><div id="na-body" class="na-loading">loading feedback\u2026</div></div>'+
     '</div></div>';
@@ -848,6 +905,16 @@ function submitFeedback(addr){
     alert("Could not send feedback right now. Try again later.");
   });
 }
+function genTg(addr){
+  const n=MAP[addr];if(!n)return;
+  const issues=detectProblems(n).filter(p=>p[0]==="warn"||p[0]==="bad").map(p=>"\u26a0\ufe0f "+p[2].replace(/<[^>]*>/g,"")).join("\n");
+  if(!issues){return;}
+  const msg="\ud83d\udd14 *Sentinel Node Alert*\n"+
+    "*"+(n.moniker||"node")+"*  ("+n.country+")\n"+
+    "`"+n.addr+"`\n\n"+issues+"\n\nScore "+n.score+"/100 \u00b7 via Sentinel Scorecard";
+  const el=document.getElementById("report");el.textContent=msg;el.style.display="block";
+  if(navigator.clipboard){navigator.clipboard.writeText(msg).then(()=>{el.textContent=msg+"\n\n\u2713 copied \u2014 paste into your Telegram alert chat";}).catch(()=>{});}
+}
 function genReport(addr){
   const n=MAP[addr];if(!n)return;const rank=countryRank(n);
   const probs=detectProblems(n).map(p=>"- "+p[2].replace(/<[^>]*>/g,"")).join("\n");
@@ -903,7 +970,6 @@ function searchCountry(enc){ window._asnSearch=decodeURIComponent(enc); renderAs
 function renderAsnIntel(){
   const box=document.getElementById("view-asnintel");
   const act=NODES.filter(n=>n.status==="active"&&n.asn);
-  // aggregate per ASN with country sets
   const agg={}, byCountry={};
   act.forEach(n=>{
     const num=asnNum(n.asn);if(!num)return;
@@ -920,59 +986,76 @@ function renderAsnIntel(){
   const ASN_LIMIT=50;
   let rows=Object.values(agg);
   const q=asnIntelState().toLowerCase().trim();
-  let html='<div class="asn-intro">Active nodes grouped by hosting provider (ASN). saturated networks are over the PlanWizard whitelist limit \u2014 new nodes there are unlikely to get leased and earn. Search a provider or a country to see if there\u2019s room.</div>';
-  html+='<div class="asn-search"><input type="search" id="asn-q" placeholder="Search ASN or Country (e.g. AS24940, Hetzner, Italy)\u2026" value="'+esc(asnIntelState())+'"></div>';
+  let html='<div class="asn-head">'+
+    '<div class="asn-title">Where to host <span class="ttip" title="Plan providers (PlanWizard) won\u2019t whitelist too many nodes on the same network (ASN). Pick a provider/country with free slots so your node can actually get leased and earn.">?</span></div>'+
+    '<div class="asn-sub">Active nodes grouped by hosting provider (ASN). Find a network with free slots \u2014 saturated ones rarely get new nodes leased.</div>'+
+    '<div class="asn-kpis">'+
+      '<div class="kpi"><div class="kpi-v">'+totNodes+'</div><div class="kpi-l">active nodes</div></div>'+
+      '<div class="kpi"><div class="kpi-v">'+totAsn+'</div><div class="kpi-l">networks (ASN)</div></div>'+
+      '<div class="kpi"><div class="kpi-v">'+Object.keys(byCountry).length+'</div><div class="kpi-l">countries</div></div>'+
+    '</div></div>';
+  html+='<div class="asn-search"><span class="asn-search-ic">\ud83d\udd0d</span><input type="search" id="asn-q" placeholder="Search a provider, ASN or country \u2014 e.g. Hetzner, AS24940, Austria" value="'+esc(asnIntelState())+'"></div>';
   if(q){
-    // filter ASNs by number, provider name, or country presence
     rows=rows.filter(r=>(r.num&&r.num.toLowerCase().includes(q))||(r.name&&r.name.toLowerCase().includes(q))||Object.keys(r.countries).some(c=>c.toLowerCase().includes(q)));
-    // placement verdict cards for matches (top 6 by size)
     if(rows.length){
-      html+='<div class="cmp">';
+      html+='<div class="vcards">';
       rows.slice().sort((a,b)=>b.total-a.total).slice(0,6).forEach(a=>{
         const sat=a.total>=ASN_LIMIT, near=a.total>=ASN_LIMIT*0.6;
-        const verdict=sat?"\u26d4 SATURATED \u2014 avoid":near?"\u26a0\ufe0f Filling up \u2014 risky":"\u2705 Room available";
-        const col=sat?"var(--bad)":near?"var(--warn)":"var(--good)";
+        const verdict=sat?"Saturated":near?"Filling up":"Free slots";
+        const vk=sat?"bad":near?"warn":"good";
         const pct=Math.min(100,Math.round(a.total/ASN_LIMIT*100));
-        html+='<div class="cmp-card" style="border-left:3px solid '+col+'" title="'+a.total+' active nodes on '+esc(a.name||a.num)+' \u2014 soft limit ~'+ASN_LIMIT+' per ASN (PlanWizard)">'+
-          '<h4>'+esc(a.num)+' \u00b7 '+esc(a.name||"")+'</h4>'+
-          '<div class="cmp-row"><span class="ck">Active nodes</span><span class="cv">'+a.total+' / ~'+ASN_LIMIT+'</span></div>'+
-          '<div class="cmp-row"><span class="ck">Capacity used</span><span class="cv" style="color:'+col+'">'+pct+'%</span></div>'+
-          '<div class="cmp-row"><span class="ck">Verdict</span><span class="cv" style="color:'+col+'">'+verdict+'</span></div></div>';
+        const lpct=a.hasL?Math.round(a.leased/a.total*100):null;
+        html+='<div class="vcard '+vk+'">'+
+          '<div class="vcard-top"><div class="vcard-asn">'+esc(a.num)+'</div><div class="vbadge '+vk+'">'+verdict+'</div></div>'+
+          '<div class="vcard-name">'+esc(a.name||"unknown provider")+'</div>'+
+          '<div class="vmeter" title="'+a.total+' of ~'+ASN_LIMIT+' soft limit"><div class="vmeter-fill '+vk+'" style="width:'+pct+'%"></div></div>'+
+          '<div class="vcard-stats">'+
+            '<span><b>'+a.total+'</b> / ~'+ASN_LIMIT+' nodes</span>'+
+            (lpct!=null?'<span class="'+(lpct>=50?"g":lpct>0?"w":"b")+'"><b>'+lpct+'%</b> leased</span>':'')+
+          '</div>'+
+          '<div class="vcard-geo" title="'+esc(Object.keys(a.countries).join(", "))+'">\ud83c\udf0d '+Object.keys(a.countries).slice(0,3).join(", ")+(Object.keys(a.countries).length>3?" +"+(Object.keys(a.countries).length-3):"")+'</div>'+
+        '</div>';
       });
       html+='</div>';
     }else{
-      html+='<div class="cmp" style="grid-template-columns:1fr"><div class="cmp-card" style="border-left:3px solid var(--good)" title="No active Sentinel nodes found matching this search">'+
-        '<h4>'+esc(asnIntelState())+'</h4><div class="cmp-row"><span class="ck">Active nodes found</span><span class="cv" style="color:var(--good)">0 \u2014 wide open \u2705</span></div>'+
-        '<div class="cmp-row"><span class="ck">Note</span><span class="cv" style="font-size:11px">Nothing here yet. If it\u2019s an ASN, verify it\u2019s not policy-excluded before buying.</span></div></div></div>';
+      html+='<div class="vcards"><div class="vcard good wide">'+
+        '<div class="vcard-top"><div class="vcard-asn">'+esc(asnIntelState())+'</div><div class="vbadge good">Wide open</div></div>'+
+        '<div class="vcard-name">No active Sentinel nodes match this search</div>'+
+        '<div class="vcard-note">Nothing here yet \u2014 a green field. If it\u2019s an ASN, double-check it isn\u2019t policy-excluded before buying.</div>'+
+      '</div></div>';
     }
   }else{
-    // no query: country opportunity boxes (least vs most crowded)
     const cs=Object.entries(byCountry).sort((a,b)=>a[1]-b[1]);
-    const most=cs.slice().reverse();
-    const crow=([c,n])=>'<div class="cmp-row crow" onclick="searchCountry(\''+encodeURIComponent(c)+'\')" title="Click to see which providers (ASNs) serve '+esc(c)+'"><span class="ck">'+esc(c)+'</span><span class="cv">'+n+'</span></div>';
-    html+='<div class="cmp"><div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\ud83c\udf31 Least crowded countries (opportunity) \u00b7 '+cs.length+'</h4>'+
-      '<div style="font-size:11px;color:var(--dim);margin-bottom:8px">click a country to see which providers serve it</div><div class="cscroll">';
-    cs.forEach(e=>{html+=crow(e);});
-    html+='</div></div><div class="cmp-card" style="border-left:3px solid var(--bad)"><h4>\ud83d\udd25 Most crowded (avoid)</h4>'+
-      '<div style="font-size:11px;color:var(--dim);margin-bottom:8px">click a country to see which providers serve it</div><div class="cscroll">';
-    most.forEach(e=>{html+=crow(e);});
+    const crow=([c,n],mx)=>{const w=Math.round(n/mx*100);return '<div class="ccol" onclick="searchCountry(\''+encodeURIComponent(c)+'\')" title="Click to see which providers (ASNs) serve '+esc(c)+'"><span class="ccol-c">'+esc(c)+'</span><span class="ccol-bar"><span style="width:'+w+'%"></span></span><span class="ccol-n">'+n+'</span></div>';};
+    const mxLeast=Math.max(...cs.slice(0,18).map(e=>e[1]),1);
+    const mxMost=Math.max(...cs.map(e=>e[1]),1);
+    html+='<div class="oppgrid">'+
+      '<div class="oppcard good"><div class="oppcard-h"><span class="oppcard-ic">\ud83c\udf31</span><div><div class="oppcard-t">Least crowded \u2014 opportunity</div><div class="oppcard-s">fewest nodes \u00b7 best chance of a free slot</div></div></div><div class="cscroll">';
+    cs.slice(0,18).forEach(e=>{html+=crow(e,mxLeast);});
+    html+='</div></div>'+
+      '<div class="oppcard bad"><div class="oppcard-h"><span class="oppcard-ic">\ud83d\udd25</span><div><div class="oppcard-t">Most crowded \u2014 avoid</div><div class="oppcard-s">saturated \u00b7 hard to get leased</div></div></div><div class="cscroll">';
+    cs.slice().reverse().slice(0,18).forEach(e=>{html+=crow(e,mxMost);});
     html+='</div></div></div>';
   }
   rows.sort((a,b)=>b.total-a.total);
-  html+='<div class="tablewrap"><div class="tscroll"><table><thead><tr>'+
-    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Leased</th><th>Countries</th><th>Status</th></tr></thead><tbody>';
+  html+='<div class="asn-table-h">All networks <span class="asn-table-c">'+rows.length+'</span></div>';
+  html+='<div class="tablewrap"><div class="tscroll"><table class="asn-tbl"><thead><tr>'+
+    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Leased <span class="ttip" title="Share of this network\u2019s nodes that currently hold an on-chain lease. High = real plan demand here.">?</span></th><th>Countries</th><th>Slots <span class="ttip" title="Free = under the ~'+ASN_LIMIT+'-node whitelist limit. Saturated = over it, hard to get leased.">?</span></th></tr></thead><tbody>';
   rows.forEach((r,i)=>{
     const sat=SATURATED_ASN[r.num]||r.total>=ASN_LIMIT;
+    const near=!sat&&r.total>=ASN_LIMIT*0.6;
     const pct=Math.round(r.total/totNodes*100);
-    html+='<tr><td class="rank">'+(i+1)+'</td>'+
+    const lpct=r.hasL?Math.round(r.leased/r.total*100):null;
+    html+='<tr onclick="goAsn(\''+esc(r.num)+'\')" style="cursor:pointer">'+
+      '<td class="rank">'+(i+1)+'</td>'+
       '<td class="mono '+(sat?'asn-sat':'asn-ok')+'">'+r.num+'</td>'+
       '<td>'+esc(r.name||"\u2014")+'</td>'+
-      '<td class="mono">'+r.total+' <span style="color:var(--dim);font-size:10px">('+pct+'%)</span></td>'+
-      '<td class="mono" '+(r.hasL?'title="'+r.leased+' of '+r.total+' nodes on this ASN currently hold an on-chain lease \u2014 the real demand signal" style="color:'+(r.leased/r.total>=0.5?'var(--good)':r.leased>0?'var(--warn)':'var(--bad)')+'">'+Math.round(r.leased/r.total*100)+'%':'>\u2014')+'</td>'+
+      '<td class="mono">'+r.total+' <span class="tdim">('+pct+'%)</span></td>'+
+      '<td class="mono" '+(lpct!=null?'style="color:'+(lpct>=50?'var(--good)':lpct>0?'var(--warn)':'var(--bad)')+'">'+lpct+'%':'>\u2014')+'</td>'+
       '<td class="mono" title="'+esc(Object.keys(r.countries).slice(0,12).join(", "))+'">'+Object.keys(r.countries).length+'</td>'+
-      '<td>'+(sat?'<span class="asn-badge sat" title="Over the ~'+ASN_LIMIT+'-node PlanWizard soft limit \u2014 hard to get whitelisted here">SATURATED</span>':'<span class="asn-badge ok" title="Below the whitelist limit \u2014 room for new nodes">OK</span>')+'</td></tr>';
+      '<td>'+(sat?'<span class="asn-badge sat">Saturated</span>':near?'<span class="asn-badge warn">Filling</span>':'<span class="asn-badge ok">Free</span>')+'</td></tr>';
   });
-  if(!rows.length)html+='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--dim)">no ASN matches</td></tr>';
+  if(!rows.length)html+='<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--dim)">no networks match \u201c'+esc(asnIntelState())+'\u201d</td></tr>';
   html+='</tbody></table></div></div>';
   box.innerHTML=html;
   const inp=document.getElementById("asn-q");
@@ -1048,10 +1131,10 @@ function renderTrends(){
   const actSeries=S.map(p=>p.active);
   const dAct=last.active-base.active;
   html+='<div class="cmp" style="grid-template-columns:1fr">'+
-    '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\ud83d\udc9a Network Pulse \u2014 active nodes</h4>'+
+    '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4 title="Live count of nodes the chain reports as active (status=1), tracked over time by the Scorecard collector.">\ud83d\udc9a Network Pulse \u2014 active nodes <span class="ttip">?</span></h4>'+
     svgLine(actSeries,600,90,"var(--good)")+
     '<div class="cmp-row"><span class="ck">'+fmtDay(first.ts)+' \u2192 now</span><span class="cv">'+last.active+' active <span style="color:'+(dAct>=0?"var(--good)":"var(--bad)")+'">('+(dAct>=0?"+":"")+dAct+')</span></span></div>'+
-    (last.nodes_leased!=null?'<div class="cmp-row"><span class="ck">Leased by plan providers</span><span class="cv">'+last.nodes_leased+' nodes \u00b7 '+(last.leases_total||0)+' leases</span></div>':'')+
+    (last.nodes_leased!=null?'<div class="cmp-row" title="Nodes that currently hold at least one on-chain lease from a plan provider, and the total number of active leases across the network. This is the real demand signal \u2014 only leased nodes earn from plans."><span class="ck">Leased by plan providers <span class="ttip">?</span></span><span class="cv">'+last.nodes_leased+' nodes \u00b7 '+(last.leases_total||0)+' leases</span></div>':'')+
     '</div></div>';
   // ASN movers (base vs last)
   const asnDelta=[];
@@ -1079,7 +1162,7 @@ function renderTrends(){
   }
   if(CAPSULE&&CAPSULE.latest){
     const c=CAPSULE.latest;
-    html+='<div class="asn-intro" style="margin-top:4px;font-size:12px">\ud83e\uddca <b>Time Capsule</b> \u2014 daily snapshot archived on <b>Walrus</b> decentralized storage : '+
+    html+='<div class="asn-intro" style="margin-top:4px;font-size:12px">\ud83e\uddca <b>Time Capsule</b> \u2014 daily snapshot archived on <b>Walrus</b> decentralized storage (Sui ecosystem): '+
       '<a href="'+esc(c.url)+'" target="_blank" rel="noopener" style="color:var(--good)">'+esc(c.date)+' \u00b7 blob '+esc((c.blobId||"").slice(0,10))+'\u2026</a>'+
       ' <span style="color:var(--dim)">sha256 '+esc((c.sha256||"").slice(0,12))+'\u2026 \u00b7 immutable &amp; verifiable</span></div>';
   }
