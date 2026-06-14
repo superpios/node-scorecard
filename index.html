@@ -1077,9 +1077,7 @@ function renderAsnIntel(){
         const lpct=a.hasL?Math.round(a.leased/a.total*100):null;
         html+='<div class="vcard '+vk+'">'+
           '<div class="vcard-top"><div class="vcard-asn">'+esc(a.num)+'</div><div class="vbadge '+vk+'">'+verdict+'</div></div>'+
-          (isMajorCloud(a.name)?'<div class="cloudwarn" title="Major cloud provider \u2014 the Sentinel docs advise against these, as they are frequently not whitelisted for plans. A few existing nodes may be leased, but a new node here risks never getting a lease.">\u26a0 Major cloud \u2014 may not be whitelisted</div>':
-           providerClass(a.name)==="isp"?'<div class="cloudwarn" title="National telecom / ISP carrier, not a hosting provider \u2014 you cannot buy a standard VPS here.">\u26a0 National ISP \u2014 not a hosting provider</div>':
-           providerClass(a.name)==="unverified"?'<div class="cloudwarn unver" title="Not a recognized hosting brand \u2014 could be a reseller or niche operator. Verify its reputation and real datacenter location before use.">Unverified provider</div>':'')+
+          (isMajorCloud(a.name)?'<div class="cloudwarn" title="Major cloud provider \u2014 the Sentinel docs advise against these, as they are frequently not whitelisted for plans. A few existing nodes may be leased, but a new node here risks never getting a lease.">\u26a0 Major cloud \u2014 may not be whitelisted</div>':'')+
           (function(){
             const tp=trustedLink(a.name);
             return '<div class="vcard-name">'+esc(a.name||"unknown provider")+(tp?' <a href="'+tp.url+'" target="_blank" rel="noopener noreferrer" class="provlink" title="'+esc(tp.label)+' \u2014 official site">\u2197</a>':'')+'</div>';
@@ -1134,9 +1132,7 @@ function renderAsnIntel(){
       '<td class="mono">'+r.total+' <span class="tdim">('+pct+'%)</span></td>'+
       '<td class="mono" '+(lpct!=null?'style="color:'+(lpct>=50?'var(--good)':lpct>0?'var(--warn)':'var(--bad)')+'">'+lpct+'%':'>\u2014')+'</td>'+
       '<td class="mono" title="'+esc(Object.keys(r.countries).slice(0,12).join(", "))+'">'+Object.keys(r.countries).length+'</td>'+
-      '<td>'+(sat?'<span class="asn-badge sat">Saturated</span>':near?'<span class="asn-badge warn">Filling</span>':'<span class="asn-badge ok">Free</span>')+(isMajorCloud(r.name)?' <span class="asn-badge cloud" title="Major cloud \u2014 Sentinel docs advise against; often not whitelisted for plans">\u26a0 major cloud</span>':
-       providerClass(r.name)==="isp"?' <span class="asn-badge isp" title="National telecom / ISP carrier \u2014 not a hosting provider. \u201cFree slots\u201d here is misleading: you can\u2019t buy a normal VPS from a phone company.">\u26a0 national ISP</span>':
-       providerClass(r.name)==="unverified"?' <span class="asn-badge unver" title="Not a recognized hosting brand \u2014 verify reputation and real datacenter location before use.">unverified</span>':'')+'</td></tr>';
+      '<td>'+(sat?'<span class="asn-badge sat">Saturated</span>':near?'<span class="asn-badge warn">Filling</span>':'<span class="asn-badge ok">Free</span>')+(isMajorCloud(r.name)?' <span class="asn-badge cloud" title="Major cloud \u2014 Sentinel docs advise against; often not whitelisted for plans">\u26a0 major cloud</span>':'')+'</td></tr>';
   });
   if(!rows.length)html+='<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--dim)">no networks match \u201c'+esc(asnIntelState())+'\u201d</td></tr>';
   html+='</tbody></table></div></div>';
