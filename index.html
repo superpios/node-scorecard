@@ -242,6 +242,20 @@
   .cscroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px} .cscroll::-webkit-scrollbar-thumb:hover{background:var(--dim)}
   .crow{cursor:pointer;border-radius:6px;padding:4px 6px;margin:0 -6px;transition:background .12s}
   .crow:hover{background:rgba(45,212,167,.08)} .crow:hover .ck{color:var(--txt)}
+  .deccard{display:flex;gap:24px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:10px 0;flex-wrap:wrap}
+  .decscore{display:flex;align-items:center;gap:14px;min-width:160px}
+  .decnum{font-size:52px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .decmax{font-size:18px;color:var(--dim);font-weight:600}
+  .decgrade{font-size:26px;font-weight:800;color:#0a0e14;width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center}
+  .decbars{flex:1;min-width:240px;display:flex;flex-direction:column;gap:9px}
+  .decrow-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
+  .decw{color:var(--dim);font-size:11px}
+  .decbar{height:7px;background:rgba(127,140,160,.12);border-radius:4px;overflow:hidden}
+  .decbar span{display:block;height:100%;border-radius:4px;transition:width .4s}
+  .decinsight{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .deci{display:flex;gap:12px;font-size:13px;padding:9px 12px;background:var(--panel);border:1px solid var(--line);border-radius:9px}
+  .decik{color:var(--muted);min-width:120px;font-weight:600}
+  .kpidec .kpi-v{font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1042,6 +1056,7 @@ function renderAsnIntel(){
       '<div class="kpi"><div class="kpi-v">'+totNodes+'</div><div class="kpi-l">active nodes</div></div>'+
       '<div class="kpi"><div class="kpi-v">'+totAsn+'</div><div class="kpi-l">networks (ASN)</div></div>'+
       '<div class="kpi"><div class="kpi-v">'+Object.keys(byCountry).length+'</div><div class="kpi-l">countries</div></div>'+
+      (function(){var dd=computeDecent();if(!dd)return '';var c=decentColor(dd.score);return '<div class="kpi kpidec" onclick="switchView(\'decent\')" style="cursor:pointer" title="Network decentralization \u2014 click for details"><div class="kpi-v" style="color:'+c+'">'+dd.score.toFixed(0)+' <span style="font-size:13px">'+decentGrade(dd.score)+'</span></div><div class="kpi-l">decentralization</div></div>';})()+
     '</div></div>';
   html+='<div class="asn-search"><span class="asn-search-ic">\ud83d\udd0d</span><input type="search" id="asn-q" placeholder="Search a provider, ASN or country \u2014 e.g. Hetzner, AS24940, Austria" value="'+esc(asnIntelState())+'"></div>';
   if(q){
@@ -1164,6 +1179,67 @@ function switchView(v){
   if(v==="trends")renderTrends();
 }
 document.querySelectorAll("#maintabs .tab").forEach(t=>t.onclick=()=>switchView(t.dataset.view));
+// ===== Decentralization Score =====
+const DEC_CLOUD=["amazon","aws ","google","g cloud","azure","microsoft","oracle","alibaba","vultr","linode","digitalocean","digital ocean","colocrossing","tencent","huawei"];
+function decIsCloud(asn){ if(!asn)return false; const a=asn.toLowerCase(); return DEC_CLOUD.some(d=>a.includes(d)); }
+function hhiScore(countsArr,total){
+  if(!total||!countsArr.length)return 0;
+  const hhi=countsArr.reduce((s,c)=>s+Math.pow(c/total,2),0);
+  const nEff=countsArr.length, hhiMin=1/nEff;
+  if(hhi<=hhiMin)return 100;
+  return Math.max(0,Math.min(100,100*(1-hhi)/(1-hhiMin)));
+}
+function decentGrade(s){ return s>=80?"A":s>=65?"B":s>=50?"C":s>=35?"D":"F"; }
+function decentColor(s){ return s>=80?"var(--good)":s>=65?"#8fd14f":s>=50?"var(--warn)":s>=35?"#f0813f":"var(--bad)"; }
+function computeDecent(){
+  const act=NODES.filter(n=>n.status==="active");
+  const total=act.length;
+  if(!total)return null;
+  const asnCount={},ctryCount={}; let cloud=0;
+  act.forEach(n=>{
+    if(n.asn){asnCount[n.asn]=(asnCount[n.asn]||0)+1;}
+    if(n.country){ctryCount[n.country]=(ctryCount[n.country]||0)+1;}
+    if(decIsCloud(n.asn))cloud++;
+  });
+  const asnVals=Object.values(asnCount), ctryVals=Object.values(ctryCount);
+  const asnDiv=hhiScore(asnVals,total);
+  const geoDiv=hhiScore(ctryVals,total);
+  const cloudIndep=100*(1-cloud/total);
+  const topAsnName=Object.keys(asnCount).sort((a,b)=>asnCount[b]-asnCount[a])[0]||"";
+  const topAsnShare=asnVals.length?Math.max(...asnVals)/total:1;
+  const spof=100*(1-topAsnShare);
+  const score=0.35*asnDiv+0.28*cloudIndep+0.22*spof+0.15*geoDiv;
+  return {score,asnDiv,cloudIndep,spof,geoDiv,total,asnCount:Object.keys(asnCount).length,
+          ctryCount:Object.keys(ctryCount).length,cloud,cloudPct:100*cloud/total,
+          topAsnName,topAsnShare:100*topAsnShare};
+}
+function decBar(label,val,weight){
+  const c=decentColor(val);
+  return '<div class="decrow"><div class="decrow-top"><span>'+label+' <span class="decw">'+weight+'</span></span><b style="color:'+c+'">'+val.toFixed(0)+'</b></div>'+
+    '<div class="decbar"><span style="width:'+val.toFixed(0)+'%;background:'+c+'"></span></div></div>';
+}
+function renderDecent(){
+  const box=document.getElementById("view-decent");
+  const d=computeDecent();
+  if(!d){box.innerHTML='<div class="asn-intro">No data.</div>';return;}
+  const g=decentGrade(d.score), col=decentColor(d.score);
+  let html='<div class="asn-intro">How <b>actually decentralized</b> is the network right now? This score combines provider diversity, independence from big clouds, single-point-of-failure resistance, and geographic spread \u2014 the real picture behind the node count.</div>';
+  html+='<div class="deccard">';
+  html+='<div class="decscore"><div class="decnum" style="color:'+col+'">'+d.score.toFixed(0)+'<span class="decmax">/100</span></div>'+
+        '<div class="decgrade" style="background:'+col+'">'+g+'</div></div>';
+  html+='<div class="decbars">';
+  html+=decBar("ASN diversity",d.asnDiv,"35%");
+  html+=decBar("Cloud independence",d.cloudIndep,"28%");
+  html+=decBar("SPOF resistance",d.spof,"22%");
+  html+=decBar("Geographic diversity",d.geoDiv,"15%");
+  html+='</div></div>';
+  html+='<div class="decinsight">';
+  html+='<div class="deci"><span class="decik">Nodes</span><span>'+d.total+' active \u00b7 '+d.asnCount+' networks \u00b7 '+d.ctryCount+' countries</span></div>';
+  html+='<div class="deci"><span class="decik">\u26a0 Biggest risk</span><span>'+esc(d.topAsnName)+' holds <b>'+d.topAsnShare.toFixed(1)+'%</b> of all nodes \u2014 if it went down, the network would lose that share at once</span></div>';
+  html+='<div class="deci"><span class="decik">Cloud exposure</span><span><b>'+d.cloudPct.toFixed(1)+'%</b> of nodes run on major clouds (AWS, Oracle, Alibaba\u2026) \u2014 lower is more decentralized</span></div>';
+  html+='</div>';
+  box.innerHTML=html;
+}
 // Top Reliable — historical uptime leaderboard
 function renderLeaderboard(){
   const box=document.getElementById("view-leaderboard");
