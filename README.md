@@ -43,11 +43,14 @@ The data tells you how a node *behaves*; NodeAdvisor tells you how it *feels to 
 
 Feedback is stored in a free Supabase table read directly from the static page — still no server of your own to run.
 
-### 🌐 ASN Intelligence
-A dedicated view for deciding **where to put a new node**: it groups active nodes by hosting provider (ASN), counts how many run on each, and flags the saturated ones.
+### 🌐 ASN Intelligence — "Where to host"
+A dedicated view for deciding **where to put a new node**: it groups active nodes by hosting provider (ASN), counts how many run on each, and flags the saturated ones — and now tells you, honestly, *which providers are even worth considering*.
 
-- **Per-ASN node counts** — see at a glance which providers are crowded
-- **Saturation flags** — ASNs over the PlanWizard whitelist limit are marked `SATURATED`; nodes there are unlikely to get leased and earn
+- **Per-ASN node counts & saturation flags** — ASNs over the PlanWizard whitelist limit are marked `SATURATED`; nodes there rarely get leased
+- **Least crowded vs most crowded** — every country below the free-slot threshold, ranked, so you can spot genuine opportunities
+- **Lease %** per ASN — not just how many nodes, but how many are *actually earning* a lease there
+- **Provider honesty badges** — recommended hosts (verified on their official site) get a direct link; **major clouds** (AWS, Oracle, Alibaba…) carry a *may-not-be-whitelisted* warning per the Sentinel docs; **national ISPs / telecoms** are flagged as *not a hosting provider*; everything else is marked *unverified — check before use*. "Free slots" no longer misleads you toward a phone company or a reseller
+- **Lease uptime (historical)** — for each node, the % of the last 7 days it actually held an on-chain lease — the real "am I earning?" signal, distinct from a one-off snapshot
 - **Hosting column + diagnostic** — every node shows its ASN in the table, and a node on a saturated ASN gets a clear warning in its diagnostic ("may not get leased/earn")
 - **Pick a clean ASN** — low-count, non-saturated providers are the smart choice for a new node
 
@@ -57,14 +60,16 @@ This turns a painful, learned-the-hard-way lesson (datacenter ASNs like IONOS, O
 The 25 most reliable active nodes ranked by **historical** uptime, stability and track record — not by who happens to be online right now. A node only ranks here by being consistently up across many samples.
 
 ### 📈 Trends — the network over time
-The Scorecard records a snapshot of the network every 3 hours and shows how it **moves over time**:
+The Scorecard records a snapshot of the network every 2 hours and shows how it **moves over time**:
 
 - **Network Pulse** — active-node count over time
 - **ASNs gaining / losing nodes** — watch providers fill up or empty out (IONOS went 285 → 188 active nodes in two days; this view catches that)
 - **Node movers** — nodes whose 7-day uptime improved or declined the most vs their own history
 
 ### 🧊 Time Capsule — on Walrus (Sui)
-Once a day the network's historical snapshot is archived on **Walrus**, the decentralized storage protocol on Sui — currently on testnet as a proof of concept. Each capsule is an immutable, content-addressed blob with a verifiable hash and a public link shown in the Trends tab. The history of a decentralized VPN, stored on decentralized storage.
+The Scorecard's historical snapshot is archived on **Walrus**, the decentralized storage protocol on Sui. Each capsule is an immutable, content-addressed blob with a verifiable hash and a public link shown in the Trends tab. The history of a decentralized VPN, stored on decentralized storage.
+
+The Scorecard itself is also published as a **Walrus Site** — the static page lives on Walrus, fully decentralized, with no central server hosting it. A planned next step is integrating **Walrus Memory** to give an AI agent persistent, verifiable memory of node history — an assistant that remembers how the network and individual nodes have behaved over time.
 
 ---
 
@@ -194,7 +199,7 @@ Header: apikey: <publishable-key>
 Feedback **writing** goes through the web UI, which applies anti-abuse measures (one vote per device, de-duplication). Writing directly via API bypasses those, so it isn't documented here by design.
 
 ### Notes for integrators
-- Data refreshes roughly every 3 hours; cache accordingly.
+- Data refreshes roughly every 2 hours; cache accordingly.
 - Fields can be `null` for nodes whose API was unreachable at sample time (~half the network at any moment) — handle nulls gracefully.
 - This is a community project; endpoints may evolve. Open an issue if you build on it and need stability guarantees.
 
@@ -220,8 +225,8 @@ cd node-scorecard
 python3 collector.py --all
 python3 make-summary.py
 
-# schedule collection (crontab -e) - every 3 hours is plenty
-0 */3 * * * /usr/bin/python3 /path/to/collector.py --all >> collector.log 2>&1 && \
+# schedule collection (crontab -e) - every 2 hours
+0 */2 * * * /usr/bin/python3 /path/to/collector.py --all >> collector.log 2>&1 && \
             /usr/bin/python3 /path/to/make-summary.py >> collector.log 2>&1 && \
             /usr/bin/python3 /path/to/make-trends.py >> collector.log 2>&1 && \
             /bin/bash /path/to/push-latest.sh >> collector.log 2>&1
@@ -240,12 +245,15 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 - ✅ ASN intelligence — per-provider saturation + placement advisor (done)
 - ✅ Reliability grade + global rank, Top Reliable leaderboard (done)
 - ✅ Trends — network time series, ASN movers, node movers (done — accumulating history)
-- ✅ Walrus Time Capsule on Sui testnet (done — mainnet under evaluation)
-- On-chain earnings trend per node (opt-in, by wallet)
+- ✅ Walrus Time Capsule on Sui (done)
+- ✅ Published as a fully decentralized Walrus Site (done)
+- ✅ "Where to host" — provider honesty badges, lease %, per-country opportunity (done)
+- On-chain earnings trend per node → ROI calculator (opt-in, by wallet)
+- Objective ASN classification via PeeringDB (hosting / ISP / enterprise)
+- Walrus Memory integration — persistent memory for an AI node-advisor agent
 - Clean versioned API endpoint with developer-friendly field names
 - Multi-network support (agnostic core - Sentinel first, others later)
 - Alerting hooks for operators
-- Integration with the Sentinel Scout / AI data layer
 
 ---
 
