@@ -279,6 +279,7 @@
   <div id="view-asnintel" style="display:none"></div>
   <div id="view-leaderboard" style="display:none"></div>
   <div id="view-trends" style="display:none"></div>
+  <div id="view-decent" style="display:none"></div>
   <div id="view-explorer">
     <!-- INSPECTOR PANEL: hidden until a node is clicked -->
     <div id="view-inspector" style="display:none">
@@ -522,7 +523,7 @@ function inspect(addr){
 function showInspector(){
   // se sono in un'altra tab (Top Reliable / ASN / Trends), torno a Explorer dove vive l'inspector
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view==="explorer"));
-  ["explorer","asnintel","leaderboard","trends"].forEach(k=>{
+  ["explorer","asnintel","leaderboard","trends","decent"].forEach(k=>{
     const el=document.getElementById("view-"+k); if(el)el.style.display=(k==="explorer")?"block":"none";
   });
   document.getElementById("explorer-list").style.display="none";
@@ -1164,7 +1165,7 @@ function renderAsnIntel(){
 }
 function switchView(v){
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-  ["explorer","asnintel","leaderboard","trends"].forEach(k=>{
+  ["explorer","asnintel","leaderboard","trends","decent"].forEach(k=>{
     const el=document.getElementById("view-"+k);
     const show=(v===k);
     el.style.display=show?"block":"none";
@@ -1174,6 +1175,7 @@ function switchView(v){
   if(v==="asnintel")renderAsnIntel();
   if(v==="leaderboard")renderLeaderboard();
   if(v==="trends")renderTrends();
+  if(v==="decent")renderDecent();
 }
 document.querySelectorAll("#maintabs .tab").forEach(t=>t.onclick=()=>switchView(t.dataset.view));
 // ===== Decentralization Score =====
