@@ -37,6 +37,9 @@
   input[type=text]{flex:1;min-width:200px}
   input[type=search]{flex:1;min-width:200px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;outline:none}
   input[type=search]:focus{border-color:var(--good);box-shadow:0 0 0 3px rgba(45,212,167,.12)}
+  input[type=search]:-webkit-autofill,input[type=search]:-webkit-autofill:hover,input[type=search]:-webkit-autofill:focus,input[type=text]:-webkit-autofill{-webkit-text-fill-color:var(--txt) !important;-webkit-box-shadow:0 0 0 1000px var(--panel-2) inset !important;caret-color:var(--txt);transition:background-color 9999s ease-in-out 0s}
+  input[type=search]:focus{background:var(--panel-2)}
+  .dot-warn{color:var(--warn,#e8a13a)} .dot-bad{color:var(--bad,#e05c5c)} .dot-good{color:var(--good,#3fb950)}
   input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;height:14px;width:14px;background:var(--muted);cursor:pointer;border-radius:50%;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6L6 18M6 6l12 12' stroke='black' stroke-width='3'/%3E%3C/svg%3E") center/contain no-repeat}
   input[type=search]::-webkit-search-cancel-button:hover{background:var(--txt)} input[type=text]:focus,select:focus{border-color:var(--good)}
   .chip-filters{display:flex;gap:6px;flex-wrap:wrap}
@@ -284,7 +287,7 @@
     <!-- INSPECTOR PANEL: hidden until a node is clicked -->
     <div id="view-inspector" style="display:none">
       <div class="insp-search">
-        <input type="search" id="insp-input" placeholder="paste a node address (sentnode1&hellip;) or moniker">
+        <input type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="insp-input" placeholder="paste a node address (sentnode1&hellip;) or moniker">
         <button class="pg" id="insp-go">Inspect</button>
       </div>
       <div id="insp-body"></div>
@@ -293,7 +296,7 @@
     <!-- LISTA: controlli + tabella -->
     <div id="explorer-list">
       <div class="controls">
-        <input type="search" id="search" placeholder="search moniker, address, city&hellip;">
+        <input type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="search" placeholder="search moniker, address, city&hellip;">
         <select id="country"><option value="">All countries</option></select>
         <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
         <div class="chip-filters"><div class="cf" id="cf-stale">Inactive</div><div class="cf" data-f="api">API reachable</div></div>
@@ -537,12 +540,12 @@ function countryRank(n){
 }
 function detectProblems(n){
   const P=[];
-  if(n.status==="stale")P.push(["warn","\ud83d\udfe0","Node data is STALE \u2014 last seen "+(n.age_h?n.age_h.toFixed(0)+"h":">24h")+" ago. Node likely offline."]);
-  else if(n.status!=="active")P.push(["bad","\ud83d\udd34","Node is INACTIVE on-chain \u2014 not earning. Check container & heartbeat."]);
-  if(n.samples>3&&n.uptime<90)P.push(["warn","\ud83d\udfe0","Historical uptime "+n.uptime.toFixed(0)+"% \u2014 below 90%. Node flaps offline."]);
-  if(n.samples>3&&n.stab<80)P.push(["warn","\ud83d\udfe0","Low stability ("+n.stab.toFixed(0)+") \u2014 frequent active/inactive transitions."]);
-  if(!n.api_ok&&n.status!=="stale")P.push(["warn","\ud83d\udfe0","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
-  if(n.freshness<40&&n.status==="active")P.push(["warn","\ud83d\udfe0","Stale heartbeat \u2014 last status update is overdue."]);
+  if(n.status==="stale")P.push(["warn","<span class=dot-warn>\u25cf</span>","Node data is STALE \u2014 last seen "+(n.age_h?n.age_h.toFixed(0)+"h":">24h")+" ago. Node likely offline."]);
+  else if(n.status!=="active")P.push(["bad","<span class=dot-bad>\u25cf</span>","Node is INACTIVE on-chain \u2014 not earning. Check container & heartbeat."]);
+  if(n.samples>3&&n.uptime<90)P.push(["warn","<span class=dot-warn>\u25cf</span>","Historical uptime "+n.uptime.toFixed(0)+"% \u2014 below 90%. Node flaps offline."]);
+  if(n.samples>3&&n.stab<80)P.push(["warn","<span class=dot-warn>\u25cf</span>","Low stability ("+n.stab.toFixed(0)+") \u2014 frequent active/inactive transitions."]);
+  if(!n.api_ok&&n.status!=="stale")P.push(["warn","<span class=dot-warn>\u25cf</span>","Node API not reachable from scanners \u2014 ports/forwarding may be off."]);
+  if(n.freshness<40&&n.status==="active")P.push(["warn","<span class=dot-warn>\u25cf</span>","Stale heartbeat \u2014 last status update is overdue."]);
   const ph=HIST[n.addr]||{};
   // inline ASN context: the info comes to the user, not the other way around
   const myA=n.asn?asnNum(n.asn):null;
@@ -558,62 +561,62 @@ function detectProblems(n){
     if(ph.l_now!=null){
       // on-chain lease truth (collector v3.7+). l_pos exists only after >=1 day of lease samples.
       if(ph.l_now===0&&ph.l_pos!=null&&ph.l_pos>=50)
-        P.push(["warn","\ud83d\udce4","Lease LOST \u2014 this node was leased "+ph.l_pos+"% of recent days but currently has NO active lease from any plan provider. Nothing to fix node-side: plan rotations usually return within 1\u20133 days.."+asnStat+asnLink]);
+        P.push(["warn","\u2191","Lease LOST \u2014 this node was leased "+ph.l_pos+"% of recent days but currently has NO active lease from any plan provider. Nothing to fix node-side: plan rotations usually return within 1\u20133 days.."+asnStat+asnLink]);
       else if(ph.l_now===0&&ph.l_pos!=null&&ph.l_pos<10&&n.uptime>=90&&ph.n>30)
-        P.push(["warn","\ud83d\udeab","Never leased \u2014 healthy node but plan providers don\u2019t lease it (on-chain). Likely not whitelisted (PlanWizard ASN/region policy)."+asnStat+asnLink]);
+        P.push(["warn","\u2717","Never leased \u2014 healthy node but plan providers don\u2019t lease it (on-chain). Likely not whitelisted (PlanWizard ASN/region policy)."+asnStat+asnLink]);
       else if(ph.l_now===0&&ph.l_pos==null&&ph.p_pos!=null&&ph.p_pos>=50&&ph.n>30)
-        P.push(["warn","\ud83d\udce4","No active lease right now (on-chain) \u2014 yet this node had client traffic in "+ph.p_pos+"% of recent days, so its lease most likely just rotated away. Nothing to fix node-side: rotations usually return within 1\u20133 days.."+asnStat+asnLink]);
+        P.push(["warn","\u2191","No active lease right now (on-chain) \u2014 yet this node had client traffic in "+ph.p_pos+"% of recent days, so its lease most likely just rotated away. Nothing to fix node-side: rotations usually return within 1\u20133 days.."+asnStat+asnLink]);
       else if(ph.l_now>0&&(n.peers||0)===0)
-        P.push(["info","\ud83d\udce5","Leased \u2713 but no client sessions right now \u2014 normal lull, traffic follows demand."]);
+        P.push(["info","\u2193","Leased \u2713 but no client sessions right now \u2014 normal lull, traffic follows demand."]);
     }else if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=5)
-      P.push(["warn","\ud83d\udeab","Healthy node but NO client traffic \u2014 peers were 0 in "+(100-ph.p_pos)+"% of recent samples. Usually NOT a node fault: the node likely isn\u2019t whitelisted for plans (PlanWizard ASN/region policy), so it never gets leases."+asnStat+asnLink]);
+      P.push(["warn","\u2717","Healthy node but NO client traffic \u2014 peers were 0 in "+(100-ph.p_pos)+"% of recent samples. Usually NOT a node fault: the node likely isn\u2019t whitelisted for plans (PlanWizard ASN/region policy), so it never gets leases."+asnStat+asnLink]);
     else if(ph.p_pos!=null&&ph.n>30&&n.uptime>=90&&ph.p_pos<=30)
-      P.push(["info","\ud83d\udc65","Sparse client traffic \u2014 peers seen in only "+ph.p_pos+"% of recent samples (avg "+(ph.p_avg!=null?ph.p_avg:"?")+"). Whitelisted but low demand, or borderline placement."]);
+      P.push(["info","\u25cf","Sparse client traffic \u2014 peers seen in only "+ph.p_pos+"% of recent samples (avg "+(ph.p_avg!=null?ph.p_avg:"?")+"). Whitelisted but low demand, or borderline placement."]);
     else if(n.peers===0)
       P.push(["info","\u2139\ufe0f","0 peers right now \u2014 normal for a fresh node, watch over time."]);
   }
   // --- rules based on network comparison (medians) ---
   if(n.status==="active"&&n.price_hr!=null&&MED.price_hr){
-    if(n.price_hr>MED.price_hr*2.5)P.push(["warn","\ud83d\udfe0","Price/hr ("+n.price_hr+") is far above the network median ("+MED.price_hr+") \u2014 fewer clients will pick this node."]);
+    if(n.price_hr>MED.price_hr*2.5)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/hr ("+n.price_hr+") is far above the network median ("+MED.price_hr+") \u2014 fewer clients will pick this node."]);
     else if(n.price_hr>0&&n.price_hr<MED.price_hr*0.4)P.push(["info","\u2139\ufe0f","Price/hr ("+n.price_hr+") well below median ("+MED.price_hr+") \u2014 you may be leaving rewards on the table."]);
   }
   if(n.status==="active"&&n.ul_mbps!=null){
     // ABSOLUTE threshold, not relative to median: network median is inflated by datacenters
     // (symmetric fiber). A residential node serves clients fine with few Mbps.
     // Flag only bandwidth so low it actually harms service.
-    if(n.ul_mbps>0&&n.ul_mbps<5)P.push(["warn","\ud83d\udfe0","Upload "+n.ul_mbps+" Mbps is very low \u2014 may struggle to serve client sessions."]);
+    if(n.ul_mbps>0&&n.ul_mbps<5)P.push(["warn","<span class=dot-warn>\u25cf</span>","Upload "+n.ul_mbps+" Mbps is very low \u2014 may struggle to serve client sessions."]);
   }
   if(n.status==="active"&&n.version&&MED.topVersion&&n.version!==MED.topVersion){
     const mine=(MED.versionCounts[n.version]||0),top=(MED.versionCounts[MED.topVersion]||0);
     if(top>mine*3)P.push(["info","\u2139\ufe0f","Running v"+n.version+" while most active nodes run v"+MED.topVersion+" \u2014 consider updating."]);
   }
-  if(asnSaturated(n.asn))P.push(["warn","\ud83d\udfe0","On a saturated ASN ("+asnSaturated(n.asn)+") \u2014 over the PlanWizard whitelist limit, may not get leased/earn."+asnStat+asnLink]);
+  if(asnSaturated(n.asn))P.push(["warn","<span class=dot-warn>\u25cf</span>","On a saturated ASN ("+asnSaturated(n.asn)+") \u2014 over the PlanWizard whitelist limit, may not get leased/earn."+asnStat+asnLink]);
   // --- HISTORICAL trend from the per-node timeline (unique to the Scorecard) ---
   const h=HIST[n.addr];
   if(h&&h.tl&&h.tl.length>=60&&n.status!=="stale"){
     const tl=h.tl, third=Math.floor(tl.length/3);
     const up=(s)=>{let a=0;for(const c of s)if(c==="1")a++;return a/s.length*100;};
     const recent=up(tl.slice(-third)), earlier=up(tl.slice(0,tl.length-third));
-    if(recent-earlier<=-12)P.push(["warn","\ud83d\udcc9","Uptime is DECLINING \u2014 "+earlier.toFixed(0)+"% earlier vs "+recent.toFixed(0)+"% in recent samples. Something changed: check power, network, watchdog."]);
-    else if(recent-earlier>=12&&n.uptime<97)P.push(["ok","\ud83d\udcc8","Recovering \u2014 recent uptime "+recent.toFixed(0)+"% vs "+earlier.toFixed(0)+"% earlier. Keep it up."]);
+    if(recent-earlier<=-12)P.push(["warn","<span class=dot-bad>\u25bc</span>","Uptime is DECLINING \u2014 "+earlier.toFixed(0)+"% earlier vs "+recent.toFixed(0)+"% in recent samples. Something changed: check power, network, watchdog."]);
+    else if(recent-earlier>=12&&n.uptime<97)P.push(["ok","<span class=dot-good>\u25b2</span>","Recovering \u2014 recent uptime "+recent.toFixed(0)+"% vs "+earlier.toFixed(0)+"% earlier. Keep it up."]);
   }
   // price per GB vs network
   if(n.status==="active"&&n.price_gb!=null&&MED.price_gb){
-    if(n.price_gb>MED.price_gb*2.5)P.push(["warn","\ud83d\udfe0","Price/GB ("+n.price_gb+") far above median ("+MED.price_gb+") \u2014 clients comparing prices will skip this node."]);
+    if(n.price_gb>MED.price_gb*2.5)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/GB ("+n.price_gb+") far above median ("+MED.price_gb+") \u2014 clients comparing prices will skip this node."]);
   }
   // young node: track record still forming
-  if(n.status==="active"&&n.samples>0&&n.samples<=10)P.push(["info","\ud83c\udf31","Young node ("+n.samples+" samples) \u2014 grade and uptime not meaningful yet, check back in a few days."]);
+  if(n.status==="active"&&n.samples>0&&n.samples<=10)P.push(["info","\u25cf","Young node ("+n.samples+" samples) \u2014 grade and uptime not meaningful yet, check back in a few days."]);
   // active + API ok but no speedtest data
   if(n.status==="active"&&n.api_ok&&n.ul_mbps==null&&n.dl_mbps==null)P.push(["info","\u2139\ufe0f","No bandwidth data \u2014 the node hasn\u2019t reported a speedtest yet (runs on its own schedule)."]);
   // crowded country: heavy competition for leases
   if(n.status==="active"&&n.country){
     const cc=NODES.filter(x=>x.status==="active"&&x.country===n.country).length;
-    if(cc>=200)P.push(["info","\ud83c\udfd9\ufe0f","Crowded country \u2014 "+cc+" active nodes in "+n.country+". More competition for client sessions."]);
+    if(cc>=200)P.push(["info","\u25cf\ufe0f","Crowded country \u2014 "+cc+" active nodes in "+n.country+". More competition for client sessions."]);
   }
   // elite recognition
   if(n.status==="active"&&n.score>=90){
     const gr2=globalRank(n);
-    if(gr2&&gr2.pos<=20)P.push(["ok","\ud83c\udfc6","Elite node \u2014 grade "+grade(n.score)+", ranked #"+gr2.pos+" of "+gr2.total+" network-wide."]);
+    if(gr2&&gr2.pos<=20)P.push(["ok","\u2605","Elite node \u2014 grade "+grade(n.score)+", ranked #"+gr2.pos+" of "+gr2.total+" network-wide."]);
   }
   // --- IP condiviso: piu' nodi sullo stesso host dividono attenzione e affidabilita' percepita ---
   if(n.status==="active"&&n.remote){
@@ -622,20 +625,20 @@ function detectProblems(n){
       NODES.forEach(x=>{if(x.status==="active"&&x.remote){const h=x.remote.split(":")[0];window._ipdup[h]=(window._ipdup[h]||0)+1;}});
     }
     const others=(window._ipdup[n.remote.split(":")[0]]||1)-1;
-    if(others>=1)P.push(["info","\ud83d\udc65","Shares its IP/host with "+others+" other active node"+(others===1?"":"s")+" \u2014 multiple nodes on one address split traffic and can look suspicious to plan providers."]);
+    if(others>=1)P.push(["info","\u25cf","Shares its IP/host with "+others+" other active node"+(others===1?"":"s")+" \u2014 multiple nodes on one address split traffic and can look suspicious to plan providers."]);
   }
   // --- remote = IP grezzo su rete residenziale: alla prima rotazione IP il nodo sparisce ---
   if(n.status==="active"&&n.hosting===false&&n.remote&&/^\d+\.\d+\.\d+\.\d+/.test(n.remote))
-    P.push(["warn","\ud83c\udfe0","Remote announced as a RAW IP on a residential-class network \u2014 when the ISP rotates the IP, the node becomes unreachable. Use a DDNS hostname instead."]);
+    P.push(["warn","\u25cf","Remote announced as a RAW IP on a residential-class network \u2014 when the ISP rotates the IP, the node becomes unreachable. Use a DDNS hostname instead."]);
   // --- prezzo zero: configurazione rotta, il nodo lavora gratis o viene scartato ---
   if(n.status==="active"&&(n.price_hr===0||n.price_gb===0))
-    P.push(["warn","\ud83d\udcb8","A price is set to ZERO ("+(n.price_hr===0?"hourly":"per-GB")+") \u2014 likely a misconfiguration."]);
+    P.push(["warn","\u00a4","A price is set to ZERO ("+(n.price_hr===0?"hourly":"per-GB")+") \u2014 likely a misconfiguration."]);
   // --- token di pagamento incompleti ---
   if(n.status==="active"&&typeof n.gb_tokens==="number"&&n.gb_tokens>0&&n.gb_tokens<3)
-    P.push(["info","\ud83e\udd1d","Accepts only "+n.gb_tokens+"/3 payment tokens \u2014 plans paying with the missing tokens can\u2019t use this node."]);
+    P.push(["info","\u25cf","Accepts only "+n.gb_tokens+"/3 payment tokens \u2014 plans paying with the missing tokens can\u2019t use this node."]);
   // --- moniker assente ---
   if(n.status==="active"&&!n.hasName)
-    P.push(["info","\ud83c\udff7\ufe0f","No moniker set \u2014 anonymous nodes are harder to find, trust and get feedback on. Set one in config.toml."]);
+    P.push(["info","\u25cf\ufe0f","No moniker set \u2014 anonymous nodes are harder to find, trust and get feedback on. Set one in config.toml."]);
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
@@ -735,16 +738,16 @@ function renderInspector(n){
   const hotC=/not reachable|INACTIVE|stale/i.test(ptxt);          // container/clock issues
   const hotP=/DECLINING|flaps|Stability|unstable/i.test(ptxt);    // power/heat/sd
   const LC=[
-    ["\ud83e\udeC0","Container alive","no container, no node \u2014 rule it out first","docker ps --format '{{.Names}} {{.Status}}'",hotC],
-    ["\ud83d\udd01","Crash loops","silent restarts show up here","docker inspect --format '{{.RestartCount}}' $(docker ps -q | head -1)",hotC||hotP],
-    ["\ud83d\udcdc","Recent errors","the container\u2019s own words, last hour","docker logs $(docker ps -q | head -1) --since 1h 2>&1 | grep -iE \"error|fatal\" | tail -10",hotC],
-    ["\ud83c\udf21\ufe0f","Power & heat (Pi)","get_throttled MUST say 0x0 \u2014 anything else is bad power or overheating","vcgencmd measure_temp; vcgencmd get_throttled",hotP],
-    ["\ud83d\udcbe","Disk space","a full disk kills databases quietly","df -h /",hotP],
-    ["\ud83e\udde0","Memory","swapping = stutters = dropped sessions","free -h",false],
+    ["\u25cf","Container alive","no container, no node \u2014 rule it out first","docker ps --format '{{.Names}} {{.Status}}'",hotC],
+    ["\u21bb","Crash loops","silent restarts show up here","docker inspect --format '{{.RestartCount}}' $(docker ps -q | head -1)",hotC||hotP],
+    ["\u2261","Recent errors","the container\u2019s own words, last hour","docker logs $(docker ps -q | head -1) --since 1h 2>&1 | grep -iE \"error|fatal\" | tail -10",hotC],
+    ["\u25cf\ufe0f","Power & heat (Pi)","get_throttled MUST say 0x0 \u2014 anything else is bad power or overheating","vcgencmd measure_temp; vcgencmd get_throttled",hotP],
+    ["\u25a0","Disk space","a full disk kills databases quietly","df -h /",hotP],
+    ["\u25cf","Memory","swapping = stutters = dropped sessions","free -h",false],
     ["\u23f0","Clock sync","a skewed clock breaks TLS and on-chain timing","timedatectl | grep -i synchron",hotC]
   ];
   const anyHot=LC.some(x=>x[4]);
-  const localChk='<details class="lchk"'+(anyHot?' open':'')+'><summary>\ud83e\ude7a Operator\u2019s local checkup \u2014 the parts no external scanner can see'+(anyHot?' <span style="color:var(--warn)">(suggested for the issues above)</span>':'')+'</summary>'+
+  const localChk='<details class="lchk"'+(anyHot?' open':'')+'><summary>\u25cf Operator\u2019s local checkup \u2014 the parts no external scanner can see'+(anyHot?' <span style="color:var(--warn)">(suggested for the issues above)</span>':'')+'</summary>'+
     '<div class="lc-intro">The Scorecard watches this node from the outside. These commands check the <b>inside</b> \u2014 run them on the node\u2019s machine. Click a command to copy it. (Adjust the container name if needed.)</div>'+
     LC.map(([ic,name,why,cmd,hot])=>'<div class="lc-item'+(hot?' hot':'')+'"><div class="lc-name" title="'+esc(why)+'">'+ic+' '+name+' <span class="why">\u2014 '+esc(why)+'</span></div><code onclick="copyCmd(this)" data-cmd="'+esc(cmd)+'">'+esc(cmd)+'</code></div>').join("")+
     '</details>';
@@ -779,7 +782,7 @@ function renderInspector(n){
     '</div><div class="card">'+
       '<h3>Score breakdown</h3>'+br+
       '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+passedHtml+localChk+
-      (detectProblems(n).some(p=>p[0]==="warn"||p[0]==="bad")?'<button class="repbtn" onclick="genReport(\''+n.addr+'\')" title="Build a ready-to-share report of this node\u2019s issues \u2014 for support or your Telegram alert channel">\ud83d\udce2 Generate issue report</button>':"")+
+      (detectProblems(n).some(p=>p[0]==="warn"||p[0]==="bad")?'<button class="repbtn" onclick="genReport(\''+n.addr+'\')" title="Build a ready-to-share report of this node\u2019s issues \u2014 for support or your Telegram alert channel">\u25cf Generate issue report</button>':"")+
       '<div class="report" id="report"></div>'+
       '<div id="nodeadvisor" style="margin-top:22px"><h3>NodeAdvisor \u2014 community feedback</h3><div id="na-body" class="na-loading">loading feedback\u2026</div></div>'+
     '</div></div>';
@@ -803,7 +806,7 @@ function livePeers(remote){
       if(!cell)return;
       const p=d&&d.result?d.result.peers:null;
       if(p!=null){
-        cell.innerHTML=p+' <span style="font-size:10px;color:var(--good);font-family:Space Mono">\u00b7 \ud83d\udfe2 LIVE</span>';
+        cell.innerHTML=p+" <span style='font-size:10px;color:var(--good);font-family:Space Mono'>\u00b7 <span class=dot-good>\u25cf</span> LIVE</span>";
       }else if(badge){
         badge.textContent="\u00b7 collector (live n/d)";
       }
@@ -967,7 +970,12 @@ function setPanelDesc(){
   document.getElementById("paneldesc").innerHTML='<span class="net-label">dVPN Sentinel Network</span> \u2014 the whole network at a glance. Sort, filter, search 1500+ nodes. Click any node to inspect it.';
 }
 function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=(k==="moniker"||k==="country"||k==="protocol")?1:-1;}state.page=0;render();}
-document.getElementById("search").oninput=e=>{state.search=e.target.value;state.page=0;render();};
+document.getElementById("search").oninput=e=>{
+  state.search=e.target.value;state.page=0;
+  var insp=document.getElementById("view-inspector");
+  if(insp&&insp.style.display!=="none"){backToExplorer();}
+  render();
+};
 document.getElementById("country").onchange=e=>{state.country=e.target.value;state.page=0;render();};
 document.getElementById("protocol").onchange=e=>{state.protocol=e.target.value;state.page=0;render();};
 document.querySelectorAll(".cf[data-f]").forEach(c=>c.onclick=()=>{const f=c.dataset.f;state.filters[f]=!state.filters[f];c.classList.toggle("on",state.filters[f]);state.page=0;render();});
@@ -1060,7 +1068,7 @@ function renderAsnIntel(){
       '<div class="kpi"><div class="kpi-v">'+Object.keys(byCountry).length+'</div><div class="kpi-l">countries</div></div>'+
       (function(){var dd=computeDecent();if(!dd)return '';var c=decentColor(dd.score);return '<div class="kpi kpidec" onclick="switchView(\'decent\')" style="cursor:pointer" title="Network decentralization \u2014 click for details"><div class="kpi-v" style="color:'+c+'">'+dd.score.toFixed(0)+' <span style="font-size:13px">'+decentGrade(dd.score)+'</span></div><div class="kpi-l">decentralization</div></div>';})()+
     '</div></div>';
-  html+='<div class="asn-search"><span class="asn-search-ic">\ud83d\udd0d</span><input type="search" id="asn-q" placeholder="Search a provider, ASN or country \u2014 e.g. Hetzner, AS24940, Austria" value="'+esc(asnIntelState())+'"></div>';
+  html+='<div class="asn-search"><span class=\"asn-search-ic\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" style=\"vertical-align:middle\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg></span><input type="search" id="asn-q" placeholder="Search a provider, ASN or country \u2014 e.g. Hetzner, AS24940, Austria" value="'+esc(asnIntelState())+'"></div>';
   if(q){
     rows=rows.filter(r=>(r.num&&r.num.toLowerCase().includes(q))||(r.name&&r.name.toLowerCase().includes(q))||Object.keys(r.countries).some(c=>c.toLowerCase().includes(q)));
     // exact-ASN match -> list the nodes on that ASN
@@ -1089,7 +1097,7 @@ function renderAsnIntel(){
             '<span><b>'+a.total+'</b> / ~'+ASN_LIMIT+' nodes</span>'+
             (lpct!=null?'<span class="'+(lpct>=50?"g":lpct>0?"w":"b")+'"><b>'+lpct+'%</b> leased</span>':'')+
           '</div>'+
-          '<div class="vcard-geo" title="'+esc(Object.keys(a.countries).join(", "))+'">\ud83c\udf0d '+Object.keys(a.countries).slice(0,3).join(", ")+(Object.keys(a.countries).length>3?" +"+(Object.keys(a.countries).length-3):"")+'</div>'+
+          '<div class="vcard-geo" title="'+esc(Object.keys(a.countries).join(", "))+'">\u25cf '+Object.keys(a.countries).slice(0,3).join(", ")+(Object.keys(a.countries).length>3?" +"+(Object.keys(a.countries).length-3):"")+'</div>'+
         '</div>';
       });
       html+='</div>';
@@ -1108,10 +1116,10 @@ function renderAsnIntel(){
     const mxLeast=Math.max(...least.map(e=>e[1]),1);
     const mxMost=Math.max(...cs.map(e=>e[1]),1);
     html+='<div class="oppgrid">'+
-      '<div class="oppcard good"><div class="oppcard-h"><span class="oppcard-ic">\ud83c\udf31</span><div><div class="oppcard-t">Least crowded \u2014 opportunity</div><div class="oppcard-s">'+least.length+' countries with \u226414 nodes \u00b7 best chance of a free slot</div></div></div><div class="cscroll">';
+      '<div class="oppcard good"><div class="oppcard-h"><span class="oppcard-ic">\u25cf</span><div><div class="oppcard-t">Least crowded \u2014 opportunity</div><div class="oppcard-s">'+least.length+' countries with \u226414 nodes \u00b7 best chance of a free slot</div></div></div><div class="cscroll">';
     least.forEach(e=>{html+=crow(e,mxLeast);});
     html+='</div></div>'+
-      '<div class="oppcard bad"><div class="oppcard-h"><span class="oppcard-ic">\ud83d\udd25</span><div><div class="oppcard-t">Most crowded \u2014 avoid</div><div class="oppcard-s">saturated \u00b7 hard to get leased</div></div></div><div class="cscroll">';
+      '<div class="oppcard bad"><div class="oppcard-h"><span class="oppcard-ic"></span><div><div class="oppcard-t">Most crowded \u2014 avoid</div><div class="oppcard-s">saturated \u00b7 hard to get leased</div></div></div><div class="cscroll">';
     cs.slice().reverse().slice(0,18).forEach(e=>{html+=crow(e,mxMost);});
     html+='</div></div></div>';
   }
@@ -1278,7 +1286,7 @@ function fmtDay(ts){const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()
 function renderTrends(){
   const box=document.getElementById("view-trends");
   if(!TRENDS||!TRENDS.series||TRENDS.series.length<2){
-    box.innerHTML='<div class="asn-intro" style="margin-top:18px">\ud83d\udcc8 <b>Collecting history\u2026</b> The network\u2019s story starts now: every 3 hours the collector records a snapshot of active nodes, ASN saturation and country spread. '+
+    box.innerHTML='<div class="asn-intro" style="margin-top:18px"><span class=dot-good>\u25b2</span> <b>Collecting history\u2026</b> The network\u2019s story starts now: every 3 hours the collector records a snapshot of active nodes, ASN saturation and country spread. '+
       'Within a couple of days this tab will show how the network <b>moves over time</b> \u2014 which providers are filling up or emptying, which countries grow, and which nodes are improving or declining.</div>';
     return;
   }
@@ -1292,7 +1300,7 @@ function renderTrends(){
   const actSeries=S.map(p=>p.active);
   const dAct=last.active-base.active;
   html+='<div class="cmp" style="grid-template-columns:1fr">'+
-    '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4 title="Live count of nodes the chain reports as active (status=1), tracked over time by the Scorecard collector.">\ud83d\udc9a Network Pulse \u2014 active nodes <span class="ttip">?</span></h4>'+
+    '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4 title="Live count of nodes the chain reports as active (status=1), tracked over time by the Scorecard collector."><span class=dot-good>\u25cf</span> Network Pulse \u2014 active nodes <span class="ttip">?</span></h4>'+
     svgLine(actSeries,600,90,"var(--good)")+
     '<div class="cmp-row"><span class="ck">'+fmtDay(first.ts)+' \u2192 now</span><span class="cv">'+last.active+' active <span style="color:'+(dAct>=0?"var(--good)":"var(--bad)")+'">('+(dAct>=0?"+":"")+dAct+')</span></span></div>'+
     (last.nodes_leased!=null?'<div class="cmp-row" title="Nodes that currently hold at least one on-chain lease from a plan provider, and the total number of active leases across the network. This is the real demand signal \u2014 only leased nodes earn from plans."><span class="ck">Leased by plan providers <span class="ttip">?</span></span><span class="cv">'+last.nodes_leased+' nodes \u00b7 '+(last.leases_total||0)+' leases</span></div>':'')+
@@ -1303,10 +1311,10 @@ function renderTrends(){
   keys.forEach(k=>{const d=(last.asn[k]||0)-(base.asn[k]||0);if(d!==0)asnDelta.push({k:k,now:last.asn[k]||0,d:d});});
   asnDelta.sort((a,b)=>b.d-a.d);
   const gain=asnDelta.filter(x=>x.d>0).slice(0,8), loss=asnDelta.filter(x=>x.d<0).reverse().slice(0,8);
-  html+='<div class="cmp"><div class="cmp-card" style="border-left:3px solid var(--good)"><h4>\ud83d\udcc8 ASNs gaining nodes</h4>';
+  html+='<div class="cmp"><div class="cmp-card" style="border-left:3px solid var(--good)"><h4><span class=dot-good>\u25b2</span> ASNs gaining nodes</h4>';
   gain.forEach(x=>{html+='<div class="cmp-row"><span class="ck">'+esc(x.k)+'</span><span class="cv">'+x.now+' <span style="color:var(--good)">+'+x.d+'</span></span></div>';});
   if(!gain.length)html+='<div class="cmp-row"><span class="ck">no gains yet</span></div>';
-  html+='</div><div class="cmp-card" style="border-left:3px solid var(--bad)"><h4>\ud83d\udcc9 ASNs losing nodes</h4>';
+  html+='</div><div class="cmp-card" style="border-left:3px solid var(--bad)"><h4><span class=dot-bad>\u25bc</span> ASNs losing nodes</h4>';
   loss.forEach(x=>{html+='<div class="cmp-row"><span class="ck">'+esc(x.k)+'</span><span class="cv">'+x.now+' <span style="color:var(--bad)">'+x.d+'</span></span></div>';});
   if(!loss.length)html+='<div class="cmp-row"><span class="ck">no losses yet</span></div>';
   html+='</div></div>';
@@ -1323,7 +1331,7 @@ function renderTrends(){
   }
   if(CAPSULE&&CAPSULE.latest){
     const c=CAPSULE.latest;
-    html+='<div class="asn-intro" style="margin-top:4px;font-size:12px">\ud83e\uddca <b>Time Capsule</b> \u2014 daily snapshot archived on <b>Walrus</b> decentralized storage (Sui ecosystem): '+
+    html+='<div class="asn-intro" style="margin-top:4px;font-size:12px">\u25cf <b>Time Capsule</b> \u2014 daily snapshot archived on <b>Walrus</b> decentralized storage (Sui ecosystem): '+
       '<a href="'+esc(c.url)+'" target="_blank" rel="noopener" style="color:var(--good)">'+esc(c.date)+' \u00b7 blob '+esc((c.blobId||"").slice(0,10))+'\u2026</a>'+
       ' <span style="color:var(--dim)">sha256 '+esc((c.sha256||"").slice(0,12))+'\u2026 \u00b7 immutable &amp; verifiable</span></div>';
   }
