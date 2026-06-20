@@ -223,6 +223,7 @@
   .provlink:hover{opacity:1}
     .ttip{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:var(--line);color:var(--muted);font-size:9px;font-weight:700;font-family:'Sora',sans-serif;cursor:help;vertical-align:middle;margin-left:2px;transition:background .15s,color .15s}
   *:hover>.ttip{background:var(--good);color:var(--bg)}
+
   .asn-intro{color:var(--txt);opacity:.75;font-size:13px;line-height:1.55;font-family:'Sora',sans-serif;margin:14px 0 16px;max-width:780px} .asn-intro b{opacity:1;color:var(--good);font-weight:600}
   .asn-sat{color:var(--bad);font-weight:700}
   .asn-ok{color:var(--good);font-weight:700}
@@ -445,7 +446,7 @@ function renderStats(){
   const leaseData=NODES.some(n=>(HIST[n.addr]||{}).l_now!=null);
   if(leaseData){
     const leased=NODES.filter(n=>n.status==="active"&&((HIST[n.addr]||{}).l_now||0)>0).length;
-    document.getElementById("stats").innerHTML+='<div class="stat b5" title="Active nodes currently leased by a plan provider (on-chain). Leases rotate every 2\u20133 days \u2014 only leased nodes earn from plans."><div class="v" data-c="'+leased+'">0</div><div class="l">Leased now</div></div>';
+    document.getElementById("stats").innerHTML+='<div class="stat b5" data-tip="Active nodes currently leased by a plan provider (on-chain). Leases rotate every 2\u20133 days \u2014 only leased nodes earn from plans."><div class="v" data-c="'+leased+'">0</div><div class="l">Leased now</div></div>';
   }
   document.querySelectorAll("#stats .v[data-c]").forEach(el=>animateCount(el,+el.dataset.c));
 }
@@ -699,7 +700,7 @@ function renderSupport(){
     'Independent &amp; community-run \u2014 no ads, no trackers, no backend. '+
     'If the Scorecard saved you a bad VPS or a lost lease, you can fuel its servers:'+
     '<div class="donrow">'+list.map(d=>
-      '<span class="addr" title="Click to copy '+esc(d.coin)+' address" onclick="copyAddr(this)" data-a="'+esc(d.addr)+'"><b>'+esc(d.coin)+'</b> \u00b7 '+esc(d.addr)+' \u29c9</span>'
+      '<span class="addr" data-tip="Click to copy '+esc(d.coin)+' address" onclick="copyAddr(this)" data-a="'+esc(d.addr)+'"><b>'+esc(d.coin)+'</b> \u00b7 '+esc(d.addr)+' \u29c9</span>'
     ).join("")+'</div>';
 }
 function copyAddr(el){
@@ -728,7 +729,7 @@ function renderInspector(n){
   const br=Object.entries(n.comps).map(([k,v])=>{const pct=Math.round((v/W[k])*100);
     return '<div class="br"><span class="lbl">'+k+'<span class="qm" data-tip="'+esc(EXPL[k]||"")+'">?</span></span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="pct">'+pct+'</span></div>';}).join("");
   let tl='<span class="na" style="font-family:Space Mono;font-size:12px">no history yet \u2014 collector needs time</span>';
-  if(n.tl){tl='<div class="timeline">'+n.tl.split("").map(c=>'<span class="tlc '+(c==="1"?"a":"i")+'" title="'+(c==="1"?"active":"inactive")+'"></span>').join("")+'</div>'+
+  if(n.tl){tl='<div class="timeline">'+n.tl.split("").map(c=>'<span class="tlc '+(c==="1"?"a":"i")+'" data-tip="'+(c==="1"?"active":"inactive")+'"></span>').join("")+'</div>'+
     '<div style="font-size:10.5px;color:var(--dim);font-family:Space Mono;margin-top:6px">'+(n.tl_from?fmtShort(n.tl_from):"")+' \u2192 '+(n.tl_to?fmtShort(n.tl_to):"")+' &middot; '+n.tl.length+' samples</div>';}
   const probs=detectProblems(n).map(([cl,ic,t])=>'<div class="problem '+cl+'"><span class="pic">'+ic+'</span><span>'+t+'</span></div>').join("");
   const pc=passedChecks(n);
@@ -749,7 +750,7 @@ function renderInspector(n){
   const anyHot=LC.some(x=>x[4]);
   const localChk='<details class="lchk"'+(anyHot?' open':'')+'><summary>\u25cf Operator\u2019s local checkup \u2014 the parts no external scanner can see'+(anyHot?' <span style="color:var(--warn)">(suggested for the issues above)</span>':'')+'</summary>'+
     '<div class="lc-intro">The Scorecard watches this node from the outside. These commands check the <b>inside</b> \u2014 run them on the node\u2019s machine. Click a command to copy it. (Adjust the container name if needed.)</div>'+
-    LC.map(([ic,name,why,cmd,hot])=>'<div class="lc-item'+(hot?' hot':'')+'"><div class="lc-name" title="'+esc(why)+'">'+ic+' '+name+' <span class="why">\u2014 '+esc(why)+'</span></div><code onclick="copyCmd(this)" data-cmd="'+esc(cmd)+'">'+esc(cmd)+'</code></div>').join("")+
+    LC.map(([ic,name,why,cmd,hot])=>'<div class="lc-item'+(hot?' hot':'')+'"><div class="lc-name" data-tip="'+esc(why)+'">'+ic+' '+name+' <span class="why">\u2014 '+esc(why)+'</span></div><code onclick="copyCmd(this)" data-cmd="'+esc(cmd)+'">'+esc(cmd)+'</code></div>').join("")+
     '</details>';
   const passedHtml=pc.length?'<div style="margin-top:11px;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">'+pc.length+' checks passed</div><div style="margin-top:6px">'+pc.map(c=>'<span class="pchip">\u2713 '+c+'</span>').join("")+'</div>':"";
   document.getElementById("insp-body").innerHTML=
@@ -771,7 +772,7 @@ function renderInspector(n){
         '<span class="k">Historical uptime</span><span class="v">'+(n.samples?n.uptime.toFixed(1)+"%":"\u2014")+'</span>'+
         '<span class="k">Stability</span><span class="v">'+(n.samples?n.stab.toFixed(0):"\u2014")+'</span>'+
         '<span class="k">History samples</span><span class="v">'+n.samples+'</span>'+
-        ((HIST[n.addr]||{}).l_now!=null?'<span class="k" title="On-chain leases held right now. A node can be rented by several plan providers at once \u2014 the number in parentheses is how many simultaneous leases. More leases = more income streams, but it depends on plan demand, not node quality.">Leased (now) <span class="ttip">?</span></span><span class="v" style="color:'+(((HIST[n.addr]||{}).l_now||0)>0?'var(--good)':'var(--warn)')+'">'+(((HIST[n.addr]||{}).l_now||0)>0?'\u2713 yes ('+HIST[n.addr].l_now+(HIST[n.addr].l_now>1?' simultaneous':'')+')':'no')+'</span>':'')+
+        ((HIST[n.addr]||{}).l_now!=null?'<span class="k" data-tip="On-chain leases held right now. A node can be rented by several plan providers at once \u2014 the number in parentheses is how many simultaneous leases. More leases = more income streams, but it depends on plan demand, not node quality.">Leased (now) <span class="ttip">?</span></span><span class="v" style="color:'+(((HIST[n.addr]||{}).l_now||0)>0?'var(--good)':'var(--warn)')+'">'+(((HIST[n.addr]||{}).l_now||0)>0?'\u2713 yes ('+HIST[n.addr].l_now+(HIST[n.addr].l_now>1?' simultaneous':'')+')':'no')+'</span>':'')+
         ((HIST[n.addr]||{}).l_pos!=null?'<span class="k">Lease uptime (7d)</span><span class="v">'+HIST[n.addr].l_pos+'%</span>':'')+
         '<span class="k">Peers (now)</span><span class="v" id="peers-live">'+(n.peers!=null?n.peers:"\u2014")+' <span id="peers-badge" style="font-size:10px;color:var(--muted);font-family:Space Mono">\u00b7 collector</span></span>'+
         '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+medRef("price_hr",n.price_hr):"\u2014")+'</span>'+
@@ -782,7 +783,7 @@ function renderInspector(n){
     '</div><div class="card">'+
       '<h3>Score breakdown</h3>'+br+
       '<h3 style="margin-top:20px">Diagnostics</h3>'+probs+passedHtml+localChk+
-      (detectProblems(n).some(p=>p[0]==="warn"||p[0]==="bad")?'<button class="repbtn" onclick="genReport(\''+n.addr+'\')" title="Build a ready-to-share report of this node\u2019s issues \u2014 for support or your Telegram alert channel">\u25cf Generate issue report</button>':"")+
+      (detectProblems(n).some(p=>p[0]==="warn"||p[0]==="bad")?'<button class="repbtn" onclick="genReport(\''+n.addr+'\')" data-tip="Build a ready-to-share report of this node\u2019s issues \u2014 for support or your Telegram alert channel">\u25cf Generate issue report</button>':"")+
       '<div class="report" id="report"></div>'+
       '<div id="nodeadvisor" style="margin-top:22px"><h3>NodeAdvisor \u2014 community feedback</h3><div id="na-body" class="na-loading">loading feedback\u2026</div></div>'+
     '</div></div>';
@@ -995,7 +996,7 @@ function asnCell(asn){
   const num=asnNum(asn);if(!num)return '<span class="na">\u2014</span>';
   const sat=asnSaturated(asn);
   const tip=asnName(asn)+(sat?" \u2014 SATURATED, hard to whitelist":" \u2014 not saturated, good for new nodes");
-  return '<span title="'+esc(tip)+'" style="cursor:help;color:'+(sat?'var(--bad)':'var(--good)')+'">'+num+'</span>';
+  return '<span data-tip="'+esc(tip)+'" style="cursor:help;color:'+(sat?'var(--bad)':'var(--good)')+'">'+num+'</span>';
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtAgo(ts){const d=(Date.now()-new Date(ts))/1000;if(d<90)return"just now";if(d<3600)return Math.round(d/60)+" min ago";if(d<86400)return Math.round(d/3600)+" h ago";return Math.round(d/86400)+" d ago";}
@@ -1060,13 +1061,13 @@ function renderAsnIntel(){
   let rows=Object.values(agg);
   const q=asnIntelState().toLowerCase().trim();
   let html='<div class="asn-head">'+
-    '<div class="asn-title">Where to host <span class="ttip" title="Plan providers (PlanWizard) won\u2019t whitelist too many nodes on the same network (ASN). Pick a provider/country with free slots so your node can actually get leased and earn.">?</span></div>'+
+    '<div class="asn-title">Where to host <span class="ttip" data-tip="Plan providers (PlanWizard) won\u2019t whitelist too many nodes on the same network (ASN). Pick a provider/country with free slots so your node can actually get leased and earn.">?</span></div>'+
     '<div class="asn-sub">Active nodes grouped by hosting provider (ASN). Find a network with free slots \u2014 saturated ones rarely get new nodes leased.</div>'+
     '<div class="asn-kpis">'+
       '<div class="kpi"><div class="kpi-v">'+totNodes+'</div><div class="kpi-l">active nodes</div></div>'+
       '<div class="kpi"><div class="kpi-v">'+totAsn+'</div><div class="kpi-l">networks (ASN)</div></div>'+
       '<div class="kpi"><div class="kpi-v">'+Object.keys(byCountry).length+'</div><div class="kpi-l">countries</div></div>'+
-      (function(){var dd=computeDecent();if(!dd)return '';var c=decentColor(dd.score);return '<div class="kpi kpidec" onclick="switchView(\'decent\')" style="cursor:pointer" title="Network decentralization \u2014 click for details"><div class="kpi-v" style="color:'+c+'">'+dd.score.toFixed(0)+' <span style="font-size:13px">'+decentGrade(dd.score)+'</span></div><div class="kpi-l">decentralization</div></div>';})()+
+      (function(){var dd=computeDecent();if(!dd)return '';var c=decentColor(dd.score);return '<div class="kpi kpidec" onclick="switchView(\'decent\')" style="cursor:pointer" data-tip="Network decentralization \u2014 click for details"><div class="kpi-v" style="color:'+c+'">'+dd.score.toFixed(0)+' <span style="font-size:13px">'+decentGrade(dd.score)+'</span></div><div class="kpi-l">decentralization</div></div>';})()+
     '</div></div>';
   html+='<div class="asn-search"><span class=\"asn-search-ic\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" style=\"vertical-align:middle\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg></span><input type="search" id="asn-q" placeholder="Search a provider, ASN or country \u2014 e.g. Hetzner, AS24940, Austria" value="'+esc(asnIntelState())+'"></div>';
   if(q){
@@ -1087,17 +1088,17 @@ function renderAsnIntel(){
         const lpct=a.hasL?Math.round(a.leased/a.total*100):null;
         html+='<div class="vcard '+vk+'">'+
           '<div class="vcard-top"><div class="vcard-asn">'+esc(a.num)+'</div><div class="vbadge '+vk+'">'+verdict+'</div></div>'+
-          (isMajorCloud(a.name)?'<div class="cloudwarn" title="Major cloud provider \u2014 the Sentinel docs advise against these, as they are frequently not whitelisted for plans. A few existing nodes may be leased, but a new node here risks never getting a lease.">\u26a0 Major cloud \u2014 may not be whitelisted</div>':'')+
+          (isMajorCloud(a.name)?'<div class="cloudwarn" data-tip="Major cloud provider \u2014 the Sentinel docs advise against these, as they are frequently not whitelisted for plans. A few existing nodes may be leased, but a new node here risks never getting a lease.">\u26a0 Major cloud \u2014 may not be whitelisted</div>':'')+
           (function(){
             const tp=trustedLink(a.name);
-            return '<div class="vcard-name">'+esc(a.name||"unknown provider")+(tp?' <a href="'+tp.url+'" target="_blank" rel="noopener noreferrer" class="provlink" title="'+esc(tp.label)+' \u2014 official site">\u2197</a>':'')+'</div>';
+            return '<div class="vcard-name">'+esc(a.name||"unknown provider")+(tp?' <a href="'+tp.url+'" target="_blank" rel="noopener noreferrer" class="provlink" data-tip="'+esc(tp.label)+' \u2014 official site">\u2197</a>':'')+'</div>';
           })()+
-          '<div class="vmeter" title="'+a.total+' of ~'+ASN_LIMIT+' soft limit"><div class="vmeter-fill '+vk+'" style="width:'+pct+'%"></div></div>'+
+          '<div class="vmeter" data-tip="'+a.total+' of ~'+ASN_LIMIT+' soft limit"><div class="vmeter-fill '+vk+'" style="width:'+pct+'%"></div></div>'+
           '<div class="vcard-stats">'+
             '<span><b>'+a.total+'</b> / ~'+ASN_LIMIT+' nodes</span>'+
             (lpct!=null?'<span class="'+(lpct>=50?"g":lpct>0?"w":"b")+'"><b>'+lpct+'%</b> leased</span>':'')+
           '</div>'+
-          '<div class="vcard-geo" title="'+esc(Object.keys(a.countries).join(", "))+'">\u25cf '+Object.keys(a.countries).slice(0,3).join(", ")+(Object.keys(a.countries).length>3?" +"+(Object.keys(a.countries).length-3):"")+'</div>'+
+          '<div class="vcard-geo" data-tip="'+esc(Object.keys(a.countries).join(", "))+'">\u25cf '+Object.keys(a.countries).slice(0,3).join(", ")+(Object.keys(a.countries).length>3?" +"+(Object.keys(a.countries).length-3):"")+'</div>'+
         '</div>';
       });
       html+='</div>';
@@ -1110,7 +1111,7 @@ function renderAsnIntel(){
     }
   }else{
     const cs=Object.entries(byCountry).sort((a,b)=>a[1]-b[1]);
-    const crow=([c,n],mx)=>{const w=Math.round(n/mx*100);return '<div class="ccol" onclick="searchCountry(\''+encodeURIComponent(c)+'\')" title="Click to see which providers (ASNs) serve '+esc(c)+'"><span class="ccol-c">'+esc(c)+'</span><span class="ccol-bar"><span style="width:'+w+'%"></span></span><span class="ccol-n">'+n+'</span></div>';};
+    const crow=([c,n],mx)=>{const w=Math.round(n/mx*100);return '<div class="ccol" onclick="searchCountry(\''+encodeURIComponent(c)+'\')" data-tip="Click to see which providers (ASNs) serve '+esc(c)+'"><span class="ccol-c">'+esc(c)+'</span><span class="ccol-bar"><span style="width:'+w+'%"></span></span><span class="ccol-n">'+n+'</span></div>';};
     const OPP_MAX=14;  // soglia "free slots": paesi sotto questa sono opportunita'
     const least=cs.filter(e=>e[1]<=OPP_MAX);
     const mxLeast=Math.max(...least.map(e=>e[1]),1);
@@ -1126,7 +1127,7 @@ function renderAsnIntel(){
   rows.sort((a,b)=>b.total-a.total);
   html+='<div class="asn-table-h">All networks <span class="asn-table-c">'+rows.length+'</span></div>';
   html+='<div class="tablewrap"><div class="tscroll"><table class="asn-tbl"><thead><tr>'+
-    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Leased <span class="ttip" title="Share of this network\u2019s nodes that currently hold an on-chain lease. High = real plan demand here.">?</span></th><th>Countries</th><th>Slots <span class="ttip" title="Free = under the ~'+ASN_LIMIT+'-node whitelist limit. Saturated = over it, hard to get leased.">?</span></th></tr></thead><tbody>';
+    '<th>#</th><th>ASN</th><th>Provider</th><th>Nodes</th><th>Leased <span class="ttip" data-tip="Share of this network\u2019s nodes that currently hold an on-chain lease. High = real plan demand here.">?</span></th><th>Countries</th><th>Slots <span class="ttip" data-tip="Free = under the ~'+ASN_LIMIT+'-node whitelist limit. Saturated = over it, hard to get leased.">?</span></th></tr></thead><tbody>';
   rows.forEach((r,i)=>{
     const sat=SATURATED_ASN[r.num]||r.total>=ASN_LIMIT;
     const near=!sat&&r.total>=ASN_LIMIT*0.6;
@@ -1137,12 +1138,12 @@ function renderAsnIntel(){
       '<td class="mono '+(sat?'asn-sat':'asn-ok')+'">'+r.num+'</td>'+
       (function(){
         const tp=trustedLink(r.name);
-        return '<td>'+esc(r.name||"\u2014")+(tp?' <a href="'+tp.url+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="provlink" title="'+esc(tp.label)+' \u2014 official site">\u2197</a>':'')+'</td>';
+        return '<td>'+esc(r.name||"\u2014")+(tp?' <a href="'+tp.url+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="provlink" data-tip="'+esc(tp.label)+' \u2014 official site">\u2197</a>':'')+'</td>';
       })()+
       '<td class="mono">'+r.total+' <span class="tdim">('+pct+'%)</span></td>'+
       '<td class="mono" '+(lpct!=null?'style="color:'+(lpct>=50?'var(--good)':lpct>0?'var(--warn)':'var(--bad)')+'">'+lpct+'%':'>\u2014')+'</td>'+
-      '<td class="mono" title="'+esc(Object.keys(r.countries).slice(0,12).join(", "))+'">'+Object.keys(r.countries).length+'</td>'+
-      '<td>'+(sat?'<span class="asn-badge sat">Saturated</span>':near?'<span class="asn-badge warn">Filling</span>':'<span class="asn-badge ok">Free</span>')+(isMajorCloud(r.name)?' <span class="asn-badge cloud" title="Major cloud \u2014 Sentinel docs advise against; often not whitelisted for plans">\u26a0 major cloud</span>':'')+'</td></tr>';
+      '<td class="mono" data-tip="'+esc(Object.keys(r.countries).slice(0,12).join(", "))+'">'+Object.keys(r.countries).length+'</td>'+
+      '<td>'+(sat?'<span class="asn-badge sat">Saturated</span>':near?'<span class="asn-badge warn">Filling</span>':'<span class="asn-badge ok">Free</span>')+(isMajorCloud(r.name)?' <span class="asn-badge cloud" data-tip="Major cloud \u2014 Sentinel docs advise against; often not whitelisted for plans">\u26a0 major cloud</span>':'')+'</td></tr>';
   });
   if(!rows.length)html+='<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--dim)">no networks match \u201c'+esc(asnIntelState())+'\u201d</td></tr>';
   html+='</tbody></table></div></div>';
@@ -1300,10 +1301,10 @@ function renderTrends(){
   const actSeries=S.map(p=>p.active);
   const dAct=last.active-base.active;
   html+='<div class="cmp" style="grid-template-columns:1fr">'+
-    '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4 title="Live count of nodes the chain reports as active (status=1), tracked over time by the Scorecard collector."><span class=dot-good>\u25cf</span> Network Pulse \u2014 active nodes <span class="ttip">?</span></h4>'+
+    '<div class="cmp-card" style="border-left:3px solid var(--good)"><h4 data-tip="Live count of nodes the chain reports as active (status=1), tracked over time by the Scorecard collector."><span class=dot-good>\u25cf</span> Network Pulse \u2014 active nodes <span class="ttip">?</span></h4>'+
     svgLine(actSeries,600,90,"var(--good)")+
     '<div class="cmp-row"><span class="ck">'+fmtDay(first.ts)+' \u2192 now</span><span class="cv">'+last.active+' active <span style="color:'+(dAct>=0?"var(--good)":"var(--bad)")+'">('+(dAct>=0?"+":"")+dAct+')</span></span></div>'+
-    (last.nodes_leased!=null?'<div class="cmp-row" title="Nodes that currently hold at least one on-chain lease from a plan provider, and the total number of active leases across the network. This is the real demand signal \u2014 only leased nodes earn from plans."><span class="ck">Leased by plan providers <span class="ttip">?</span></span><span class="cv">'+last.nodes_leased+' nodes \u00b7 '+(last.leases_total||0)+' leases</span></div>':'')+
+    (last.nodes_leased!=null?'<div class="cmp-row" data-tip="Nodes that currently hold at least one on-chain lease from a plan provider, and the total number of active leases across the network. This is the real demand signal \u2014 only leased nodes earn from plans."><span class="ck">Leased by plan providers <span class="ttip">?</span></span><span class="cv">'+last.nodes_leased+' nodes \u00b7 '+(last.leases_total||0)+' leases</span></div>':'')+
     '</div></div>';
   // ASN movers (base vs last)
   const asnDelta=[];
@@ -1339,6 +1340,26 @@ function renderTrends(){
 }
 
 setPanelDesc();renderSupport();load();
+</script>
+
+<script>
+(function(){
+  var tip=document.createElement('div');
+  tip.id='gtooltip';
+  tip.style.cssText='position:fixed;z-index:99999;pointer-events:none;background:#10161f;color:#e8f0ea;border:1px solid #3fb950;padding:7px 11px;border-radius:8px;font-size:12px;line-height:1.4;font-family:Sora,sans-serif;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.55);opacity:0;transition:opacity .12s;display:none';
+  document.body.appendChild(tip);
+  var cur=null;
+  document.addEventListener('mouseover',function(e){
+    var t=e.target.closest('[data-tip]');
+    if(t){cur=t;tip.textContent=t.getAttribute('data-tip');tip.style.display='block';requestAnimationFrame(function(){tip.style.opacity='1';});}
+  });
+  document.addEventListener('mousemove',function(e){
+    if(cur){var x=e.clientX+14,y=e.clientY+16;var r=tip.getBoundingClientRect();if(x+r.width>window.innerWidth-8)x=e.clientX-r.width-12;if(y+r.height>window.innerHeight-8)y=e.clientY-r.height-12;tip.style.left=x+'px';tip.style.top=y+'px';}
+  });
+  document.addEventListener('mouseout',function(e){
+    if(cur&&(!e.relatedTarget||!e.relatedTarget.closest||!e.relatedTarget.closest('[data-tip]'))){cur=null;tip.style.opacity='0';setTimeout(function(){if(!cur)tip.style.display='none';},120);}
+  });
+})();
 </script>
 </body>
 </html>
