@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sentinel Node Scorecard</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap');
-  :root{--bg:#0a0e14;--panel:#111722;--panel-2:#0d121a;--line:#1e2937;--txt:#e6edf3;--muted:#8a97a4;--dim:#5a6675;--accent:#ff4d5e;--accent-2:#4b8bf4;--good:#2dd4a7;--warn:#f5a524;--bad:#e0303f;--gold:#f5c518;--chip:#192230}
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Orbitron:wght@600;700;800&display=swap');
+  :root{--bg:#0a0e14;--panel:#111722;--panel-2:#0d121a;--line:#1e2937;--txt:#e6edf3;--muted:#a7c4bf;--dim:#7d9b95;--accent:#ff4d5e;--accent-2:#4b8bf4;--good:#2dd4a7;--warn:#f5a524;--bad:#e0303f;--gold:#f5c518;--chip:#192230}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:radial-gradient(1000px 520px at 88% -8%,rgba(45,212,167,.07),transparent 60%),radial-gradient(820px 600px at -5% 105%,rgba(75,139,244,.06),transparent 55%),var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-height:100vh;padding:22px}
   .wrap{max-width:1320px;margin:0 auto}
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
-  h1{font-size:29px;font-weight:800;letter-spacing:-.6px;line-height:1}
-  h1 .it-g{color:#2dd4a7} h1 .it-w{color:#fff} h1 .it-r{color:#ff4d5e}
-  .tagline{color:var(--txt);opacity:.82;font-size:13px;margin-top:7px;font-family:'Sora',sans-serif;letter-spacing:.2px}
+  h1{font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1;font-family:'Space Grotesk',sans-serif}
+  h1 .it-g{background:linear-gradient(135deg,#2dd4a7,#3df0d0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(45,212,167,.35))}
+  h1 .it-w{color:#f0f6fc;filter:drop-shadow(0 0 8px rgba(255,255,255,.15))}
+  h1 .it-r{background:linear-gradient(135deg,#ff4d5e,#ff8a5c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(255,77,94,.35))}
+  .tagline{color:var(--txt);opacity:.92;font-size:13px;margin-top:7px;font-family:'Sora',sans-serif;letter-spacing:.2px}
   .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6} .updated b{color:var(--good)}
   .livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:5px;box-shadow:0 0 0 0 rgba(45,212,167,.6);animation:pulse 2s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,167,.5)}70%{box-shadow:0 0 0 7px rgba(45,212,167,0)}100%{box-shadow:0 0 0 0 rgba(45,212,167,0)}}
@@ -21,14 +23,14 @@
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 17px;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
   .stat:hover{transform:translateY(-2px);border-color:var(--dim)}
   .stat::after{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--good);opacity:.75}
-  .stat .v{font-size:25px;font-weight:800;font-family:'Space Mono',monospace} .stat .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+  .stat .v{font-size:27px;font-weight:700;font-family:'Space Grotesk',sans-serif;letter-spacing:-.5px;color:var(--good)} .stat .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.8px;margin-top:4px;font-family:'Space Grotesk',sans-serif;font-weight:500}
   .stat.b2::after{background:var(--accent-2)} .stat.b3::after{background:var(--warn)} .stat.b4::after{background:var(--gold)} .stat.b5::after{background:var(--good)}
   .tabs{display:flex;gap:4px;margin:16px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;transition:color .15s,border-color .2s;position:relative;top:1px}
+  .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;transition:color .15s,border-color .2s;position:relative;top:1px;font-family:'Space Grotesk',sans-serif;font-weight:500}
   @keyframes viewfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
   .viewfade{animation:viewfade .25s ease-out}
   .tab:hover{color:var(--txt)} .tab.active{color:var(--good);border-bottom-color:var(--good)}
-  .panel-desc{color:var(--txt);opacity:.78;font-size:13px;line-height:1.5;font-family:'Sora',sans-serif;margin:14px 0;max-width:780px}
+  .panel-desc{color:var(--txt);opacity:.92;font-size:13px;line-height:1.5;font-family:'Sora',sans-serif;margin:14px 0;max-width:780px}
   .net-label{color:var(--good);font-weight:700;opacity:1}
   .showing{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;margin:0 0 10px 2px}
   .showing b{color:var(--good);font-weight:700}
@@ -164,7 +166,7 @@
   @media(max-width:600px){.qm::after{width:160px}}
   /* ASN Intelligence redesign */
   .asn-head{margin:16px 0 18px}
-  .asn-title{font-size:21px;font-weight:800;font-family:'Sora',sans-serif;letter-spacing:-.3px}
+  .asn-title{font-size:23px;font-weight:700;font-family:'Space Grotesk',sans-serif;letter-spacing:-.5px}
   .asn-sub{color:var(--muted);font-size:13px;line-height:1.55;margin-top:5px;max-width:680px}
   .asn-kpis{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 18px;min-width:96px}
@@ -263,6 +265,14 @@
 </style>
 </head>
 <body>
+<canvas id="bgCanvas" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;opacity:0"></canvas>
+<div id="bgPicker" style="position:fixed;bottom:14px;right:14px;z-index:9998;display:flex;align-items:center;gap:9px;background:rgba(13,18,26,.92);border:1px solid var(--line);border-radius:30px;padding:7px 13px;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);box-shadow:0 6px 22px rgba(0,0,0,.55);backdrop-filter:blur(6px)">
+  <span style="letter-spacing:.5px;text-transform:uppercase;font-size:10px">Live background</span>
+  <button id="bgToggle" role="switch" aria-checked="false" style="position:relative;width:38px;height:20px;border-radius:20px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;padding:0;transition:background .25s,border-color .25s">
+    <span id="bgKnob" style="position:absolute;top:1px;left:1px;width:16px;height:16px;border-radius:50%;background:var(--dim);transition:transform .25s,background .25s"></span>
+  </button>
+  <span id="bgHelp" tabindex="0" data-tip="Live network backdrop. Cycles every 3 min: Earth (nodes by country), Mesh (the network as a web), Streams (traffic flow). Brightens with network health." style="display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;border:1px solid var(--line);color:var(--muted);cursor:help;font-size:11px;user-select:none">?</span>
+</div>
 <div class="wrap">
   <header>
     <div><h1><span class="it-g">Sentinel</span> <span class="it-w">Node</span> <span class="it-r">Scorecard</span></h1>
@@ -1361,5 +1371,154 @@ setPanelDesc();renderSupport();load();
   });
 })();
 </script>
+<script>
+(function(){
+  var cv=document.getElementById('bgCanvas'),ctx=cv.getContext('2d'),W,H,DPR=Math.min(window.devicePixelRatio||1,2);
+  function resize(){W=window.innerWidth;H=window.innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0);}
+  resize();window.addEventListener('resize',function(){resize();if(mode==='earth')initEarth();else if(mode==='mesh')initMesh();else if(mode==='streams')initStreams();});
+
+  // palette dal tema: verde acqua, rosa, blu
+  var GOOD='45,212,167', ACCENT='255,77,94', ACC2='75,139,244';
+  // dati rete reali: paese, nodi, lat, lon
+  var GEO=[["US",536,39,-98],["UK",107,54,-2],["DE",101,51,10],["FR",84,46,2],["TR",60,39,35],["ES",60,40,-4],["JP",40,36,138],["CA",39,56,-106],["IN",36,22,78],["NL",33,52,5],["IT",28,42,12],["PL",13,52,19],["BR",10,-10,-55],["AU",12,-25,133],["SG",9,1,103],["SE",10,62,15],["FI",11,64,26],["RU",14,61,105],["KR",12,36,128],["ZA",4,-30,25],["AR",8,-38,-63],["MX",9,23,-102],["UA",9,49,32],["VN",7,16,108],["TH",6,15,100],["AE",8,24,54],["IL",6,31,35],["PK",8,30,70],["PE",6,-10,-76],["CL",6,-30,-71],["NO",8,62,10],["NZ",4,-41,174]];
+  var HEALTH=0.91;
+
+  var mode='off', raf=null, t=0;
+
+  // ============ EARTH — globo notturno con atmosfera e nodi glow ============
+  var cx,cy,R,rot=0,dots=[],grid=[],merid=[],stars=[];
+  function initEarth(){
+    cx=W*0.5;cy=H*0.44;R=Math.min(W,H)*0.32;
+    dots=[];
+    for(var i=0;i<GEO.length;i++){var g=GEO[i];var n=Math.min(g[1],55);for(var k=0;k<n;k++){dots.push({lat:g[2]+(Math.random()-.5)*7,lon:g[3]+(Math.random()-.5)*9,ph:Math.random()*6.28,sz:.5+Math.random()*1.1,big:Math.random()<.12});}}
+    grid=[];for(var la=-60;la<=60;la+=20){var r=[];for(var lo=-180;lo<=180;lo+=8)r.push([la,lo]);grid.push(r);}
+    merid=[];for(var lo=-180;lo<180;lo+=20){var c=[];for(var la=-88;la<=88;la+=8)c.push([la,lo]);merid.push(c);}
+    stars=[];for(var i=0;i<90;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1,tw:Math.random()*6.28});
+  }
+  function proj(lat,lon,r){var la=lat*Math.PI/180,lo=(lon+r)*Math.PI/180;return{x:cx+Math.cos(la)*Math.sin(lo)*R,y:cy-Math.sin(la)*R,z:Math.cos(la)*Math.cos(lo)};}
+  function drawEarth(){
+    var f=HEALTH;t+=.012;rot+=.05;
+    // sfondo spaziale con vignettatura
+    var bg=ctx.createRadialGradient(cx,cy,R*.5,cx,cy,Math.max(W,H)*.8);
+    bg.addColorStop(0,'rgba(8,14,24,1)');bg.addColorStop(1,'rgba(4,7,13,1)');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    // stelle che luccicano
+    for(var i=0;i<stars.length;i++){var s=stars[i];var a=.15+.2*Math.sin(t*2+s.tw);ctx.fillStyle='rgba(180,210,230,'+a+')';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.28);ctx.fill();}
+    // alone atmosferico esterno (glow del pianeta)
+    var halo=ctx.createRadialGradient(cx,cy,R*.85,cx,cy,R*1.35);
+    halo.addColorStop(0,'rgba('+GOOD+',0)');halo.addColorStop(.55,'rgba('+GOOD+','+(.10+f*.10)+')');halo.addColorStop(1,'rgba('+ACC2+',0)');
+    ctx.fillStyle=halo;ctx.beginPath();ctx.arc(cx,cy,R*1.35,0,6.28);ctx.fill();
+    // disco pianeta (lato notte)
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.clip();
+    var sp=ctx.createRadialGradient(cx-R*.35,cy-R*.35,R*.05,cx,cy,R*1.1);
+    sp.addColorStop(0,'rgba(16,32,52,1)');sp.addColorStop(.55,'rgba(9,18,32,1)');sp.addColorStop(1,'rgba(3,6,12,1)');
+    ctx.fillStyle=sp;ctx.fillRect(cx-R,cy-R,R*2,R*2);
+    // griglia sottile
+    ctx.lineWidth=.5;
+    for(var i=0;i<grid.length;i++){ctx.beginPath();ctx.strokeStyle='rgba('+GOOD+','+(.05+.03*Math.sin(i))+')';var st=false;for(var j=0;j<grid[i].length;j++){var p=proj(grid[i][j][0],grid[i][j][1],rot);if(p.z>0){st?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);st=true;}else st=false;}ctx.stroke();}
+    for(var i=0;i<merid.length;i++){ctx.beginPath();ctx.strokeStyle='rgba('+GOOD+',.045)';var st=false;for(var j=0;j<merid[i].length;j++){var p=proj(merid[i][j][0],merid[i][j][1],rot);if(p.z>0){st?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);st=true;}else st=false;}ctx.stroke();}
+    ctx.restore();
+    // terminatore (ombra del lato notte) per dare il "dusk"
+    var term=ctx.createLinearGradient(cx-R,0,cx+R,0);
+    term.addColorStop(0,'rgba(0,0,0,0)');term.addColorStop(.62,'rgba(0,0,0,0)');term.addColorStop(1,'rgba(0,0,0,.45)');
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.clip();ctx.fillStyle=term;ctx.fillRect(cx-R,cy-R,R*2,R*2);ctx.restore();
+    // nodi come luci di città con glow
+    for(var i=0;i<dots.length;i++){var d=dots[i],p=proj(d.lat,d.lon,rot);if(p.z<=.03)continue;
+      var pulse=.5+.5*Math.sin(t*.9+d.ph),dep=Math.max(.2,p.z),br=(.35+f*.6)*pulse*dep,sz=d.sz*(.7+f*.6)*dep;
+      if(d.big){var g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,sz*5);g.addColorStop(0,'rgba('+GOOD+','+br*.5+')');g.addColorStop(1,'rgba('+GOOD+',0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,sz*5,0,6.28);ctx.fill();}
+      ctx.beginPath();ctx.arc(p.x,p.y,sz*2.2,0,6.28);ctx.fillStyle='rgba('+GOOD+','+(br*.16)+')';ctx.fill();
+      ctx.beginPath();ctx.arc(p.x,p.y,sz,0,6.28);ctx.fillStyle='rgba('+(170+f*60)+',255,'+(190+f*50)+','+br+')';ctx.fill();
+    }
+    // bordo atmosfera sottile
+    ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.strokeStyle='rgba('+GOOD+','+(.18+f*.18)+')';ctx.lineWidth=1.2;ctx.stroke();
+  }
+
+  // ============ MESH — rete che pulsa, con nodi glow e archi luminosi ============
+  var nodes=[];
+  // ============ MESH — rete densa e ben visibile, nodi colorati per "tipo" ============
+  // tipi di nodo (metafora dei protocolli/stato reale): verde=core attivo, blu=relay standard, rosa=alto traffico
+  var TYPES=[{c:GOOD,w:.55},{c:ACC2,w:.30},{c:ACCENT,w:.15}];
+  var nodes=[];
+  function pickType(){var r=Math.random(),a=0;for(var i=0;i<TYPES.length;i++){a+=TYPES[i].w;if(r<a)return TYPES[i].c;}return GOOD;}
+  function initMesh(){nodes=[];var N=Math.min(85,Math.floor(W*H/15000));for(var i=0;i<N;i++)nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.30,vy:(Math.random()-.5)*.30,ph:Math.random()*6.28,hub:Math.random()<.18,col:pickType()});}
+  function drawMesh(){
+    var f=HEALTH;t+=.018;
+    var bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'rgba(8,14,23,1)');bg.addColorStop(1,'rgba(5,9,17,1)');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    for(var i=0;i<nodes.length;i++){var n=nodes[i];n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;}
+    // archi tra nodi vicini — più raggio, più opacità, colore misto dei due nodi
+    for(var i=0;i<nodes.length;i++)for(var j=i+1;j<nodes.length;j++){var dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<185){var a=(1-d/185)*(.16+f*.20);var g=ctx.createLinearGradient(nodes[i].x,nodes[i].y,nodes[j].x,nodes[j].y);g.addColorStop(0,'rgba('+nodes[i].col+','+a+')');g.addColorStop(1,'rgba('+nodes[j].col+','+a+')');ctx.strokeStyle=g;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}}
+    // nodi: hub con glow ampio + nodi normali ben visibili, colorati per tipo
+    for(var i=0;i<nodes.length;i++){var n=nodes[i],pulse=.5+.5*Math.sin(t*.8+n.ph);
+      if(n.hub){var rr=18;var g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,rr);g.addColorStop(0,'rgba('+n.col+','+(.45+f*.35*pulse)+')');g.addColorStop(1,'rgba('+n.col+',0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,rr,0,6.28);ctx.fill();
+        ctx.beginPath();ctx.arc(n.x,n.y,3.2,0,6.28);ctx.fillStyle='rgba('+n.col+','+(.85+f*.15)+')';ctx.fill();
+        ctx.beginPath();ctx.arc(n.x,n.y,1.4,0,6.28);ctx.fillStyle='rgba(255,255,255,.85)';ctx.fill();}
+      else{var g2=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,6);g2.addColorStop(0,'rgba('+n.col+','+(.35+f*.4*pulse)+')');g2.addColorStop(1,'rgba('+n.col+',0)');ctx.fillStyle=g2;ctx.beginPath();ctx.arc(n.x,n.y,6,0,6.28);ctx.fill();
+        ctx.beginPath();ctx.arc(n.x,n.y,2,0,6.28);ctx.fillStyle='rgba('+n.col+','+(.7+f*.3*pulse)+')';ctx.fill();}
+    }
+  }
+
+  // ============ STREAMS — traffico colorato per tipo, con scia e testa luminosa ============
+  // verde = traffico relay sano, blu = handshake/controllo, rosa = picco/alto volume
+  var streams=[];
+  function initStreams(){streams=[];var N=Math.min(95,Math.floor(W/13));for(var i=0;i<N;i++){var col=pickType();streams.push({x:Math.random()*W,y:Math.random()*H,len:16+Math.random()*46,sp:.4+Math.random()*.8,c:col,w:col===ACCENT?1.6:(col===ACC2?1.1:.85)});}}
+  function drawStreams(){
+    var f=HEALTH;t+=.01;
+    var bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'rgba(6,11,19,1)');bg.addColorStop(1,'rgba(4,7,14,1)');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    var speed=.5+f*2.8,alpha=.16+f*.4;
+    for(var i=0;i<streams.length;i++){var s=streams[i];var L=s.len*(.5+f);
+      var grad=ctx.createLinearGradient(s.x,s.y,s.x+L,s.y);
+      grad.addColorStop(0,'rgba('+s.c+',0)');grad.addColorStop(1,'rgba('+s.c+','+(alpha*(s.c===ACCENT?.9:1))+')');
+      ctx.strokeStyle=grad;ctx.lineWidth=s.w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x+L,s.y);ctx.stroke();
+      // testa luminosa con glow
+      var hx=s.x+L;var hg=ctx.createRadialGradient(hx,s.y,0,hx,s.y,s.w*3);hg.addColorStop(0,'rgba('+s.c+','+(alpha+.35)+')');hg.addColorStop(1,'rgba('+s.c+',0)');ctx.fillStyle=hg;ctx.beginPath();ctx.arc(hx,s.y,s.w*3,0,6.28);ctx.fill();
+      ctx.beginPath();ctx.arc(hx,s.y,s.w*.9,0,6.28);ctx.fillStyle='rgba('+s.c+','+(alpha+.4)+')';ctx.fill();
+      s.x+=speed*s.sp*3;if(s.x>W+50){s.x=-s.len;s.y=Math.random()*H;s.c=pickType();s.w=s.c===ACCENT?1.6:(s.c===ACC2?1.1:.85);}
+    }
+  }
+  function loop(){
+    if(mode==='earth')drawEarth();else if(mode==='mesh')drawMesh();else if(mode==='streams')drawStreams();
+    raf=requestAnimationFrame(loop);
+  }
+
+  // ---- auto-cycle + toggle ----
+  var CYCLE=['earth','mesh','streams'], cycleIdx=0, cycleTimer=null, isOn=false;
+  function targetOpacity(m){return m==='earth'?0.6:0.42;}
+  function activate(m){if(m==='earth')initEarth();else if(m==='mesh')initMesh();else if(m==='streams')initStreams();mode=m;}
+  function fadeTo(m){cv.style.transition='opacity 1s ease';cv.style.opacity='0';setTimeout(function(){activate(m);cv.style.opacity=String(targetOpacity(m));},1000);}
+
+  function turnOn(){
+    isOn=true;
+    cv.style.transition='opacity 1s ease';
+    cycleIdx=0;activate(CYCLE[0]);cv.style.opacity=String(targetOpacity(CYCLE[0]));
+    if(!raf)loop();
+    if(cycleTimer)clearInterval(cycleTimer);
+    cycleTimer=setInterval(function(){cycleIdx=(cycleIdx+1)%CYCLE.length;fadeTo(CYCLE[cycleIdx]);},180000); // 3 minuti
+    setKnob(true);
+  }
+  function turnOff(){
+    isOn=false;
+    if(cycleTimer){clearInterval(cycleTimer);cycleTimer=null;}
+    cv.style.transition='opacity .6s ease';cv.style.opacity='0';
+    setTimeout(function(){if(!isOn){if(raf){cancelAnimationFrame(raf);raf=null;}ctx.clearRect(0,0,W,H);mode='off';}},600);
+    setKnob(false);
+  }
+  function setKnob(on){
+    var tg=document.getElementById('bgToggle'),kn=document.getElementById('bgKnob');
+    if(!tg)return;
+    tg.setAttribute('aria-checked',on?'true':'false');
+    tg.style.background=on?'rgba('+GOOD+',.25)':'var(--panel-2)';
+    tg.style.borderColor=on?'rgba('+GOOD+',.6)':'var(--line)';
+    kn.style.transform=on?'translateX(18px)':'translateX(0)';
+    kn.style.background=on?'rgb('+GOOD+')':'var(--dim)';
+  }
+
+  var tg=document.getElementById('bgToggle');
+  tg.addEventListener('click',function(){if(isOn){turnOff();try{localStorage.setItem('sc_bg','off');}catch(_){}}else{turnOn();try{localStorage.setItem('sc_bg','on');}catch(_){}}});
+  // ripristina
+  var saved='off';try{saved=localStorage.getItem('sc_bg')||'off';}catch(_){}
+  if(saved==='on')turnOn();else setKnob(false);
+})();
+</script>
 </body>
+
 </html>
