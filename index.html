@@ -6,7 +6,7 @@
 <title>Sentinel Node Scorecard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Orbitron:wght@600;700;800&display=swap');
-  :root{--bg:#0a0e14;--panel:#111722;--panel-2:#0d121a;--line:#1e2937;--txt:#e6edf3;--muted:#a7c4bf;--dim:#7d9b95;--accent:#ff4d5e;--accent-2:#4b8bf4;--good:#2dd4a7;--warn:#f5a524;--bad:#e0303f;--gold:#f5c518;--chip:#192230}
+  :root{--bg:#0a0e14;--panel:rgba(17,23,34,.80);--panel-2:rgba(13,18,26,.78);--line:#1e2937;--txt:#e6edf3;--muted:#a7c4bf;--dim:#7d9b95;--accent:#ff4d5e;--accent-2:#4b8bf4;--good:#2dd4a7;--warn:#f5a524;--bad:#e0303f;--gold:#f5c518;--chip:#192230}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:radial-gradient(1000px 520px at 88% -8%,rgba(45,212,167,.07),transparent 60%),radial-gradient(820px 600px at -5% 105%,rgba(75,139,244,.06),transparent 55%),var(--bg);color:var(--txt);font-family:'Sora',sans-serif;min-height:100vh;padding:22px}
   .wrap{max-width:1320px;margin:0 auto}
@@ -269,7 +269,7 @@
 </style>
 </head>
 <body>
-<canvas id="bgCanvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:0"></canvas>
+<canvas id="bgCanvas" style="position:fixed !important;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:0"></canvas>
 <div id="bgPicker" style="position:fixed;bottom:14px;right:14px;z-index:9998;display:flex;align-items:center;gap:9px;background:rgba(13,18,26,.92);border:1px solid var(--line);border-radius:30px;padding:7px 13px;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);box-shadow:0 6px 22px rgba(0,0,0,.55);backdrop-filter:blur(6px)">
   <span style="letter-spacing:.5px;text-transform:uppercase;font-size:10px">Live background</span>
   <button id="bgToggle" role="switch" aria-checked="false" style="position:relative;width:38px;height:20px;border-radius:20px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;padding:0;transition:background .25s,border-color .25s">
