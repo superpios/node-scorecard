@@ -15,7 +15,7 @@ The whole network at a glance. Every node, sortable and filterable by:
 
 - **Score** (computed with real variance — see below)
 - **Status** (active / inactive) — inactive nodes hidden by default, toggle to show
-- **Protocol** (V2Ray / WireGuard / OpenVPN)
+- **Protocol** (V2Ray / WireGuard / OpenVPN / Xray-REALITY / AmneziaWG / Hysteria2) — each carries an **anti-censorship level** derived from the protocol
 - **Price** (P2P/hr and P2P/GB)
 - **Peers**, historical **uptime %**, **country / city**
 - **ASN / hosting provider** — which network each node runs on, with saturation flags
@@ -30,6 +30,7 @@ Click any node (or paste an address) to deep-dive:
 - **Country ranking** — "#12 of 47 in Italy", not a meaningless absolute number
 - **Detected problems** — 16 rule-based diagnostics: inactive, low uptime, unstable, API unreachable, stale heartbeat, zero peers, price outliers (per hr **and** per GB vs network median), very low bandwidth, outdated version, saturated ASN, crowded country, young node, missing speedtest — plus a **historical uptime trend** check (declining / recovering, computed from the node's own timeline), a **lease check** that catches the most frustrating case — a perfectly healthy node that gets *no client traffic* because it isn't whitelisted for plans (peers ≈ 0 across recent history) — and an **elite badge** for top-20 ranked nodes
 - **Reliability grade** — an A+/A/B/C/D/E letter from the historical score, with a global rank ("#12 of 1,594 active nodes")
+- **Anti-censorship level** — derived objectively from the node's protocol: **High** (Xray/REALITY — anti-active-probing, resists state-level censorship), **Medium** (AmneziaWG / Hysteria2 — obfuscated transport, evades DPI), **Basic** (V2Ray — encrypted but detectable) or **Minimal** (WireGuard / OpenVPN — recognizable & blockable). Surfaced as a badge so operators and privacy-focused users can pick censorship-resistant nodes at a glance
 - **Score breakdown** — how each weighted component contributes
 - **Generate support report** — a ready-to-paste summary for the Sentinel support Telegram or a GitHub issue, so a node's problems actually reach the people who can help
 
@@ -53,6 +54,7 @@ A dedicated view for deciding **where to put a new node**: it groups active node
 - **Lease uptime (historical)** — for each node, the % of the last 7 days it actually held an on-chain lease — the real "am I earning?" signal, distinct from a one-off snapshot
 - **Hosting column + diagnostic** — every node shows its ASN in the table, and a node on a saturated ASN gets a clear warning in its diagnostic ("may not get leased/earn")
 - **Pick a clean ASN** — low-count, non-saturated providers are the smart choice for a new node
+- **Clickable ASN drill-down** — search a country or provider, then click any ASN box to instantly see every node running on it, ranked by score
 
 This turns a painful, learned-the-hard-way lesson (datacenter ASNs like IONOS, Oracle and OVH are saturated; residential ASNs are not) into something you can *see* before spending a cent. The same view doubles as a **node placement advisor**: search an ASN or a country and get an instant verdict (⛔ saturated / ⚠️ filling up / ✅ room available) with capacity-used %, plus the least- and most-crowded countries.
 
@@ -139,7 +141,7 @@ Returns an array of node objects:
 | `ts` | string | ISO timestamp of this sample |
 | `inactive_at` | string | On-chain heartbeat-expiry timestamp |
 | `remote` | string\|null | Announced `host:port` |
-| `protocol` | string\|null | `v2ray` / `wireguard` / `openvpn` |
+| `protocol` | string\|null | `v2ray` / `wireguard` / `openvpn` / `xray` / `amneziawg` / `hysteria2` |
 | `peers` | int\|null | Connected peers at sample time |
 | `price_hr` / `price_gb` | number\|null | Price in P2P per hour / per GB |
 | `dl_mbps` / `ul_mbps` | number\|null | Measured bandwidth |
@@ -248,6 +250,7 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 - ✅ Walrus Time Capsule on Sui (done)
 - ✅ Published as a fully decentralized Walrus Site (done)
 - ✅ "Where to host" — provider honesty badges, lease %, per-country opportunity (done)
+- ✅ Multi-protocol awareness + anti-censorship level per node (done — V2Ray/WireGuard/OpenVPN/Xray-REALITY/AmneziaWG/Hysteria2)
 - On-chain earnings trend per node → ROI calculator (opt-in, by wallet)
 - Objective ASN classification via PeeringDB (hosting / ISP / enterprise)
 - Walrus Memory integration — persistent memory for an AI node-advisor agent
