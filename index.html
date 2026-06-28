@@ -68,6 +68,9 @@
   .b-act{background:rgba(45,212,167,.15);color:var(--good)} .b-ina{background:rgba(239,75,87,.13);color:var(--bad)} .b-sta{background:rgba(245,165,36,.14);color:var(--warn)}
   .proto{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600;background:var(--chip);color:var(--muted)}
   .proto.v2ray{background:rgba(75,139,244,.14);color:var(--accent-2)} .proto.wireguard{background:rgba(245,165,36,.14);color:var(--warn)} .proto.openvpn{background:rgba(168,85,247,.14);color:#c084fc}
+  .proto.xray{background:rgba(45,212,167,.18);color:var(--good)} .proto.amneziawg{background:rgba(96,165,250,.16);color:#7cc4ff} .proto.hysteria2{background:rgba(244,114,182,.16);color:#f9a8d4}
+  .acens{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;font-family:Space Mono,monospace}
+  .acens.high{background:rgba(45,212,167,.18);color:var(--good)} .acens.med{background:rgba(245,165,36,.16);color:var(--warn)} .acens.low{background:var(--chip);color:var(--muted)}
   .flag{color:var(--muted);font-size:12px} .price{font-family:'Space Mono',monospace} .na{color:var(--dim)}
   .pager{display:flex;align-items:center;justify-content:space-between;padding:13px;gap:12px;flex-wrap:wrap}
   .pager .info{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace}
@@ -314,7 +317,7 @@
       <div class="controls">
         <input type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="search" placeholder="search moniker, address, city&hellip;">
         <select id="country"><option value="">All countries</option></select>
-        <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option></select>
+        <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option><option value="xray">Xray/REALITY</option><option value="amneziawg">AmneziaWG</option><option value="hysteria2">Hysteria2</option></select>
         <div class="chip-filters"><div class="cf" id="cf-stale">Inactive</div><div class="cf" data-f="api">API reachable</div></div>
       </div>
       <div class="showing" id="showing"></div>
@@ -775,7 +778,8 @@ function renderInspector(n){
         '<div class="imeta"><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span>'+
         (n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'')+
         '<span class="proto">'+esc(n.country)+(n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</span>'+
-        (n.version?'<span class="proto">v'+esc(n.version)+'</span>':'')+'</div></div>'+
+        (n.version?'<span class="proto">v'+esc(n.version)+'</span>':'')+
+        (acLevel(n.protocol)?'<span class="acens '+acLevel(n.protocol).cls+'" data-tip="'+acLevel(n.protocol).tip+'">\u26e8 anti-censorship: '+acLevel(n.protocol).label+'</span>':'')+'</div></div>'+
         '<div style="text-align:right"><div class="ibig" style="color:'+(n.score>=80?'var(--good)':n.score>=55?'var(--warn)':'var(--bad)')+'">'+n.score+'</div>'+
         '<div style="font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">score</div>'+
         '<div style="margin-top:7px;font-family:Space Mono,monospace;font-weight:700;font-size:20px;color:'+(n.score>=80?'var(--good)':n.score>=55?'var(--warn)':'var(--bad)')+'">'+grade(n.score)+'</div>'+
@@ -984,6 +988,16 @@ function backToExplorer(){
 }
 function setPanelDesc(){
   document.getElementById("paneldesc").innerHTML='<span class="net-label">dVPN Sentinel Network</span> \u2014 the whole network at a glance. Sort, filter, search 1500+ nodes. Click any node to inspect it.';
+}
+function acLevel(proto){
+  // livello anti-censura derivato dal protocollo (oggettivo)
+  if(!proto)return null;
+  const p=proto.toLowerCase();
+  if(p==="xray")return {cls:"high",label:"High",tip:"Xray/REALITY \u2014 anti-active-probing: resists state-level probing (China/Iran). Masquerades as real TLS traffic."};
+  if(p==="amneziawg"||p==="hysteria2")return {cls:"med",label:"Medium",tip:"Obfuscated transport \u2014 traffic disguised to evade DPI blocking, but not full anti-probing."};
+  if(p==="v2ray")return {cls:"low",label:"Basic",tip:"Encrypted but detectable by deep packet inspection. No active-probing resistance."};
+  if(p==="wireguard"||p==="openvpn")return {cls:"low",label:"Minimal",tip:"Standard VPN protocol \u2014 recognizable and blockable by censors."};
+  return null;
 }
 function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=(k==="moniker"||k==="country"||k==="protocol")?1:-1;}state.page=0;render();}
 document.getElementById("search").oninput=e=>{
