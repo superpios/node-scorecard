@@ -52,7 +52,7 @@ const de = nodes.filter(n =>
     GET https://superpios.github.io/node-scorecard/history-summary.json
 
 Updated **every hour**. Array of per-node reliability summaries computed from
-weeks of continuous sampling (~3h interval).
+weeks of continuous hourly sampling.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -78,8 +78,13 @@ weeks of continuous sampling (~3h interval).
 
     GET https://superpios.github.io/node-scorecard/trends.json
 
-Snapshots every 3h: active node count, per-ASN and per-country distribution,
-lease totals, plus node movers (7d uptime improving/declining).
+Object with:
+- `series` — hourly snapshots. Each: `ts`, `total`, `active`, `stale`,
+  `api_ok`, `asn` (per-ASN node counts), `country` (per-country node counts)
+- `movers_up` / `movers_down` — nodes whose 7-day uptime is improving or
+  declining. Each: `a` (address), `mon` (moniker), `d7` (recent uptime %),
+  `prev` (prior uptime %), `delta`
+- `generated` — when the file was built
 
 ## Joining the two datasets
 
