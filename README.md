@@ -5,7 +5,16 @@
 The Scorecard answers the question that matters most to a node operator: **how has my node behaved over time, and how does it compare to the rest of the network?**
 
 It samples every node on the Sentinel network on a schedule, builds a historical record measured in hundreds of thousands of samples, and turns it into an actionable reliability score, a country ranking, time-series trends, and a node-by-node diagnostic — all from data collected on-device, with no backend.
+## Public API
 
+All Scorecard data is available as free JSON endpoints (CORS open, no key,
+updated hourly):
+
+    https://superpios.github.io/node-scorecard/latest.json           # current snapshot, ~9000 nodes
+    https://superpios.github.io/node-scorecard/history-summary.json  # reliability history per node
+    https://superpios.github.io/node-scorecard/trends.json           # network trends over time
+
+Full field-by-field documentation, examples and join patterns: **[API.md](API.md)**
 ---
 
 ## What it does
