@@ -607,9 +607,23 @@ function detectProblems(n){
     // Flag only bandwidth so low it actually harms service.
     if(n.ul_mbps>0&&n.ul_mbps<5)P.push(["warn","<span class=dot-warn>\u25cf</span>","Upload "+n.ul_mbps+" Mbps is very low \u2014 may struggle to serve client sessions."]);
   }
-  if(n.status==="active"&&n.version&&MED.topVersion&&n.version!==MED.topVersion){
+  // Semver-aware version check. Compares NUMERICALLY, not against the most
+  // common version: right after a release the majority is on the OLD version,
+  // and the old logic told early adopters of the new one to "update" backwards.
+  function semverCmp(a,b){
+    const pa=String(a).replace(/^v/i,"").split(".").map(x=>parseInt(x,10)||0);
+    const pb=String(b).replace(/^v/i,"").split(".").map(x=>parseInt(x,10)||0);
+    for(let i=0;i<3;i++){const d=(pa[i]||0)-(pb[i]||0);if(d)return d;}
+    return 0;
+  }
+  if(n.status==="active"&&n.version&&MED.topVersion){
+    const cmp=semverCmp(n.version,MED.topVersion);
     const mine=(MED.versionCounts[n.version]||0),top=(MED.versionCounts[MED.topVersion]||0);
-    if(top>mine*3)P.push(["info","\u2139\ufe0f","Running v"+n.version+" while most active nodes run v"+MED.topVersion+" \u2014 consider updating."]);
+    if(cmp<0&&top>mine*3){
+      P.push(["info","\u2139\ufe0f","Running v"+n.version+" \u2014 older than v"+MED.topVersion+" used by most active nodes. Consider updating."]);
+    }else if(cmp>0){
+      P.push(["ok","\u2705","Running v"+n.version+" \u2014 ahead of the network (most nodes are on v"+MED.topVersion+"). Early adopter."]);
+    }
   }
   if(asnSaturated(n.asn))P.push(["warn","<span class=dot-warn>\u25cf</span>","On a saturated ASN ("+asnSaturated(n.asn)+") \u2014 over the PlanWizard whitelist limit, may not get leased/earn."+asnStat+asnLink]);
   // --- HISTORICAL trend from the per-node timeline (unique to the Scorecard) ---
