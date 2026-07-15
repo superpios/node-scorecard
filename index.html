@@ -44,6 +44,21 @@
   .dot-warn{color:var(--warn,#e8a13a)} .dot-bad{color:var(--bad,#e05c5c)} .dot-good{color:var(--good,#3fb950)}
   input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;height:14px;width:14px;background:var(--muted);cursor:pointer;border-radius:50%;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6L6 18M6 6l12 12' stroke='black' stroke-width='3'/%3E%3C/svg%3E") center/contain no-repeat}
   input[type=search]::-webkit-search-cancel-button:hover{background:var(--txt)} input[type=text]:focus,select:focus{border-color:var(--good)}
+    /* custom dropdowns (country/protocol) - themed, keyboard type-ahead */
+  .sdd{position:relative}
+  .sdd-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--txt);padding:10px 32px 10px 12px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;cursor:pointer;min-width:150px;text-align:left;position:relative}
+  .sdd-btn::after{content:'';position:absolute;right:13px;top:50%;width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg)}
+  .sdd.open .sdd-btn,.sdd-btn:focus{border-color:var(--good);outline:none}
+  .sdd-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:235px;max-height:295px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:5px;z-index:60;box-shadow:0 12px 34px rgba(0,0,0,.55);scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .sdd.open .sdd-menu{display:block}
+  .sdd-menu::-webkit-scrollbar{width:8px}
+  .sdd-menu::-webkit-scrollbar-track{background:transparent}
+  .sdd-menu::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .sdd-menu::-webkit-scrollbar-thumb:hover{background:var(--good)}
+  .sdd-it{padding:8px 11px;border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .sdd-it:hover{background:rgba(45,212,167,.10);color:var(--txt)}
+  .sdd-it.sel{color:var(--good);background:rgba(45,212,167,.13)}
+  .sdd-it.kbd{outline:1px solid var(--good)}
   .chip-filters{display:flex;gap:6px;flex-wrap:wrap}
   .cf{padding:9px 14px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600;transition:.15s}
   .cf:hover{color:var(--txt)} .cf.on{background:rgba(45,212,167,.13);border-color:var(--good);color:var(--good)}
@@ -316,8 +331,8 @@
     <div id="explorer-list">
       <div class="controls">
         <input type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="search" placeholder="search moniker, address, city&hellip;">
-        <select id="country"><option value="">All countries</option></select>
-        <select id="protocol"><option value="">All protocols</option><option value="v2ray">V2Ray</option><option value="wireguard">WireGuard</option><option value="openvpn">OpenVPN</option><option value="xray">Xray/REALITY</option><option value="amneziawg">AmneziaWG</option><option value="hysteria2">Hysteria2</option></select>
+        <div class="sdd" id="dd-country"><button type="button" class="sdd-btn">All countries</button><div class="sdd-menu"></div></div>
+        <div class="sdd" id="dd-protocol"><button type="button" class="sdd-btn">All protocols</button><div class="sdd-menu"></div></div>
         <div class="chip-filters"><div class="cf" id="cf-stale">Inactive</div><div class="cf" data-f="api">API reachable</div></div>
       </div>
       <div class="showing" id="showing"></div>
@@ -439,9 +454,10 @@ function computeMedians(){
     versionCounts:vcount
   };
 }
-function buildCountry(){const sel=document.getElementById("country");const c={};
+function buildCountry(){const c={};
   NODES.forEach(n=>{if(n.country&&n.country!=="\u2014")c[n.country]=(c[n.country]||0)+1;});
-  Object.entries(c).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=k+" ("+v+")";sel.appendChild(o);});}
+  const items=[{v:"",t:"All countries"}].concat(Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({v:k,t:k+" ("+v+")"})));
+  sddBuild("dd-country",items,state.country,function(v){state.country=v;state.page=0;render();});}
 function animateCount(el,target){
   const dur=900,t0=performance.now();
   function step(now){
@@ -1022,8 +1038,59 @@ document.getElementById("search").oninput=e=>{
   if(insp&&insp.style.display!=="none"){backToExplorer();}
   render();
 };
-document.getElementById("country").onchange=e=>{state.country=e.target.value;state.page=0;render();};
-document.getElementById("protocol").onchange=e=>{state.protocol=e.target.value;state.page=0;render();};
+/* country handled by custom dropdown (sddBuild in buildCountry) */
+// ===== custom dropdown engine (country/protocol) with keyboard type-ahead =====
+var SDD={};
+function sddBuild(id,items,current,onPick){
+  var root=document.getElementById(id);if(!root)return;
+  var btn=root.querySelector(".sdd-btn"),menu=root.querySelector(".sdd-menu");
+  SDD[id]={items:items,onPick:onPick,buf:"",timer:null};
+  menu.innerHTML="";
+  items.forEach(function(it){
+    var d=document.createElement("div");
+    d.className="sdd-it"+(it.v===current?" sel":"");
+    d.textContent=it.t;d.dataset.v=it.v;
+    d.onclick=function(e){if(e)e.stopPropagation();sddPick(id,it.v,it.t);};
+    menu.appendChild(d);
+  });
+  if(!root._wired){
+    root._wired=true;
+    btn.onclick=function(e){e.stopPropagation();sddCloseAll(id);root.classList.toggle("open");};
+  }
+}
+function sddPick(id,v,t){
+  var root=document.getElementById(id),btn=root.querySelector(".sdd-btn");
+  btn.textContent=(v==="")?SDD[id].items[0].t:t.replace(/ \(\d+\)$/,"");
+  root.classList.remove("open");
+  [].forEach.call(root.querySelectorAll(".sdd-it"),function(x){x.classList.toggle("sel",x.dataset.v===v);x.classList.remove("kbd");});
+  SDD[id].onPick(v);
+}
+function sddCloseAll(except){
+  [].forEach.call(document.querySelectorAll(".sdd.open"),function(r){if(r.id!==except)r.classList.remove("open");});
+}
+document.addEventListener("click",function(){sddCloseAll();});
+document.addEventListener("keydown",function(e){
+  var open=document.querySelector(".sdd.open");if(!open)return;
+  var S=SDD[open.id],menu=open.querySelector(".sdd-menu");
+  var items=[].slice.call(menu.children);if(!items.length||!S)return;
+  var cur=-1;items.forEach(function(x,i){if(x.classList.contains("kbd"))cur=i;});
+  function mark(el){items.forEach(function(x){x.classList.remove("kbd");});if(el){el.classList.add("kbd");el.scrollIntoView({block:"nearest"});}}
+  if(e.key==="Escape"){open.classList.remove("open");mark(null);return;}
+  if(e.key==="ArrowDown"){e.preventDefault();mark(items[Math.min(cur+1,items.length-1)]);return;}
+  if(e.key==="ArrowUp"){e.preventDefault();mark(items[Math.max(cur-1,0)]);return;}
+  if(e.key==="Enter"){if(cur>=0){e.preventDefault();items[cur].click();}return;}
+  if(e.key.length===1&&/[a-z0-9 ]/i.test(e.key)){
+    e.preventDefault();clearTimeout(S.timer);S.timer=setTimeout(function(){S.buf="";},800);
+    var ch=e.key.toLowerCase();
+    var same=S.buf.length>0&&S.buf.split("").every(function(c){return c===ch;});
+    if(same){S.buf=ch;var from=cur<0?0:cur+1;var seq=items.slice(from).concat(items.slice(0,from));
+      var hit=null;seq.forEach(function(d){if(!hit&&d.textContent.toLowerCase().indexOf(ch)===0)hit=d;});mark(hit);return;}
+    S.buf+=ch;
+    var hit2=null;items.forEach(function(d){if(!hit2&&d.textContent.toLowerCase().indexOf(S.buf)===0)hit2=d;});
+    if(hit2)mark(hit2);
+  }
+});
+sddBuild("dd-protocol",[{v:"",t:"All protocols"},{v:"v2ray",t:"V2Ray"},{v:"wireguard",t:"WireGuard"},{v:"openvpn",t:"OpenVPN"},{v:"xray",t:"Xray/REALITY"},{v:"amneziawg",t:"AmneziaWG"},{v:"hysteria2",t:"Hysteria2"}],state.protocol,function(v){state.protocol=v;state.page=0;render();});
 document.querySelectorAll(".cf[data-f]").forEach(c=>c.onclick=()=>{const f=c.dataset.f;state.filters[f]=!state.filters[f];c.classList.toggle("on",state.filters[f]);state.page=0;render();});
 document.getElementById("cf-stale").onclick=function(){state.showInactive=!state.showInactive;this.classList.toggle("on",state.showInactive);state.page=0;render();};
 document.getElementById("prev").onclick=()=>{if(state.page>0){state.page--;render();}};
