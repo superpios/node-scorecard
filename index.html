@@ -426,6 +426,7 @@ function enrich(n){
     price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
     protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
     dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",asn:n.asn||null,
+    sla_pass:(n.sla_pass!=null?n.sla_pass:null),sla_mbps:(n.sla_mbps!=null?n.sla_mbps:null),sla_baseline:(n.sla_baseline!=null?n.sla_baseline:null),sla_err:n.sla_err||null,
     tl:h.tl||"",tl_from:h.tl_from,tl_to:h.tl_to,
     score:Math.max(0,Math.min(100,score)),comps:comps};
 }
@@ -538,7 +539,7 @@ function render(){
     html+='<tr class="node-row" onclick="inspect(\''+n.addr+'\')"><td class="'+rk+'">'+rank+'</td>'+
       '<td><div class="mon'+(n.hasName?'':' na')+'">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
       '<td><span class="score '+sc(n.score)+'">'+n.score+'</span><div class="sbar"><i style="width:'+n.score+'%"></i></div></td>'+
-      '<td><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span></td>'+
+      '<td><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span>'+(n.sla_pass===true?' <span class="badge b-act" data-tip="Passed the official Sentinel SLA test (test.sentinel.co): a real tunnel was opened and measured">SLA \u2713</span>':n.sla_pass===false?' <span class="badge b-ina" data-tip="Failed the official Sentinel SLA test: '+esc(n.sla_err||"error")+'">SLA \u2717</span>':'')+'</td>'+
       '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>'+
       '<td class="hide-sm">'+pr(n.price_hr)+'</td><td class="hide-sm">'+pr(n.price_gb)+'</td>'+
       '<td class="mono hide-sm">'+(n.peers!=null?n.peers:'<span class="na">\u2014</span>')+'</td>'+
@@ -690,6 +691,7 @@ function detectProblems(n){
   // --- moniker assente ---
   if(n.status==="active"&&!n.hasName)
     P.push(["info","\u25cf\ufe0f","No moniker set \u2014 anonymous nodes are harder to find, trust and get feedback on. Set one in config.toml."]);
+  if(n.sla_pass===false)P.push(["warn","<span class=dot-bad>\u25cf</span>","FAILED the official Sentinel SLA test ("+esc(n.sla_err||"error")+") \u2014 a real tunnel could not be established or performed. The strongest signal this node is not serving clients right now."]);
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
@@ -727,6 +729,7 @@ function passedChecks(n){
   if(n.ul_mbps!=null)add(n.ul_mbps>=1,"Bandwidth");
   if(typeof n.gb_tokens==="number")add(n.gb_tokens>=3,"Payment tokens 3/3");
   add(!!n.hasName,"Moniker set");
+  if(n.sla_pass!=null)add(n.sla_pass===true,"Official SLA test");
   if(ph.l_now!=null)add(ph.l_now>0,"Leased (on-chain)");
   if(ph.p_pos!=null)add(ph.p_pos>30,"Client traffic");
   if(n.remote){if(!window._ipdup){window._ipdup={};NODES.forEach(x=>{if(x.status==="active"&&x.remote){const h=x.remote.split(":")[0];window._ipdup[h]=(window._ipdup[h]||0)+1;}});}
@@ -828,6 +831,7 @@ function renderInspector(n){
         '<span class="k">Peers (now)</span><span class="v" id="peers-live">'+(n.peers!=null?n.peers:"\u2014")+' <span id="peers-badge" style="font-size:10px;color:var(--muted);font-family:Space Mono">\u00b7 collector</span></span>'+
         '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+medRef("price_hr",n.price_hr):"\u2014")+'</span>'+
         '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P"+medRef("price_gb",n.price_gb):"\u2014")+'</span>'+
+        '<span class="k" data-tip="Official Sentinel SLA test (test.sentinel.co): a real tunnel is opened through the node and speed is measured. The strongest proof a node actually serves clients.">SLA test <span class="ttip">?</span></span><span class="v">'+(n.sla_pass===true?'<span style="color:var(--good)">\u2713 PASS'+(n.sla_mbps!=null?" \u00b7 "+n.sla_mbps+" Mbps":"")+'</span>':n.sla_pass===false?'<span style="color:var(--bad)">\u2717 FAIL'+(n.sla_err?" \u00b7 "+esc(n.sla_err):"")+'</span>':'\u2014')+'</span>'+
         '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps"+ulRef(n.ul_mbps):"\u2014")+'</span>'+
         '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span>'+
         '<span class="k">Hosting</span><span class="v">'+(n.asn?esc(asnNum(n.asn))+" \u00b7 "+esc(asnName(n.asn)):"\u2014")+'</span></div>'+

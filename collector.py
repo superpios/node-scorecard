@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Sentinel Scorecard Collector v3.7 (active-first + leases)
+# Sentinel Scorecard Collector v3.8 (active-first + leases + SLA test.sentinel.co)
+# v3.8: aggancia i test SLA ufficiali (pass/mbps/baseline/err) da test.sentinel.co in latest.json.
 # v3.7: campiona anche le LEASE on-chain (chi e' affittato dai provider dei piani).
 #       2 richieste per giro -> campo "leases" (conteggio) in ogni record attivo.
 #       Nel tempo costruisce il "lease uptime": in che % del tempo un nodo e' affittato.
@@ -151,6 +152,17 @@ def export_latest():
             except: pass
     before=len(latest)
     latest={a:r for a,r in latest.items() if (r.get("ts") or "")>=cut}
+    # --- anti-blip guard: non sovrascrivere se gli active crollano (run LCD difettosa) ---
+    new_active=sum(1 for r in latest.values() if r.get("status")=="active")
+    if os.path.exists(LATEST):
+        try:
+            old=json.load(open(LATEST))
+            old_active=sum(1 for r in old if r.get("status")=="active")
+            if old_active>=200 and new_active < old_active*0.6:
+                print(f"! ANTI-BLIP: active {old_active}->{new_active} (<60%), NON sovrascrivo. Run LCD difettosa.")
+                return
+        except Exception: pass
+    # --- fine guard ---
     json.dump(list(latest.values()),open(LATEST,"w"))
     print(f"Esportati {len(latest)} nodi in {LATEST} ({before-len(latest)} oltre 30gg esclusi)")
 def enrich_asn():
@@ -186,6 +198,38 @@ def enrich_asn():
     json.dump(nodes,open(LATEST,"w"))
     withasn=sum(1 for n in nodes if n.get("asn"))
     print(f"[{now_iso()}] ASN done: {new_lookups} nuovi lookup, {withasn}/{len(nodes)} nodi con ASN, cache {len(cache)} IP")
+def enrich_sla():
+    # v3.8: aggancia i risultati dei test SLA ufficiali di Sentinel (test.sentinel.co).
+    # UN solo fetch della run piu' recente (~1500 nodi) -> mappa per address.
+    # Campi aggiunti a ogni nodo attivo testato: sla_pass, sla_mbps, sla_baseline, sla_err.
+    # Nodi non presenti nella run test -> campi assenti (non "falliti").
+    if not os.path.exists(LATEST): print("Nessun latest.json per SLA."); return
+    try:
+        run=fetch("https://test.sentinel.co/api/public/runs/last", timeout=25)
+    except Exception as e:
+        print(f"[{now_iso()}] SLA skip: run test non raggiungibile ({e})"); return
+    tested=run.get("nodes") or []
+    sla={}
+    for tn in tested:
+        addr=tn.get("address")
+        if not addr: continue
+        err=tn.get("error")
+        sla[addr]={
+            "sla_pass": (err is None),
+            "sla_mbps": tn.get("actualMbps"),
+            "sla_baseline": tn.get("baselineMbps"),
+            "sla_err": tn.get("errorCode"),
+        }
+    nodes=json.load(open(LATEST))
+    hit=0
+    for n in nodes:
+        sd=sla.get(n.get("addr"))
+        if sd:
+            n.update(sd); hit+=1
+    json.dump(nodes,open(LATEST,"w"))
+    npass=sum(1 for v in sla.values() if v["sla_pass"])
+    print(f"[{now_iso()}] SLA: run #{run.get('id')} - {len(sla)} nodi testati ({npass} pass), agganciati {hit}/{len(nodes)}")
+
 def report():
     if not os.path.exists(DATA): print("Nessuno storico."); return
     rows=[json.loads(l) for l in open(DATA) if l.strip()]; by={}
@@ -243,4 +287,5 @@ def main():
     print(f"[{now_iso()}] {w} campioni attivi + {len(tracked_inactive)} transizioni inactive")
     export_latest()
     enrich_asn()   # v3.4: aggiunge ASN dopo l'export
+    enrich_sla()   # v3.8: aggancia SLA da test.sentinel.co
 if __name__=="__main__": main()
