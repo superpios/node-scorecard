@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Sentinel Scorecard Collector v3.8 (active-first + leases + SLA test.sentinel.co)
+# Sentinel Scorecard Collector v3.9 (active-first + leases + SLA + api_status)\n# v3.9: campo api_status granulare (ok/timeout/refused/tls_error/reset/unreachable/bad_response/error).
 # v3.8: aggancia i test SLA ufficiali (pass/mbps/baseline/err) da test.sentinel.co in latest.json.
 # v3.7: campiona anche le LEASE on-chain (chi e' affittato dai provider dei piani).
 #       2 richieste per giro -> campo "leases" (conteggio) in ogni record attivo.
@@ -96,9 +96,22 @@ def price_udvpn(arr):
             try: return round(int(p["quote_value"])/1e6,2)
             except: return None
     return None
+def api_status_of(e):
+    # v3.9: classifica l'errore API in una categoria compatta.
+    if e is None: return "error"
+    r=getattr(e,"reason",None)
+    t=r if r is not None else e
+    m=(str(t) or str(e)).lower()
+    if isinstance(t,(socket.timeout,TimeoutError)) or "timed out" in m or "timeout" in m: return "timeout"
+    if isinstance(t,ConnectionRefusedError) or "refused" in m: return "refused"
+    if isinstance(t,ssl.SSLError) or "ssl" in m or "certificate" in m or "tls" in m or "handshake" in m: return "tls_error"
+    if isinstance(t,ConnectionResetError) or "reset" in m: return "reset"
+    if "unreachable" in m or "no route" in m or "getaddrinfo" in m or "name or service" in m: return "unreachable"
+    return "error"
+
 def sample(addr,leases=None):
     rec={"ts":now_iso(),"addr":addr,"status":None,"inactive_at":None,"remote":None,"moniker":None,
-         "dl_mbps":None,"ul_mbps":None,"api_ok":False,"gb_tokens":0,
+         "dl_mbps":None,"ul_mbps":None,"api_ok":False,"api_status":None,"gb_tokens":0,
          "price_hr":None,"price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,"asn":None,"hosting":None,
          "leases":(leases or {}).get(addr,0)}
     try:
@@ -112,17 +125,19 @@ def sample(addr,leases=None):
         rec["price_hr"]=price_udvpn(hp)
     except Exception as e: rec["error"]=str(e); return rec
     if rec["remote"]:
-        api=None
+        api=None; last_api_err=None
         for attempt,to in enumerate((7,12)):
             try:
                 api=fetch(f"https://{rec['remote']}/",timeout=to); break
-            except Exception:
+            except Exception as _e:
+                last_api_err=_e
                 if attempt==0: time.sleep(1)
                 api=None
         if api is not None:
             try:
                 res=api.get("result",api)
                 rec["api_ok"]=True
+                rec["api_status"]="ok"
                 if res.get("downlink"):
                     try: rec["dl_mbps"]=round(int(res["downlink"])*8/1e6,2)
                     except: pass
@@ -137,9 +152,10 @@ def sample(addr,leases=None):
                 loc=res.get("location") or {}
                 if loc.get("country"): rec["country"]=loc["country"]
                 if loc.get("city"): rec["city"]=loc["city"]
-            except Exception: rec["api_ok"]=False
+            except Exception: rec["api_ok"]=False; rec["api_status"]="bad_response"
         else:
             rec["api_ok"]=False
+            rec["api_status"]=api_status_of(last_api_err)
     return rec
 def export_latest():
     if not os.path.exists(DATA): print("Nessuno storico."); return
