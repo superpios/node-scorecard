@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # make-trends v1.2: v1.1 + lease series (leases_total, nodes_leased) per the lease-coverage trend.
-# v1.1: registra anche chain_total/chain_active (conteggio nativo on-chain via count_total):
-#       campo "nascosto" nei dati, non mostrato in UI - storico per noi.
+# v1.1: also records chain_total/chain_active (native on-chain count via count_total):
+#       "hidden" field in the data, not shown in UI - historical record for us.
 # Runs after make-summary.py. Appends one snapshot per run to trends.jsonl,
 # writes trends.json (site file) and pushes it to GitHub reusing the token
 # already stored in push-latest.sh (never hardcode the token here).
@@ -49,7 +49,7 @@ def _chain_count(extra=""):
                                    headers={"User-Agent":"scorecard"})
         return int(json.loads(urllib.request.urlopen(req,timeout=15).read())["pagination"]["total"])
     except Exception: return None
-# lease coverage from latest.json (campo scritto dal collector v3.7)
+# lease coverage from latest.json (field written by collector v3.7)
 _act=[n for n in latest if disp_status(n)=="active"]
 _lv=[n.get("leases") for n in _act if n.get("leases") is not None]
 snap["nodes_leased"]=sum(1 for v in _lv if v>0) if _lv else None
@@ -101,7 +101,7 @@ print(f"trends: {len(series)} points, movers +{len(movers_up)}/-{len(movers_down
 # ---- push trends.json to GitHub (token read from push-latest.sh) ----
 try:
     tok=re.search(r'(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})',open(PUSH_SH).read())
-    if not tok: raise RuntimeError("token non trovato in push-latest.sh")
+    if not tok: raise RuntimeError("token not found in push-latest.sh")
     tok=tok.group(1)
     api=f"https://api.github.com/repos/{REPO}/contents/trends.json"
     def gh(url,data=None,method="GET"):
@@ -117,4 +117,4 @@ try:
     gh(api,json.dumps(body).encode(),"PUT")
     print("OK trends.json pushed")
 except Exception as e:
-    print(f"push trends fallito (riproverà al prossimo giro): {e}")
+    print(f"trends push failed (will retry next cycle): {e}")

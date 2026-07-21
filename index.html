@@ -671,7 +671,7 @@ function detectProblems(n){
     const gr2=globalRank(n);
     if(gr2&&gr2.pos<=20)P.push(["ok","\u2605","Elite node \u2014 grade "+grade(n.score)+", ranked #"+gr2.pos+" of "+gr2.total+" network-wide."]);
   }
-  // --- IP condiviso: piu' nodi sullo stesso host dividono attenzione e affidabilita' percepita ---
+  // --- shared IP: multiple nodes on the same host split attention and perceived reliability ---
   if(n.status==="active"&&n.remote){
     if(!window._ipdup){
       window._ipdup={};
@@ -680,10 +680,10 @@ function detectProblems(n){
     const others=(window._ipdup[n.remote.split(":")[0]]||1)-1;
     if(others>=1)P.push(["info","\u25cf","Shares its IP/host with "+others+" other active node"+(others===1?"":"s")+" \u2014 multiple nodes on one address split traffic and can look suspicious to plan providers."]);
   }
-  // --- remote = IP grezzo su rete residenziale: alla prima rotazione IP il nodo sparisce ---
+  // --- remote = raw IP on a residential network: on the first IP rotation the node vanishes ---
   if(n.status==="active"&&n.hosting===false&&n.remote&&/^\d+\.\d+\.\d+\.\d+/.test(n.remote))
     P.push(["warn","\u25cf","Remote announced as a RAW IP on a residential-class network \u2014 when the ISP rotates the IP, the node becomes unreachable. Use a DDNS hostname instead."]);
-  // --- prezzo zero: configurazione rotta, il nodo lavora gratis o viene scartato ---
+  // --- zero price: broken configuration, the node works for free or gets discarded ---
   if(n.status==="active"&&(n.price_hr===0||n.price_gb===0))
     P.push(["warn","\u00a4","A price is set to ZERO ("+(n.price_hr===0?"hourly":"per-GB")+") \u2014 likely a misconfiguration."]);
   // --- token di pagamento incompleti ---
@@ -1027,7 +1027,7 @@ function setPanelDesc(){
   document.getElementById("paneldesc").innerHTML='<span class="net-label">dVPN Sentinel Network</span> \u2014 the whole network at a glance. Sort, filter, search 1500+ nodes. Click any node to inspect it.';
 }
 function acLevel(proto){
-  // livello anti-censura derivato dal protocollo (oggettivo)
+  // anti-censorship level derived from the protocol (objective)
   if(!proto)return null;
   const p=proto.toLowerCase();
   if(p==="xray")return {cls:"high",label:"High",tip:"Xray/REALITY \u2014 anti-active-probing: resists state-level probing (China/Iran). Masquerades as real TLS traffic."};
@@ -1492,7 +1492,7 @@ setPanelDesc();renderSupport();load();
 
   var mode='off', raf=null, t=0;
 
-  // ============ EARTH — globo notturno con atmosfera e nodi glow ============
+  // ============ EARTH — night globe with atmosphere and glowing nodes ============
   var cx,cy,R,rot=0,dots=[],grid=[],merid=[],stars=[];
   function initEarth(){
     cx=W*0.5;cy=H*0.44;R=Math.min(W,H)*0.32;
@@ -1529,7 +1529,7 @@ setPanelDesc();renderSupport();load();
     var term=ctx.createLinearGradient(cx-R,0,cx+R,0);
     term.addColorStop(0,'rgba(0,0,0,0)');term.addColorStop(.62,'rgba(0,0,0,0)');term.addColorStop(1,'rgba(0,0,0,.45)');
     ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.clip();ctx.fillStyle=term;ctx.fillRect(cx-R,cy-R,R*2,R*2);ctx.restore();
-    // nodi come luci di città con glow
+    // nodes as glowing city lights
     for(var i=0;i<dots.length;i++){var d=dots[i],p=proj(d.lat,d.lon,rot);if(p.z<=.03)continue;
       var pulse=.5+.5*Math.sin(t*.9+d.ph),dep=Math.max(.2,p.z),br=(.35+f*.6)*pulse*dep,sz=d.sz*(.7+f*.6)*dep;
       if(d.big){var g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,sz*5);g.addColorStop(0,'rgba('+GOOD+','+br*.5+')');g.addColorStop(1,'rgba('+GOOD+',0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,sz*5,0,6.28);ctx.fill();}
@@ -1540,10 +1540,10 @@ setPanelDesc();renderSupport();load();
     ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.strokeStyle='rgba('+GOOD+','+(.18+f*.18)+')';ctx.lineWidth=1.2;ctx.stroke();
   }
 
-  // ============ MESH — rete che pulsa, con nodi glow e archi luminosi ============
+  // ============ MESH — pulsing network with glowing nodes and luminous arcs ============
   var nodes=[];
-  // ============ MESH — rete densa e ben visibile, nodi colorati per "tipo" ============
-  // tipi di nodo (metafora dei protocolli/stato reale): verde=core attivo, blu=relay standard, rosa=alto traffico
+  // ============ MESH — dense, clearly visible network, nodes colored by "type" ============
+  // node types (metaphor for protocols/real state): green=active core, blue=standard relay, pink=high traffic
   var TYPES=[{c:GOOD,w:.55},{c:ACC2,w:.30},{c:ACCENT,w:.15}];
   var nodes=[];
   function pickType(){var r=Math.random(),a=0;for(var i=0;i<TYPES.length;i++){a+=TYPES[i].w;if(r<a)return TYPES[i].c;}return GOOD;}
@@ -1552,9 +1552,9 @@ setPanelDesc();renderSupport();load();
     var f=HEALTH;t+=.018;
     var bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'rgba(8,14,23,1)');bg.addColorStop(1,'rgba(5,9,17,1)');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
     for(var i=0;i<nodes.length;i++){var n=nodes[i];n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;}
-    // archi tra nodi vicini — più raggio, più opacità, colore misto dei due nodi
+    // arcs between nearby nodes — more radius, more opacity, blended color of the two nodes
     for(var i=0;i<nodes.length;i++)for(var j=i+1;j<nodes.length;j++){var dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<185){var a=(1-d/185)*(.16+f*.20);var g=ctx.createLinearGradient(nodes[i].x,nodes[i].y,nodes[j].x,nodes[j].y);g.addColorStop(0,'rgba('+nodes[i].col+','+a+')');g.addColorStop(1,'rgba('+nodes[j].col+','+a+')');ctx.strokeStyle=g;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}}
-    // nodi: hub con glow ampio + nodi normali ben visibili, colorati per tipo
+    // nodes: hubs with wide glow + clearly visible regular nodes, colored by type
     for(var i=0;i<nodes.length;i++){var n=nodes[i],pulse=.5+.5*Math.sin(t*.8+n.ph);
       if(n.hub){var rr=18;var g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,rr);g.addColorStop(0,'rgba('+n.col+','+(.45+f*.35*pulse)+')');g.addColorStop(1,'rgba('+n.col+',0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,rr,0,6.28);ctx.fill();
         ctx.beginPath();ctx.arc(n.x,n.y,3.2,0,6.28);ctx.fillStyle='rgba('+n.col+','+(.85+f*.15)+')';ctx.fill();

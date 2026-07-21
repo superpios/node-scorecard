@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# make-summary v3.5.1: l_pos richiede >=8 campioni (evita falsi "never leased" a storico giovane). v3.5: v3.4 + lease stats: l_pos (% recent samples with a lease = "lease uptime"), l_now
+# make-summary v3.5.1: l_pos requires >=8 samples (avoids false "never leased" on young history). v3.5: v3.4 + lease stats: l_pos (% recent samples with a lease = "lease uptime"), l_now
 import json, os
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__)) or "."
 DATA=os.path.join(HERE,"history.jsonl")
 OUT=os.path.join(HERE,"history-summary.json")
-WINDOW=168           # ultimi N campioni nella timeline (1 settimana orari)
-STALE_HOURS=24       # se l'ultimo campione > 24h -> nodo considerato stale
+WINDOW=168           # last N samples in the timeline (1 week of hourly samples)
+STALE_HOURS=24       # if the last sample is > 24h old -> node considered stale
 PURGE_DAYS=30        # nodes unseen for 30+ days (delisted from chain) drop out of the summary
 NOW=datetime.now(timezone.utc)
 
@@ -29,20 +29,20 @@ for a,recs in by.items():
     ul=sum(uls)/len(uls) if uls else None
     country=next((r.get("country") for r in reversed(recs) if r.get("country")),None)
     sc=round(uptime*0.6+stab*0.3+(10 if ul else 0))
-    # timeline compatta: ultimi WINDOW campioni, '1'=active '0'=altro
+    # compact timeline: last WINDOW samples, '1'=active '0'=other
     win=recs[-WINDOW:]
     tl="".join("1" if r.get("status")=="active" else "0" for r in win)
     tl_from=win[0].get("ts") if win else None
     tl_to=win[-1].get("ts") if win else None
     # recent lease stats (last ~7 days): l_pos = "lease uptime" (% of samples with an active lease)
     lr=[r.get("leases") for r in recs[-56:] if r.get("leases") is not None]
-    l_pos=round(sum(1 for v in lr if v>0)/len(lr)*100) if len(lr)>=8 else None  # serve >=1 giorno di campioni lease
+    l_pos=round(sum(1 for v in lr if v>0)/len(lr)*100) if len(lr)>=8 else None  # requires >=1 day of lease samples
     l_now=recs[-1].get("leases") if recs[-1].get("leases") is not None else None
     # recent peers stats (last ~7 days): for the "healthy but no clients" lease check
     pr=[r.get("peers") for r in recs[-56:] if r.get("peers") is not None]
     p_pos=round(sum(1 for v in pr if v>0)/len(pr)*100) if pr else None
     p_avg=round(sum(pr)/len(pr),1) if pr else None
-    # stale check: età ultimo campione
+    # stale check: age of the last sample
     age_h=None; stale=False
     last_ts=recs[-1].get("ts","")
     try:
@@ -60,4 +60,4 @@ for a,recs in by.items():
 json.dump(summary,open(OUT,"w"))
 stale_count=sum(1 for s in summary if s.get("stale"))
 purged=len(by)-len(summary)
-print(f"summary v3.5: {len(summary)} nodi ({stale_count} stale, {purged} purged >30d) -> {OUT}")
+print(f"summary v3.5: {len(summary)} nodes ({stale_count} stale, {purged} purged >30d) -> {OUT}")

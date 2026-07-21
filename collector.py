@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 # Sentinel Scorecard Collector v3.10 (active-first + leases + SLA + api_status + multi-protocol)
-# v3.10: supporto nodi multi-protocollo (nuovo API: services[] al posto di service_type).
-#        "protocol" resta stringa (servizio primario, retrocompatibile con la UI);
-#        nuovo campo "protocols": [{"type","peers"}] = peers per protocollo (prova di uso reale).
-# v3.9: campo api_status granulare (ok/timeout/refused/tls_error/reset/unreachable/bad_response/error).
-# v3.8: aggancia i test SLA ufficiali (pass/mbps/baseline/err) da test.sentinel.co in latest.json.
-# v3.7: campiona anche le LEASE on-chain (chi e' affittato dai provider dei piani).
-#       2 richieste per giro -> campo "leases" (conteggio) in ogni record attivo.
-#       Nel tempo costruisce il "lease uptime": in che % del tempo un nodo e' affittato.
-# v3.6: la chain ha 76k+ registrazioni storiche (per lo piu' morte). Ora scarichiamo
-#       SOLO gli attivi (status=1, ~8 pagine) + scriviamo un record leggero "inactive"
-#       per i nodi tracciati che escono dalla lista attivi (li segue la purga 30gg).
+# v3.10: multi-protocol node support (new API: services[] replaces service_type).
+#        "protocol" stays a string (primary service, backward compatible with the UI);
+#        new field "protocols": [{"type","peers"}] = per-protocol peers (proof of real usage).
+# v3.9: granular api_status field (ok/timeout/refused/tls_error/reset/unreachable/bad_response/error).
+# v3.8: attaches official SLA test results (pass/mbps/baseline/err) from test.sentinel.co into latest.json.
+# v3.7: also samples on-chain LEASES (who is leased by plan providers).
+#       2 requests per cycle -> "leases" field (count) in every active record.
+#       Over time this builds "lease uptime": the % of time a node is leased.
+# v3.6: the chain has 76k+ historical registrations (mostly dead). We now download
+#       ONLY active ones (status=1, ~8 pages) + write a lightweight "inactive" record
+#       for tracked nodes that drop off the active list (30-day purge handles them).
 #       export_latest applica lo stesso taglio 30gg.
-# v3: aggiunge price_hr/price_gb (da LCD), protocol/peers/version/banda (da API locale)
-# v3.1: retry API nodo (2 tentativi) per ridurre nodi con moniker/peers None
-# v3.2: ASN enrichment con cache su file (lookup IP->ASN via ip-api, 1 call per IP nuovo)
-# v3.4: enrich_asn solo nodi attivi (status==active) - meno lookup, piu utile
-# v3.5: aggiunge campo hosting (datacenter true/false) da ip-api; cache come dict {asn,hosting}
+# v3: adds price_hr/price_gb (from LCD), protocol/peers/version/bandwidth (from node API)
+# v3.1: node API retry (2 attempts) to reduce nodes with moniker/peers None
+# v3.2: ASN enrichment with on-file cache (IP->ASN lookup via ip-api, 1 call per new IP)
+# v3.4: enrich_asn only on active nodes (status==active) - fewer lookups, more useful
+# v3.5: adds hosting field (datacenter true/false) from ip-api; cache as dict {asn,hosting}
 import json, os, sys, time, urllib.request, urllib.parse, ssl, socket
 from datetime import datetime, timezone
 HERE=os.path.dirname(os.path.abspath(__file__))
@@ -35,7 +35,7 @@ def _cache_get(cache, ip):
     if isinstance(v,str): return {"asn":v,"hosting":None}  # legacy entry, hosting unknown
     return v
 def lookup_asn(remote, cache):
-    # remote = 'host:port' o 'ip:port' -> dict {asn,hosting} (cache su IP, 1 call per IP nuovo)
+    # remote = 'host:port' or 'ip:port' -> dict {asn,hosting} (cached per IP, 1 call per new IP)
     if not remote: return None
     host=remote.split(":")[0].strip()
     if not host: return None
@@ -79,7 +79,7 @@ def all_nodes(lim=200,maxp=40,status=None):
         time.sleep(0.5)
     return out
 def fetch_leases():
-    # Tutte le lease attive della rete (poche centinaia) -> {node_address: count}
+    # All active leases on the network (a few hundred) -> {node_address: count}
     out={}; key=None
     for _ in range(10):
         url=f"{LCD}/sentinel/lease/v1/leases?pagination.limit=500"
@@ -101,7 +101,7 @@ def price_udvpn(arr):
             except: return None
     return None
 def api_status_of(e):
-    # v3.9: classifica l'errore API in una categoria compatta.
+    # v3.9: classifies the API error into a compact category.
     if e is None: return "error"
     r=getattr(e,"reason",None)
     t=r if r is not None else e
@@ -151,12 +151,12 @@ def sample(addr,leases=None):
                 rec["peers"]=res.get("peers")
                 svcs=res.get("services")
                 if isinstance(svcs,list) and svcs:
-                    # nodo multi-protocollo (API nuova): services[] = [{"type","metadata","peers"}]
+                    # multi-protocol node (new API): services[] = [{"type","metadata","peers"}]
                     types_=[s.get("type") for s in svcs if isinstance(s,dict) and s.get("type")]
                     rec["protocol"]=types_[0] if types_ else None
                     rec["protocols"]=[{"type":s.get("type"),"peers":s.get("peers")} for s in svcs if isinstance(s,dict) and s.get("type")]
                 else:
-                    # nodo legacy (v9 mono): service_type stringa
+                    # legacy node (v9 mono): service_type string
                     rec["protocol"]=res.get("service_type")
                 ver=res.get("version") or {}
                 rec["version"]=ver.get("tag") if isinstance(ver,dict) else ver
@@ -170,7 +170,7 @@ def sample(addr,leases=None):
             rec["api_status"]=api_status_of(last_api_err)
     return rec
 def export_latest():
-    if not os.path.exists(DATA): print("Nessuno storico."); return
+    if not os.path.exists(DATA): print("No history yet."); return
     from datetime import timedelta
     cut=(datetime.now(timezone.utc)-timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
     latest={}
@@ -180,27 +180,27 @@ def export_latest():
             except: pass
     before=len(latest)
     latest={a:r for a,r in latest.items() if (r.get("ts") or "")>=cut}
-    # --- anti-blip guard: non sovrascrivere se gli active crollano (run LCD difettosa) ---
+    # --- anti-blip guard: do not overwrite if active count collapses (faulty LCD run) ---
     new_active=sum(1 for r in latest.values() if r.get("status")=="active")
     if os.path.exists(LATEST):
         try:
             old=json.load(open(LATEST))
             old_active=sum(1 for r in old if r.get("status")=="active")
             if old_active>=200 and new_active < old_active*0.6:
-                print(f"! ANTI-BLIP: active {old_active}->{new_active} (<60%), NON sovrascrivo. Run LCD difettosa.")
+                print(f"! ANTI-BLIP: active {old_active}->{new_active} (<60%), NOT overwriting. Faulty LCD run.")
                 return
         except Exception: pass
     # --- fine guard ---
     json.dump(list(latest.values()),open(LATEST,"w"))
-    print(f"Esportati {len(latest)} nodi in {LATEST} ({before-len(latest)} oltre 30gg esclusi)")
+    print(f"Exported {len(latest)} nodes to {LATEST} ({before-len(latest)} older than 30d excluded)")
 def enrich_asn():
-    # v3.4: ASN enrichment solo nodi ATTIVI. Salva cache ogni 40 lookup (a prova di interruzione),
-    # stampa progresso, riprende dalla cache se rilanciato. Rate-limit ip-api 45/min.
-    if not os.path.exists(LATEST): print("Nessun latest.json."); return
+    # v3.4: ASN enrichment on ACTIVE nodes only. Saves cache every 40 lookups (interruption-proof),
+    # prints progress, resumes from cache if relaunched. ip-api rate limit 45/min.
+    if not os.path.exists(LATEST): print("No latest.json."); return
     cache=json.load(open(ASNCACHE)) if os.path.exists(ASNCACHE) else {}
     nodes=json.load(open(LATEST))
     todo=[n for n in nodes if n.get("remote") and n.get("status")=="active" and (not n.get("asn") or n.get("hosting") is None)]
-    print(f"[{now_iso()}] ASN enrich: {len(todo)} nodi ATTIVI da risolvere (cache: {len(cache)} IP)")
+    print(f"[{now_iso()}] ASN enrich: {len(todo)} ACTIVE nodes to resolve (cache: {len(cache)} IPs)")
     new_lookups=0; done=0
     for n in nodes:
         # process active nodes missing asn OR missing hosting (so legacy entries get hosting filled)
@@ -225,13 +225,13 @@ def enrich_asn():
     json.dump(cache,open(ASNCACHE,"w"))
     json.dump(nodes,open(LATEST,"w"))
     withasn=sum(1 for n in nodes if n.get("asn"))
-    print(f"[{now_iso()}] ASN done: {new_lookups} nuovi lookup, {withasn}/{len(nodes)} nodi con ASN, cache {len(cache)} IP")
+    print(f"[{now_iso()}] ASN done: {new_lookups} new lookups, {withasn}/{len(nodes)} nodes with ASN, cache {len(cache)} IPs")
 def enrich_sla():
-    # v3.8: aggancia i risultati dei test SLA ufficiali di Sentinel (test.sentinel.co).
-    # UN solo fetch della run piu' recente (~1500 nodi) -> mappa per address.
-    # Campi aggiunti a ogni nodo attivo testato: sla_pass, sla_mbps, sla_baseline, sla_err.
-    # Nodi non presenti nella run test -> campi assenti (non "falliti").
-    if not os.path.exists(LATEST): print("Nessun latest.json per SLA."); return
+    # v3.8: attaches Sentinel's official SLA test results (test.sentinel.co).
+    # ONE fetch of the most recent run (~1500 nodes) -> map by address.
+    # Fields added to every tested active node: sla_pass, sla_mbps, sla_baseline, sla_err.
+    # Nodes absent from the test run -> fields absent (not "failed").
+    if not os.path.exists(LATEST): print("No latest.json for SLA."); return
     try:
         run=fetch("https://test.sentinel.co/api/public/runs/last", timeout=25)
     except Exception as e:
@@ -256,13 +256,13 @@ def enrich_sla():
             n.update(sd); hit+=1
     json.dump(nodes,open(LATEST,"w"))
     npass=sum(1 for v in sla.values() if v["sla_pass"])
-    print(f"[{now_iso()}] SLA: run #{run.get('id')} - {len(sla)} nodi testati ({npass} pass), agganciati {hit}/{len(nodes)}")
+    print(f"[{now_iso()}] SLA: run #{run.get('id')} - {len(sla)} nodes tested ({npass} pass), attached {hit}/{len(nodes)}")
 
 def report():
-    if not os.path.exists(DATA): print("Nessuno storico."); return
+    if not os.path.exists(DATA): print("No history yet."); return
     rows=[json.loads(l) for l in open(DATA) if l.strip()]; by={}
     for r in rows: by.setdefault(r["addr"],[]).append(r)
-    print(f"\n{len(rows)} campioni su {len(by)} nodi\n")
+    print(f"\n{len(rows)} samples across {len(by)} nodes\n")
     for a,recs in sorted(by.items(),key=lambda x:-sum(1 for r in x[1] if r.get('status')=='active')/len(x[1])):
         n=len(recs); up=round(sum(1 for r in recs if r.get("status")=="active")/n*100,1)
         mon=(recs[-1].get("moniker") or a[:20])[:22]; print(f"  {mon:<24} {n:>4}smp {up:>5}%")
@@ -274,12 +274,12 @@ def main():
     if "--asn" in a: enrich_asn(); return
     tracked_inactive=[]
     if "--all" in a:
-        print(f"[{now_iso()}] Scarico nodi ATTIVI dalla chain (status=1)...")
+        print(f"[{now_iso()}] Downloading ACTIVE nodes from chain (status=1)...")
         t=all_nodes(status=1)
         if not t:
-            print("! lista attivi vuota (LCD giu'?), esco senza scrivere"); return
-        # nodi che tracciavamo come attivi e ora non sono piu' nella lista: un record
-        # leggero li marca inactive; poi smettiamo di campionarli (purge 30gg li elimina)
+            print("! active list empty (LCD down?), exiting without writing"); return
+        # nodes we tracked as active that are no longer on the list: a lightweight
+        # record marks them inactive; then we stop sampling them (30-day purge removes them)
         act_set=set(t)
         if os.path.exists(LATEST):
             try:
@@ -287,14 +287,14 @@ def main():
                     if n.get("status")=="active" and n["addr"] not in act_set:
                         tracked_inactive.append(n["addr"])
             except Exception: pass
-        print(f"[{now_iso()}] {len(t)} attivi on-chain | {len(tracked_inactive)} tracked diventati inattivi")
+        print(f"[{now_iso()}] {len(t)} active on-chain | {len(tracked_inactive)} tracked went inactive")
         LEASES=fetch_leases()
         nl=sum(1 for v in LEASES.values() if v>0)
-        print(f"[{now_iso()}] lease attive: {sum(LEASES.values())} su {nl} nodi affittati")
+        print(f"[{now_iso()}] active leases: {sum(LEASES.values())} across {nl} leased nodes")
     else:
         t=load_watch()["nodes"]
         if not t: print("Vuoto. Usa --add o --all"); return
-        print(f"[{now_iso()}] Campiono {len(t)} nodi watchlist")
+        print(f"[{now_iso()}] Sampling {len(t)} watchlist nodes")
     w=0; act=0; done=0; total=len(t)
     from concurrent.futures import ThreadPoolExecutor, as_completed
     with open(DATA,"a") as f:
@@ -312,8 +312,8 @@ def main():
                 "moniker":None,"dl_mbps":None,"ul_mbps":None,"api_ok":False,"gb_tokens":0,"price_hr":None,
                 "price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,
                 "asn":None,"hosting":None})+"\n")
-    print(f"[{now_iso()}] {w} campioni attivi + {len(tracked_inactive)} transizioni inactive")
+    print(f"[{now_iso()}] {w} active samples + {len(tracked_inactive)} inactive transitions")
     export_latest()
-    enrich_asn()   # v3.4: aggiunge ASN dopo l'export
-    enrich_sla()   # v3.8: aggancia SLA da test.sentinel.co
+    enrich_asn()   # v3.4: adds ASN after the export
+    enrich_sla()   # v3.8: attaches SLA from test.sentinel.co
 if __name__=="__main__": main()
