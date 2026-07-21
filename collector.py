@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# Sentinel Scorecard Collector v3.9 (active-first + leases + SLA + api_status)\n# v3.9: campo api_status granulare (ok/timeout/refused/tls_error/reset/unreachable/bad_response/error).
+# Sentinel Scorecard Collector v3.10 (active-first + leases + SLA + api_status + multi-protocol)
+# v3.10: supporto nodi multi-protocollo (nuovo API: services[] al posto di service_type).
+#        "protocol" resta stringa (servizio primario, retrocompatibile con la UI);
+#        nuovo campo "protocols": [{"type","peers"}] = peers per protocollo (prova di uso reale).
+# v3.9: campo api_status granulare (ok/timeout/refused/tls_error/reset/unreachable/bad_response/error).
 # v3.8: aggancia i test SLA ufficiali (pass/mbps/baseline/err) da test.sentinel.co in latest.json.
 # v3.7: campiona anche le LEASE on-chain (chi e' affittato dai provider dei piani).
 #       2 richieste per giro -> campo "leases" (conteggio) in ogni record attivo.
@@ -112,7 +116,7 @@ def api_status_of(e):
 def sample(addr,leases=None):
     rec={"ts":now_iso(),"addr":addr,"status":None,"inactive_at":None,"remote":None,"moniker":None,
          "dl_mbps":None,"ul_mbps":None,"api_ok":False,"api_status":None,"gb_tokens":0,
-         "price_hr":None,"price_gb":None,"protocol":None,"peers":None,"version":None,"country":None,"city":None,"asn":None,"hosting":None,
+         "price_hr":None,"price_gb":None,"protocol":None,"protocols":None,"peers":None,"version":None,"country":None,"city":None,"asn":None,"hosting":None,
          "leases":(leases or {}).get(addr,0)}
     try:
         n=fetch(f"{LCD}/sentinel/node/v3/nodes/{addr}").get("node",{})
@@ -145,7 +149,15 @@ def sample(addr,leases=None):
                     try: rec["ul_mbps"]=round(int(res["uplink"])*8/1e6,2)
                     except: pass
                 rec["peers"]=res.get("peers")
-                rec["protocol"]=res.get("service_type")
+                svcs=res.get("services")
+                if isinstance(svcs,list) and svcs:
+                    # nodo multi-protocollo (API nuova): services[] = [{"type","metadata","peers"}]
+                    types_=[s.get("type") for s in svcs if isinstance(s,dict) and s.get("type")]
+                    rec["protocol"]=types_[0] if types_ else None
+                    rec["protocols"]=[{"type":s.get("type"),"peers":s.get("peers")} for s in svcs if isinstance(s,dict) and s.get("type")]
+                else:
+                    # nodo legacy (v9 mono): service_type stringa
+                    rec["protocol"]=res.get("service_type")
                 ver=res.get("version") or {}
                 rec["version"]=ver.get("tag") if isinstance(ver,dict) else ver
                 if not rec["moniker"]: rec["moniker"]=res.get("moniker")
