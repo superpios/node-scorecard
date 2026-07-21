@@ -354,7 +354,8 @@
     <a href="https://hub.bluefrens.xyz" target="_blank" rel="noopener">&#128153; BlueFrens Hub</a>
     <a href="https://sentnodes.com" target="_blank" rel="noopener">SentNodes</a>
     <a href="https://nodes.suchnode.net" target="_blank" rel="noopener">SuchNode</a>
-    <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a></div>
+    <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a>
+    <a href="https://superpios.github.io/sentinel-node-dash/" target="_blank" rel="noopener">&#128126; Node Dash (game)</a></div>
   <div class="support" id="support"></div>
   <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators</footer>
 </div>
@@ -424,7 +425,7 @@ function enrich(n){
     uptime:uptime,stab:stab,longevity:Math.round(longevity),freshness:Math.round(fresh),
     stale:stale,age_h:h.age_h||null,
     price_hr:(typeof n.price_hr==="number")?n.price_hr:null,price_gb:(typeof n.price_gb==="number")?n.price_gb:null,
-    protocol:n.protocol||null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
+    protocol:n.protocol||null,protocols:(Array.isArray(n.protocols)&&n.protocols.length)?n.protocols:null,peers:(typeof n.peers==="number")?n.peers:null,version:n.version||null,
     dl_mbps:n.dl_mbps,ul_mbps:n.ul_mbps,inactive_at:n.inactive_at,remote:n.remote||"",asn:n.asn||null,
     sla_pass:(n.sla_pass!=null?n.sla_pass:null),sla_mbps:(n.sla_mbps!=null?n.sla_mbps:null),sla_baseline:(n.sla_baseline!=null?n.sla_baseline:null),sla_err:n.sla_err||null,
     tl:h.tl||"",tl_from:h.tl_from,tl_to:h.tl_to,
@@ -492,7 +493,7 @@ function filtered(){let r=NODES.slice();
   else r=r.filter(n=>n.status==="active");
   if(state.filters.api)r=r.filter(n=>n.api_ok);
   if(state.country)r=r.filter(n=>n.country===state.country);
-  if(state.protocol)r=r.filter(n=>n.protocol===state.protocol);
+  if(state.protocol)r=r.filter(n=>n.protocol===state.protocol||(n.protocols&&n.protocols.some(p=>p.type===state.protocol)));
   if(state.search){const q=state.search.toLowerCase();r=r.filter(n=>n.moniker.toLowerCase().includes(q)||n.addr.toLowerCase().includes(q)||n.city.toLowerCase().includes(q));}
   const k=state.sortKey,d=state.sortDir;
   r.sort((a,b)=>{let av=a[k],bv=b[k];if(av==null)av=-1;if(bv==null)bv=-1;
@@ -540,7 +541,7 @@ function render(){
       '<td><div class="mon'+(n.hasName?'':' na')+'">'+esc(n.moniker)+'</div><div class="addr mono">'+n.addr.slice(0,15)+'\u2026'+n.addr.slice(-5)+'</div></td>'+
       '<td><span class="score '+sc(n.score)+'">'+n.score+'</span><div class="sbar"><i style="width:'+n.score+'%"></i></div></td>'+
       '<td><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span>'+(n.sla_pass===true?' <span class="badge b-act" data-tip="Passed the official Sentinel SLA test (test.sentinel.co): a real tunnel was opened and measured">SLA \u2713</span>':n.sla_pass===false?' <span class="badge b-ina" data-tip="Failed the official Sentinel SLA test: '+esc(n.sla_err||"error")+'">SLA \u2717</span>':'')+'</td>'+
-      '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'<span class="na">\u2014</span>')+'</td>'+
+      '<td class="hide-sm">'+(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+(n.protocols&&n.protocols.length>1?' +'+(n.protocols.length-1):'')+'</span>':'<span class="na">\u2014</span>')+'</td>'+
       '<td class="hide-sm">'+pr(n.price_hr)+'</td><td class="hide-sm">'+pr(n.price_gb)+'</td>'+
       '<td class="mono hide-sm">'+(n.peers!=null?n.peers:'<span class="na">\u2014</span>')+'</td>'+
       '<td class="mono hide-sm">'+(n.samples?n.uptime.toFixed(0):'<span class="na">\u2014</span>')+'</td>'+
@@ -811,7 +812,7 @@ function renderInspector(n){
     '<div class="insp-grid"><div class="card">'+
       '<div class="ihead"><div><div class="imon">'+esc(n.moniker)+'</div><div class="iaddr">'+n.addr+'</div>'+
         '<div class="imeta"><span class="badge '+(n.status==="active"?"b-act":n.status==="stale"?"b-sta":"b-ina")+'">'+n.status+'</span>'+
-        (n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':'')+
+        (n.protocols?n.protocols.map(p=>'<span class="proto '+p.type+'" data-tip="Reported by the node API. '+(p.peers>0?p.peers+' client(s) connected right now (real usage).':'No clients connected at this moment.')+' This is API data, not an end-to-end tunnel test.">'+p.type+(p.peers>0?' &#183; '+p.peers:'')+'</span>').join(''):(n.protocol?'<span class="proto '+n.protocol+'">'+n.protocol+'</span>':''))+
         '<span class="proto">'+esc(n.country)+(n.city!=="\u2014"?" \u00b7 "+esc(n.city):"")+'</span>'+
         (n.version?'<span class="proto">v'+esc(n.version)+'</span>':'')+
         (acLevel(n.protocol)?'<span class="acens '+acLevel(n.protocol).cls+'" data-tip="'+acLevel(n.protocol).tip+'">\u26e8 anti-censorship: '+acLevel(n.protocol).label+'</span>':'')+'</div></div>'+
