@@ -77,13 +77,6 @@ The Scorecard records a snapshot of the network every 2 hours and shows how it *
 - **ASNs gaining / losing nodes** — watch providers fill up or empty out (IONOS went 285 → 188 active nodes in two days; this view catches that)
 - **Node movers** — nodes whose 7-day uptime improved or declined the most vs their own history
 
-### 🧊 Time Capsule — on Walrus (Sui)
-The Scorecard's historical snapshot is archived on **Walrus**, the decentralized storage protocol on Sui. Each capsule is an immutable, content-addressed blob with a verifiable hash and a public link shown in the Trends tab. The history of a decentralized VPN, stored on decentralized storage.
-
-The Scorecard itself is also published as a **Walrus Site** — the static page lives on Walrus, fully decentralized, with no central server hosting it. A planned next step is integrating **Walrus Memory** to give an AI agent persistent, verifiable memory of node history — an assistant that remembers how the network and individual nodes have behaved over time.
-
----
-
 ### Official SLA test results
 
 Every hour the collector merges the results of Sentinel's **official SLA test runs**
@@ -138,8 +131,6 @@ make-summary.py  -> aggregates history.jsonl into history-summary.json (uptime %
 make-trends.py   -> appends a network snapshot per run (active count, per-ASN and
                     per-country totals) and computes node movers (7d uptime vs prior)
                     from raw history. Writes + publishes trends.json.
-walrus-capsule.py-> once a day, archives trends.json on Walrus and publishes
-                    capsule.json with the blob ID, hash and verification link.
 push-latest.sh   -> publishes latest.json + history-summary.json to this repo
 index.html       -> static UI, fetches the two JSON files and renders everything
                     client-side. Community feedback (NodeAdvisor) is read/written
@@ -213,13 +204,6 @@ One snapshot every ~3 hours: `{ts,total,active,stale,api_ok,asn:{...},country:{.
 GET https://superpios.github.io/node-scorecard/trends.json
 ```
 
-### Walrus archive index — `capsule.json`
-The latest and last 30 daily Walrus capsules: `{date,blobId,sha256,bytes,url,network}`. Fetch the `url` to retrieve the archived snapshot from a Walrus aggregator and verify its `sha256`.
-
-```
-GET https://superpios.github.io/node-scorecard/capsule.json
-```
-
 ### Community feedback (NodeAdvisor)
 Feedback is stored in Supabase and is **readable** via its auto-generated REST API (read policy only). Example — fetch visible feedback for one node:
 
@@ -265,8 +249,6 @@ python3 make-summary.py
             /usr/bin/python3 /path/to/make-trends.py >> collector.log 2>&1 && \
             /bin/bash /path/to/push-latest.sh >> collector.log 2>&1
 
-# daily Walrus capsule (optional)
-50 23 * * * /usr/bin/python3 /path/to/walrus-capsule.py >> capsule.log 2>&1
 ```
 
 Then publish `latest.json` and `history-summary.json` to the repo (see `push-latest.sh`) and open `index.html`.
@@ -279,13 +261,10 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 - ✅ ASN intelligence — per-provider saturation + placement advisor (done)
 - ✅ Reliability grade + global rank, Top Reliable leaderboard (done)
 - ✅ Trends — network time series, ASN movers, node movers (done — accumulating history)
-- ✅ Walrus Time Capsule on Sui (done)
-- ✅ Published as a fully decentralized Walrus Site (done)
 - ✅ "Where to host" — provider honesty badges, lease %, per-country opportunity (done)
 - ✅ Multi-protocol awareness + anti-censorship level per node (done — V2Ray/WireGuard/OpenVPN/Xray-REALITY/AmneziaWG/Hysteria2)
 - On-chain earnings trend per node → ROI calculator (opt-in, by wallet)
 - Objective ASN classification via PeeringDB (hosting / ISP / enterprise)
-- Walrus Memory integration — persistent memory for an AI node-advisor agent
 - Clean versioned API endpoint with developer-friendly field names
 - Multi-network support (agnostic core - Sentinel first, others later)
 - Alerting hooks for operators
