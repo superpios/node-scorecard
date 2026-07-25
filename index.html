@@ -1402,7 +1402,7 @@ function fmtDay(ts){const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()
 function renderTrends(){
   const box=document.getElementById("view-trends");
   if(!TRENDS||!TRENDS.series||TRENDS.series.length<2){
-    box.innerHTML='<div class="asn-intro" style="margin-top:18px"><span class=dot-good>\u25b2</span> <b>Collecting history\u2026</b> The network\u2019s story starts now: every 3 hours the collector records a snapshot of active nodes, ASN saturation and country spread. '+
+    box.innerHTML='<div class="asn-intro" style="margin-top:18px"><span class=dot-good>\u25b2</span> <b>Collecting history\u2026</b> The network\u2019s story starts now: every hour the collector records a snapshot of active nodes, ASN saturation and country spread. '+
       'Within a couple of days this tab will show how the network <b>moves over time</b> \u2014 which providers are filling up or emptying, which countries grow, and which nodes are improving or declining.</div>';
     return;
   }
@@ -1411,7 +1411,7 @@ function renderTrends(){
   // 7d window for deltas (or whole series if shorter)
   const cutoff=Date.now()-7*24*3600*1000;
   let base=S.find(p=>new Date(p.ts).getTime()>=cutoff)||first;
-  let html='<div class="asn-intro">How the network <b>moves over time</b> \u2014 snapshots every 3h since '+fmtDay(first.ts)+'. Deltas compare now vs '+fmtDay(base.ts)+'.</div>';
+  let html='<div class="asn-intro">How the network <b>moves over time</b> \u2014 snapshots every hour since '+fmtDay(first.ts)+'. Deltas compare now vs '+fmtDay(base.ts)+'.</div>';
   // Network Pulse
   const actSeries=S.map(p=>p.active);
   const dAct=last.active-base.active;

@@ -10,7 +10,7 @@ It samples every node on the Sentinel network on a schedule, builds a historical
 All Scorecard data is available as free JSON endpoints (CORS open, no key,
 updated hourly):
 
-    https://superpios.github.io/node-scorecard/latest.json           # current snapshot, ~9000 nodes
+    https://superpios.github.io/node-scorecard/latest.json           # current snapshot, ~1,800 nodes (~1,500 active)
     https://superpios.github.io/node-scorecard/history-summary.json  # reliability history per node
     https://superpios.github.io/node-scorecard/trends.json           # network trends over time
 
@@ -209,7 +209,7 @@ This turns a painful, learned-the-hard-way lesson (datacenter ASNs like IONOS, O
 The 25 most reliable active nodes ranked by **historical** uptime, stability and track record — not by who happens to be online right now. A node only ranks here by being consistently up across many samples.
 
 ### 📈 Trends — the network over time
-The Scorecard records a snapshot of the network every 2 hours and shows how it **moves over time**:
+The Scorecard records a snapshot of the network every hour and shows how it **moves over time**:
 
 - **Network Pulse** — active-node count over time
 - **ASNs gaining / losing nodes** — watch providers fill up or empty out (IONOS went 285 → 188 active nodes in two days; this view catches that)
@@ -338,7 +338,7 @@ GET https://superpios.github.io/node-scorecard/history-summary.json
 > The on-page score uses a richer weighting than the `sc` field above; `sc` is a lightweight pre-computed approximation. To reproduce the full score, see the weights table under [The score](#the-score).
 
 ### Network time series — `trends.json`
-One snapshot every ~3 hours: `{ts,total,active,stale,api_ok,asn:{...},country:{...}}` per point, plus `movers_up`/`movers_down` (nodes whose 7-day uptime changed most vs their prior history).
+One snapshot every hour: `{ts,total,active,stale,api_ok,asn:{...},country:{...}}` per point, plus `movers_up`/`movers_down` (nodes whose 7-day uptime changed most vs their prior history).
 
 ```
 GET https://superpios.github.io/node-scorecard/trends.json
@@ -355,7 +355,7 @@ Header: apikey: <publishable-key>
 Feedback **writing** goes through the web UI, which applies anti-abuse measures (one vote per device, de-duplication). Writing directly via API bypasses those, so it isn't documented here by design.
 
 ### Notes for integrators
-- Data refreshes roughly every 2 hours; cache accordingly.
+- Data refreshes hourly; cache accordingly.
 - Fields can be `null` for nodes whose API was unreachable at sample time (~half the network at any moment) — handle nulls gracefully.
 - This is a community project; endpoints may evolve. Open an issue if you build on it and need stability guarantees.
 
@@ -383,7 +383,7 @@ cd node-scorecard
 python3 collector.py --all
 python3 make-summary.py
 
-# schedule collection (crontab -e) - every 2 hours
+# schedule collection (crontab -e) - hourly
 0 */2 * * * /usr/bin/python3 /path/to/collector.py --all >> collector.log 2>&1 && \
             /usr/bin/python3 /path/to/make-summary.py >> collector.log 2>&1 && \
             /usr/bin/python3 /path/to/make-trends.py >> collector.log 2>&1 && \
