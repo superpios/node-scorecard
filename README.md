@@ -18,23 +18,142 @@ Full field-by-field documentation, examples and join patterns: **[API.md](API.md
 
 ### Paid API for AI agents (x402)
 
-The raw snapshots above stay free. What is sold is the **curation on top of them**:
-composite scoring, verified-residential detection, ASN concentration analysis and
-best-node recommendations, as pay-per-call endpoints an autonomous agent can use
-with no signup and no API key — USDC on Base, settled per request.
+**Live at [`https://nodescorecard.xyz`](https://nodescorecard.xyz)**
 
-| Endpoint | Price | What it answers |
+The Node Scorecard data is available as a machine-payable HTTP API. There is no
+account, no API key, no sign-up and no OAuth. An agent calls an endpoint, receives
+`402 Payment Required`, signs a USDC payment on Base, retries, and gets the data.
+
+Requests that fail (HTTP >= 400) are never settled — errors are not charged.
+
+| | |
+|---|---|
+| Base URL | `https://nodescorecard.xyz` |
+| Protocol | x402 v2, scheme `exact` |
+| Network | `eip155:8453` (Base mainnet) |
+| Asset | USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (6 decimals) |
+| Facilitator | `https://facilitator.payai.network` |
+
+#### Free discovery endpoints
+
+No payment, no headers, nothing required.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /` | Documentation. HTML for browsers, JSON for agents, Markdown with `Accept: text/markdown` |
+| `GET /manifest` | Machine-readable service manifest |
+| `GET /openapi.json` | OpenAPI 3.1 description with `x-x402` price extensions |
+| `GET /llms.txt` | Plain-text summary for LLM crawlers |
+| `GET /auth.md` | How agent authentication works |
+| `GET /.well-known/api-catalog` | RFC 9727 catalog (`application/linkset+json`) |
+| `GET /.well-known/agent-skills/index.json` | Agent Skills discovery index |
+| `GET /scorecard/health` | Liveness and configuration |
+
+#### Paid endpoints
+
+| Endpoint | Price | Returns |
 |---|---|---|
-| `network-stats` | $0.01 | Is the network itself healthy and decentralized? |
-| `recommend` | $0.01 | Which node fits this use case (residential / privacy / speed / censorship)? |
-| `nodes-top` | $0.005 | Top-N nodes, ASN-diversified, filterable by country and protocol |
-| `nodes` | $0.005 | Full ranked list with all measured signals |
-| `node-detail` | $0.003 | One node in depth, with network rank and full history |
+| `GET /scorecard/network-stats` | $0.010 | Network-wide health report |
+| `GET /scorecard/recommend` | $0.010 | Ranked recommendations for a stated need |
+| `GET /scorecard/nodes` | $0.005 | Full node snapshot |
+| `GET /scorecard/nodes/top` | $0.005 | Top nodes by composite score |
+| `GET /scorecard/node/:address` | $0.003 | Single node scorecard |
 
-Live on [Bankr x402 Cloud](https://bankr.bot):
-`https://x402.bankr.bot/0x0fcc5724d2dddf79ce1af1f091a823fd6438ef73/<endpoint>`
+##### `GET /scorecard/network-stats` — $0.010
 
----
+No parameters. Returns ASN concentration and HHI index, verified residential share,
+protocol mix, censorship-resistance mix, country distribution, SLA speed percentiles
+and P2P price percentiles, measured from a live snapshot.
+
+##### `GET /scorecard/recommend` — $0.010
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `need` | string | — | Free text, e.g. `privacy residential` or `speed europe`. Case-insensitive. |
+| `country` | string | any | Restrict candidates to one country, exact name, case-insensitive. |
+
+Returns one recommendation plus up to three alternatives, diversified across ASNs
+and countries so the result is not concentrated on a single provider.
+
+##### `GET /scorecard/nodes` — $0.005
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `all` | `1` | — | Return every tracked node instead of only the active ones. |
+
+##### `GET /scorecard/nodes/top` — $0.005
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `n` | integer | `5` | How many nodes to return. Clamped to 1–50. |
+| `max_per_asn` | integer | `2` | Anti-concentration cap: max nodes sharing one ASN. |
+| `min_score` | number | `0` | Minimum composite score, 0–100. |
+| `country` | string | — | Exact country name, case-insensitive. |
+| `protocol` | string | — | `v2ray`, `wireguard`, `xray`, `openvpn`, `hysteria2`, `amneziawg`. Also matches multi-protocol nodes. |
+| `sla_only` | `true` | — | Only nodes that passed the SLA speed test. |
+
+`max_per_asn=1` guarantees every returned node sits on a different autonomous
+system. This is the parameter that matters for real redundancy: without it, a
+"top 10" list can be ten nodes inside the same datacenter.
+
+```
+GET /scorecard/nodes/top?n=10&sla_only=true&min_score=80&max_per_asn=1
+```
+
+##### `GET /scorecard/node/:address` — $0.003
+
+Full scorecard for one node, addressed by its `sentnode1...` bech32 address.
+No query parameters.
+
+#### Calling it
+
+Probe first — this costs nothing and tells you the exact price:
+
+```bash
+curl -s -D - -o /dev/null https://nodescorecard.xyz/scorecard/network-stats
+```
+
+You get `402 Payment Required` and a `PAYMENT-REQUIRED` header containing
+base64-encoded JSON with `payTo`, `network`, `amount`, `asset` and
+`maxTimeoutSeconds`. Decode it, sign with your wallet, and retry the identical
+request with the `PAYMENT` header.
+
+Any x402 v2 client library handles this automatically. With
+[`@x402/fetch`](https://www.npmjs.com/package/@x402/fetch):
+
+```js
+import { wrapFetchWithPayment } from '@x402/fetch';
+
+const fetchWithPay = wrapFetchWithPayment(fetch, wallet);
+
+const res = await fetchWithPay(
+  'https://nodescorecard.xyz/scorecard/nodes/top?n=5&sla_only=true&max_per_asn=1'
+);
+const { nodes } = await res.json();
+```
+
+#### Where the data comes from
+
+An independent collector polls every active node's API directly and cross-checks
+on-chain state. Nothing here is self-reported by node operators. The snapshot is
+refreshed hourly; API responses are cached for 10 minutes.
+
+The service runs on a residential Raspberry Pi behind a Cloudflare Tunnel, with
+no inbound ports open and the origin address never exposed. The process that
+serves paid requests holds no private keys: settlement is delegated to a remote
+facilitator, and only the public receiving address is configured.
+
+#### Mirror
+
+The same data is also reachable through the Bankr x402 cloud:
+
+```
+https://x402.bankr.bot/0x0fcc5724d2dddf79ce1af1f091a823fd6438ef73/<endpoint>
+```
+
+`https://nodescorecard.xyz` is the canonical origin. The x402 payload served there
+advertises that URL as the resource, and the parameters documented above are the
+ones implemented by it.
 
 ## What it does
 
