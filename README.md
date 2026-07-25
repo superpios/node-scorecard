@@ -15,6 +15,25 @@ updated hourly):
     https://superpios.github.io/node-scorecard/trends.json           # network trends over time
 
 Full field-by-field documentation, examples and join patterns: **[API.md](API.md)**
+
+### Paid API for AI agents (x402)
+
+The raw snapshots above stay free. What is sold is the **curation on top of them**:
+composite scoring, verified-residential detection, ASN concentration analysis and
+best-node recommendations, as pay-per-call endpoints an autonomous agent can use
+with no signup and no API key — USDC on Base, settled per request.
+
+| Endpoint | Price | What it answers |
+|---|---|---|
+| `network-stats` | $0.01 | Is the network itself healthy and decentralized? |
+| `recommend` | $0.01 | Which node fits this use case (residential / privacy / speed / censorship)? |
+| `nodes-top` | $0.005 | Top-N nodes, ASN-diversified, filterable by country and protocol |
+| `nodes` | $0.005 | Full ranked list with all measured signals |
+| `node-detail` | $0.003 | One node in depth, with network rank and full history |
+
+Live on [Bankr x402 Cloud](https://bankr.bot):
+`https://x402.bankr.bot/0x0fcc5724d2dddf79ce1af1f091a823fd6438ef73/<endpoint>`
+
 ---
 
 ## What it does
@@ -163,6 +182,8 @@ Returns an array of node objects:
 | `inactive_at` | string | On-chain heartbeat-expiry timestamp |
 | `remote` | string\|null | Announced `host:port` |
 | `protocol` | string\|null | `v2ray` / `wireguard` / `openvpn` / `xray` / `amneziawg` / `hysteria2` |
+| `protocols` | array\|null | Multi-protocol nodes only: `[{type, peers}]`, one entry per running service. `null` on single-protocol nodes |
+| `api_status` | string\|null | Why the node API did or did not answer: `ok` / `timeout` / `refused` / `tls_error` / `reset` / `unreachable` / `bad_response` / `error` |
 | `peers` | int\|null | Connected peers at sample time |
 | `price_hr` / `price_gb` | number\|null | Price in P2P per hour / per GB |
 | `dl_mbps` / `ul_mbps` | number\|null | Measured bandwidth |
@@ -263,6 +284,10 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 - ✅ Trends — network time series, ASN movers, node movers (done — accumulating history)
 - ✅ "Where to host" — provider honesty badges, lease %, per-country opportunity (done)
 - ✅ Multi-protocol awareness + anti-censorship level per node (done — V2Ray/WireGuard/OpenVPN/Xray-REALITY/AmneziaWG/Hysteria2)
+- ✅ Multi-protocol collector: per-protocol peer counts from the v9+ node API, with legacy fallback (done)
+- ✅ Granular API failure reasons (`api_status`) instead of a single ok/failed flag (done)
+- ✅ Verified-residential detection: geo-IP hosting flag cross-checked against the ASN (done — the flag alone over-reports by ~3.4x)
+- ✅ Paid x402 API for AI agents, pay-per-call in USDC on Base (done — see Paid API section)
 - On-chain earnings trend per node → ROI calculator (opt-in, by wallet)
 - Objective ASN classification via PeeringDB (hosting / ISP / enterprise)
 - Clean versioned API endpoint with developer-friendly field names
@@ -274,6 +299,8 @@ Then publish `latest.json` and `history-summary.json` to the repo (see `push-lat
 ## Ecosystem
 
 Friends & complementary tools: [BlueFrens Hub](https://hub.bluefrens.xyz) · [SentNodes](https://sentnodes.com) · [SuchNode](https://nodes.suchnode.net) · [p2pscan](https://p2pscan.com) · [stats.sentinel.co](https://stats.sentinel.co)
+
+Also by the same operator: **[Node Dash](https://superpios.github.io/sentinel-node-dash/)** — an arcade game that teaches how the Sentinel network actually works.
 
 ---
 
