@@ -16,8 +16,8 @@ beyond GitHub's generous CDN.
 
     GET https://superpios.github.io/node-scorecard/latest.json
 
-Updated **every hour**. Array of ~9000 node objects (all nodes ever seen;
-filter by `status` for active ones).
+Updated **every hour**. Array of ~1,800 node objects — every node currently known to the network,
+active or not. Filter by `status` for the ~1,500 active ones, and by `api_ok` for those whose API also answered.
 
 | Field | Type | Meaning |
 |---|---|---|
