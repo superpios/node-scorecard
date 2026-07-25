@@ -10,11 +10,18 @@ It samples every node on the Sentinel network on a schedule, builds a historical
 All Scorecard data is available as free JSON endpoints (CORS open, no key,
 updated hourly):
 
-    https://superpios.github.io/node-scorecard/latest.json           # current snapshot, ~1,800 nodes (~1,500 active)
+    https://superpios.github.io/node-scorecard/latest.json           # current snapshot
     https://superpios.github.io/node-scorecard/history-summary.json  # reliability history per node
     https://superpios.github.io/node-scorecard/trends.json           # network trends over time
 
 Full field-by-field documentation, examples and join patterns: **[API.md](API.md)**
+
+<!-- STATS:BEGIN -->
+<!-- generated hourly by update-stats.py — do not edit by hand -->
+
+Latest snapshot: counts are regenerated automatically after every collector run.
+
+<!-- STATS:END -->
 
 ### Paid API for AI agents (x402)
 

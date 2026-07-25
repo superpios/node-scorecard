@@ -14,10 +14,17 @@ beyond GitHub's generous CDN.
 
 ### 1. Current network snapshot
 
+<!-- STATS:BEGIN -->
+<!-- generated hourly by update-stats.py — do not edit by hand -->
+
+Latest snapshot: counts are regenerated automatically after every collector run.
+
+<!-- STATS:END -->
+
     GET https://superpios.github.io/node-scorecard/latest.json
 
-Updated **every hour**. Array of ~1,800 node objects — every node currently known to the network,
-active or not. Filter by `status` for the ~1,500 active ones, and by `api_ok` for those whose API also answered.
+Updated **every hour**. Array of node objects — every node currently known to the network,
+active or not. Filter by `status` for the active ones, and by `api_ok` for those whose API also answered.
 
 | Field | Type | Meaning |
 |---|---|---|
