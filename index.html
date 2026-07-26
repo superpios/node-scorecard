@@ -16,6 +16,9 @@
   h1 .it-w{color:#f0f6fc;filter:drop-shadow(0 0 8px rgba(255,255,255,.15))}
   h1 .it-r{background:linear-gradient(135deg,#ff4d5e,#ff8a5c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(255,77,94,.35))}
   .tagline{color:var(--txt);opacity:.92;font-size:13px;margin-top:7px;font-family:'Sora',sans-serif;letter-spacing:.2px}
+  .apipill{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 12px;border:1px solid var(--good);border-radius:9px;background:rgba(45,212,167,.08);color:var(--good);text-decoration:none;font-family:'Space Mono',monospace;font-size:12px;transition:all .15s}
+  .apipill:hover{background:rgba(45,212,167,.16);transform:translateY(-1px)}
+  .apipill b{font-weight:700}
   .updated{font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6} .updated b{color:var(--good)}
   .livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:5px;box-shadow:0 0 0 0 rgba(45,212,167,.6);animation:pulse 2s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,167,.5)}70%{box-shadow:0 0 0 7px rgba(45,212,167,0)}100%{box-shadow:0 0 0 0 rgba(45,212,167,0)}}
@@ -299,7 +302,8 @@
 <div class="wrap">
   <header>
     <div><h1><span class="it-g">Sentinel</span> <span class="it-w">Node</span> <span class="it-r">Scorecard</span></h1>
-      <div class="tagline">network intelligence &middot; historical uptime &middot; node diagnostics</div></div>
+      <div class="tagline">network intelligence &middot; historical uptime &middot; node diagnostics</div>
+      <a class="apipill" href="https://nodescorecard.xyz" target="_blank" rel="noopener">&#9889; <b>Paid API for AI agents</b> &middot; pay-per-call in USDC &rarr;</a></div>
     <div class="updated" id="updated">loading&hellip;</div>
   </header>
   <div class="stats" id="stats"></div>
@@ -355,9 +359,10 @@
     <a href="https://sentnodes.com" target="_blank" rel="noopener">SentNodes</a>
     <a href="https://nodes.suchnode.net" target="_blank" rel="noopener">SuchNode</a>
     <a href="https://p2pscan.com" target="_blank" rel="noopener">p2pscan</a>
-    <a href="https://superpios.github.io/sentinel-node-dash/" target="_blank" rel="noopener">&#128126; Node Dash (game)</a></div>
+    <a href="https://superpios.github.io/sentinel-node-dash/" target="_blank" rel="noopener">&#128126; Node Dash (game)</a>
+    <a href="https://nodescorecard.xyz" target="_blank" rel="noopener">&#9889; nodescorecard.xyz (x402 API)</a></div>
   <div class="support" id="support"></div>
-  <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators</footer>
+  <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators<br>machine-readable, pay-per-call: <a href="https://nodescorecard.xyz" target="_blank" rel="noopener" style="color:var(--good)">nodescorecard.xyz</a></footer>
 </div>
 <script>
 const REPO="superpios/node-scorecard";
