@@ -17,7 +17,7 @@ beyond GitHub's generous CDN.
 <!-- STATS:BEGIN -->
 <!-- generated hourly by update-stats.py — do not edit by hand -->
 
-Latest snapshot: **1,810 nodes tracked**, **1,464 active**, **1,439** of those with a responding API. Those 1,439 span **229 autonomous systems**, and **173** (12.0%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
+Latest snapshot: **1,809 nodes tracked**, **1,134 active**, **1,116** of those with a responding API. Those 1,116 span **205 autonomous systems**, and **135** (12.1%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
 
 <!-- STATS:END -->
 
