@@ -37,9 +37,13 @@ Requests that fail (HTTP >= 400) are never settled — errors are not charged.
 |---|---|
 | Base URL | `https://nodescorecard.xyz` |
 | Protocol | x402 v2, scheme `exact` |
-| Network | `eip155:8453` (Base mainnet) |
-| Asset | USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (6 decimals) |
+| Chains | **Base** and **Solana** — the `402` lists both, the agent picks one |
+| Base | `eip155:8453` · USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| Solana | `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` · USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
 | Facilitator | `https://facilitator.payai.network` |
+
+On Solana the facilitator sponsors the transaction fee, so an agent needs USDC
+only — no SOL.
 
 #### Free discovery endpoints
 
@@ -55,6 +59,8 @@ No payment, no headers, nothing required.
 | `GET /.well-known/api-catalog` | RFC 9727 catalog (`application/linkset+json`) |
 | `GET /.well-known/agent-skills/index.json` | Agent Skills discovery index |
 | `GET /scorecard/health` | Liveness and configuration |
+| `POST /mcp` | **Model Context Protocol server** — see below |
+| `GET /.well-known/mcp/server-card.json` | MCP server card |
 
 #### Paid endpoints
 
@@ -111,6 +117,35 @@ GET /scorecard/nodes/top?n=10&sla_only=true&min_score=80&max_per_asn=1
 
 Full scorecard for one node, addressed by its `sentnode1...` bech32 address.
 No query parameters.
+
+#### MCP server
+
+The Scorecard is also an MCP server, so any MCP-capable assistant can query the
+Sentinel network in plain language. Point your client at:
+
+```
+https://nodescorecard.xyz/mcp
+```
+
+Stateless Streamable HTTP. Both the `2026-07-28` and `2025-11-25` protocol
+revisions are accepted, so old and new clients both work.
+
+| Tool | Returns |
+|---|---|
+| `sentinel_network_overview` | Lifetime on-chain registrations vs nodes actually active, ASN concentration, verified-residential share |
+| `sentinel_node_lookup` | Status, location, protocol, historical uptime and measured speed for one node |
+| `sentinel_top_nodes` | Best-scoring active nodes, one per autonomous system |
+
+These tools are free and return a limited sample. The paid endpoints above serve
+the full dataset with filters.
+
+```bash
+curl -s -X POST https://nodescorecard.xyz/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'MCP-Protocol-Version: 2026-07-28' \
+  -H 'Mcp-Method: tools/list' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
 
 #### Calling it
 
