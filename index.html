@@ -620,7 +620,7 @@ function detectProblems(n){
   }
   // --- rules based on network comparison (medians) ---
   if(n.status==="active"&&n.price_hr!=null&&MED.price_hr){
-    if(n.price_hr>MED.price_hr*2.5)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/hr ("+n.price_hr+") is far above the network median ("+MED.price_hr+") \u2014 fewer clients will pick this node."]);
+    if(n.price_hr>50)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/hr ("+n.price_hr+") is above the SLA limit (50 P2P/hr) \u2014 clients following the SLA won\u2019t pick this node."]);
     else if(n.price_hr>0&&n.price_hr<MED.price_hr*0.4)P.push(["info","\u2139\ufe0f","Price/hr ("+n.price_hr+") well below median ("+MED.price_hr+") \u2014 you may be leaving rewards on the table."]);
   }
   if(n.status==="active"&&n.ul_mbps!=null){
@@ -659,7 +659,7 @@ function detectProblems(n){
   }
   // price per GB vs network
   if(n.status==="active"&&n.price_gb!=null&&MED.price_gb){
-    if(n.price_gb>MED.price_gb*2.5)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/GB ("+n.price_gb+") far above median ("+MED.price_gb+") \u2014 clients comparing prices will skip this node."]);
+    if(n.price_gb>40)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/GB ("+n.price_gb+") is above the SLA limit (40 P2P/GB) \u2014 clients following the SLA will skip this node."]);
   }
   // young node: track record still forming
   if(n.status==="active"&&n.samples>0&&n.samples<=10)P.push(["info","\u25cf","Young node ("+n.samples+" samples) \u2014 grade and uptime not meaningful yet, check back in a few days."]);
@@ -700,6 +700,12 @@ function detectProblems(n){
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
+const PRICE_LIMIT={price_hr:50,price_gb:40};
+function slaRef(key,v){
+  const lim=PRICE_LIMIT[key];if(lim==null||v==null)return "";
+  const over=v>lim;
+  return ' <span class="medref" style="color:'+(over?'var(--bad)':'var(--good)')+'">'+(over?'\u2717 over SLA limit '+lim:'\u2713 within SLA \u2264'+lim)+'</span>';
+}
 function medRef(key,v){
   const m=MED[key];if(!m)return "";
   const rel=v>m*1.15?"above":v<m*0.85?"below":"\u2248";
@@ -729,8 +735,8 @@ function passedChecks(n){
     add(up(ph.tl.slice(-third))-up(ph.tl.slice(0,ph.tl.length-third))>-12,"Uptime trend");
   }
   add(!(asnSaturated(n.asn)),"ASN not saturated");
-  if(n.price_hr!=null&&MED.price_hr)add(n.price_hr>0&&n.price_hr<=MED.price_hr*2.5,"Price /hr sane");
-  if(n.price_gb!=null&&MED.price_gb)add(n.price_gb>0&&n.price_gb<=MED.price_gb*2.5,"Price /GB sane");
+  if(n.price_hr!=null)add(n.price_hr>0&&n.price_hr<=50,"Price /hr within SLA");
+  if(n.price_gb!=null)add(n.price_gb>0&&n.price_gb<=40,"Price /GB within SLA");
   if(n.ul_mbps!=null)add(n.ul_mbps>=1,"Bandwidth");
   if(typeof n.gb_tokens==="number")add(n.gb_tokens>=3,"Payment tokens 3/3");
   add(!!n.hasName,"Moniker set");
@@ -834,8 +840,8 @@ function renderInspector(n){
         ((HIST[n.addr]||{}).l_now!=null?'<span class="k" data-tip="On-chain leases held right now. A node can be rented by several plan providers at once \u2014 the number in parentheses is how many simultaneous leases. More leases = more income streams, but it depends on plan demand, not node quality.">Leased (now) <span class="ttip">?</span></span><span class="v" style="color:'+(((HIST[n.addr]||{}).l_now||0)>0?'var(--good)':'var(--warn)')+'">'+(((HIST[n.addr]||{}).l_now||0)>0?'\u2713 yes ('+HIST[n.addr].l_now+(HIST[n.addr].l_now>1?' simultaneous':'')+')':'no')+'</span>':'')+
         ((HIST[n.addr]||{}).l_pos!=null?'<span class="k">Lease uptime (7d)</span><span class="v">'+HIST[n.addr].l_pos+'%</span>':'')+
         '<span class="k">Peers (now)</span><span class="v" id="peers-live">'+(n.peers!=null?n.peers:"\u2014")+' <span id="peers-badge" style="font-size:10px;color:var(--muted);font-family:Space Mono">\u00b7 collector</span></span>'+
-        '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+medRef("price_hr",n.price_hr):"\u2014")+'</span>'+
-        '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P"+medRef("price_gb",n.price_gb):"\u2014")+'</span>'+
+        '<span class="k">Price /hr</span><span class="v">'+(n.price_hr!=null?n.price_hr+" P2P"+slaRef("price_hr",n.price_hr):"\u2014")+'</span>'+
+        '<span class="k">Price /GB</span><span class="v">'+(n.price_gb!=null?n.price_gb+" P2P"+slaRef("price_gb",n.price_gb):"\u2014")+'</span>'+
         '<span class="k" data-tip="Official Sentinel SLA test (test.sentinel.co): a real tunnel is opened through the node and speed is measured. The strongest proof a node actually serves clients.">SLA test <span class="ttip">?</span></span><span class="v">'+(n.sla_pass===true?'<span style="color:var(--good)">\u2713 PASS'+(n.sla_mbps!=null?" \u00b7 "+n.sla_mbps+" Mbps":"")+'</span>':n.sla_pass===false?'<span style="color:var(--bad)">\u2717 FAIL'+(n.sla_err?" \u00b7 "+esc(n.sla_err):"")+'</span>':'\u2014')+'</span>'+
         '<span class="k">Upload</span><span class="v">'+(n.ul_mbps!=null?n.ul_mbps+" Mbps"+ulRef(n.ul_mbps):"\u2014")+'</span>'+
         '<span class="k">Remote</span><span class="v">'+esc(n.remote||"\u2014")+'</span>'+
