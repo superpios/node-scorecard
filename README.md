@@ -19,7 +19,7 @@ Full field-by-field documentation, examples and join patterns: **[API.md](API.md
 <!-- STATS:BEGIN -->
 <!-- generated hourly by update-stats.py — do not edit by hand -->
 
-Latest snapshot: **1,820 nodes tracked**, **1,492 active**, **1,475** of those with a responding API. Those 1,475 span **238 autonomous systems**, and **178** (12.1%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
+Latest snapshot: **1,819 nodes tracked**, **1,489 active**, **1,468** of those with a responding API. Those 1,468 span **236 autonomous systems**, and **175** (11.9%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
 
 <!-- STATS:END -->
 
@@ -29,7 +29,7 @@ Latest snapshot: **1,820 nodes tracked**, **1,492 active**, **1,475** of those w
 
 The Node Scorecard data is available as a machine-payable HTTP API. There is no
 account, no API key, no sign-up and no OAuth. An agent calls an endpoint, receives
-`402 Payment Required`, signs a USDC payment on Base, retries, and gets the data.
+`402 Payment Required`, signs a USDC payment on one of the four chains, retries, and gets the data.
 
 Requests that fail (HTTP >= 400) are never settled — errors are not charged.
 
@@ -37,8 +37,10 @@ Requests that fail (HTTP >= 400) are never settled — errors are not charged.
 |---|---|
 | Base URL | `https://nodescorecard.xyz` |
 | Protocol | x402 v2, scheme `exact` |
-| Chains | **Base** and **Solana** — the `402` lists both, the agent picks one |
+| Chains | **Base**, **Polygon**, **Arbitrum** and **Solana** — the `402` lists all four, the agent picks one |
 | Base | `eip155:8453` · USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| Polygon | `eip155:137` · USDC `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` |
+| Arbitrum | `eip155:42161` · USDC `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
 | Solana | `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` · USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
 | Facilitator | `https://facilitator.payai.network` |
 
@@ -217,7 +219,7 @@ Click any node (or paste an address) to deep-dive:
 - **Historical uptime timeline** — a visual active/inactive bar for every sample collected over time
 - **Measured uptime %** and **stability** (how often it flaps offline)
 - **Country ranking** — "#12 of 47 in Italy", not a meaningless absolute number
-- **Detected problems** — 16 rule-based diagnostics: inactive, low uptime, unstable, API unreachable, stale heartbeat, zero peers, price outliers (per hr **and** per GB vs network median), very low bandwidth, outdated version, saturated ASN, crowded country, young node, missing speedtest — plus a **historical uptime trend** check (declining / recovering, computed from the node's own timeline), a **lease check** that catches the most frustrating case — a perfectly healthy node that gets *no client traffic* because it isn't whitelisted for plans (peers ≈ 0 across recent history) — and an **elite badge** for top-20 ranked nodes
+- **Detected problems** — 16 rule-based diagnostics: inactive, low uptime, unstable, API unreachable, stale heartbeat, zero peers, price outliers (per hr **and** per GB vs the SLA limit — 50 P2P/hr, 40 P2P/GB), very low bandwidth, outdated version, saturated ASN, crowded country, young node, missing speedtest — plus a **historical uptime trend** check (declining / recovering, computed from the node's own timeline), a **lease check** that catches the most frustrating case — a perfectly healthy node that gets *no client traffic* because it isn't whitelisted for plans (peers ≈ 0 across recent history) — and an **elite badge** for top-20 ranked nodes
 - **Reliability grade** — an A+/A/B/C/D/E letter from the historical score, with a global rank ("#12 of 1,594 active nodes")
 - **Anti-censorship level** — derived objectively from the node's protocol: **High** (Xray/REALITY — anti-active-probing, resists state-level censorship), **Medium** (AmneziaWG / Hysteria2 — obfuscated transport, evades DPI), **Basic** (V2Ray — encrypted but detectable) or **Minimal** (WireGuard / OpenVPN — recognizable & blockable). Surfaced as a badge so operators and privacy-focused users can pick censorship-resistant nodes at a glance
 - **Score breakdown** — how each weighted component contributes
