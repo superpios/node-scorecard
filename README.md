@@ -29,7 +29,7 @@ Latest snapshot: **1,826 nodes tracked**, **1,463 active**, **1,446** of those w
 
 The Node Scorecard data is available as a machine-payable HTTP API. There is no
 account, no API key, no sign-up and no OAuth. An agent calls an endpoint, receives
-`402 Payment Required`, signs a USDC payment on one of the four chains, retries, and gets the data.
+`402 Payment Required`, signs a USDC payment on one of the five chains, retries, and gets the data.
 
 Requests that fail (HTTP >= 400) are never settled — errors are not charged.
 
@@ -37,15 +37,23 @@ Requests that fail (HTTP >= 400) are never settled — errors are not charged.
 |---|---|
 | Base URL | `https://nodescorecard.xyz` |
 | Protocol | x402 v2, scheme `exact` |
-| Chains | **Base**, **Polygon**, **Arbitrum** and **Solana** — the `402` lists all four, the agent picks one |
+| Chains | **Base**, **Polygon**, **Arbitrum**, **Avalanche** and **Solana** — the `402` lists all five, the agent picks one |
 | Base | `eip155:8453` · USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
 | Polygon | `eip155:137` · USDC `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` |
 | Arbitrum | `eip155:42161` · USDC `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
+| Avalanche | `eip155:43114` · USDC `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E` |
 | Solana | `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` · USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
 | Facilitator | `https://facilitator.payai.network` |
 
 On Solana the facilitator sponsors the transaction fee, so an agent needs USDC
 only — no SOL.
+
+#### Verifiable receipts
+
+Every paid response carries an `X-Receipt-Id` header. `GET /receipt/{requestId}`
+returns a receipt binding the payment to a SHA-256 hash (JCS/RFC-8785 canonical) of
+the exact bytes served — the bytes you pay for are the bytes you get. Verify by
+recomputing the hash from the response you received; no trust in the server required.
 
 #### Free discovery endpoints
 
