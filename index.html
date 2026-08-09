@@ -567,7 +567,7 @@ function inspect(addr){
   renderInspector(n);
 }
 function showInspector(){
-  // se sono in un'altra tab (Top Reliable / ASN / Trends), torno a Explorer dove vive l'inspector
+  // if we're on another tab (Top Reliable / ASN / Trends), go back to Explorer where the inspector lives
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view==="explorer"));
   ["explorer","asnintel","leaderboard","trends","decent"].forEach(k=>{
     const el=document.getElementById("view-"+k); if(el)el.style.display=(k==="explorer")?"block":"none";
@@ -1133,7 +1133,7 @@ function goAsn(asn){ window._asnSearch=asn; switchView("asnintel"); window.scrol
 function asnIntelState(){ if(!window._asnSearch)window._asnSearch=""; return window._asnSearch; }
 function searchCountry(enc){ window._asnSearch=decodeURIComponent(enc); renderAsnIntel(); window.scrollTo({top:0,behavior:"smooth"}); }
 // Provider consigliati con link UFFICIALI verificati (dominio ufficiale, giugno 2026).
-// Match per sottostringa del nome ASN -> URL. Solo provider seri/whitelist-friendly.
+// Match by ASN name substring -> URL. Only serious/whitelist-friendly providers.
 const TRUSTED_PROV=[
   {m:"hetzner", url:"https://www.hetzner.com/cloud", label:"Hetzner Cloud \u2014 DE/FI/US/SG, GDPR-compliant, great value"},
   {m:"netcup", url:"https://www.netcup.com/en/server/vps", label:"netcup \u2014 DE/AT (Vienna), affordable and solid"},
@@ -1239,7 +1239,7 @@ function renderAsnIntel(){
   }else{
     const cs=Object.entries(byCountry).sort((a,b)=>a[1]-b[1]);
     const crow=([c,n],mx)=>{const w=Math.round(n/mx*100);return '<div class="ccol" onclick="searchCountry(\''+encodeURIComponent(c)+'\')" data-tip="Click to see which providers (ASNs) serve '+esc(c)+'"><span class="ccol-c">'+esc(c)+'</span><span class="ccol-bar"><span style="width:'+w+'%"></span></span><span class="ccol-n">'+n+'</span></div>';};
-    const OPP_MAX=14;  // soglia "free slots": paesi sotto questa sono opportunita'
+    // "free slots" threshold: countries below this are opportunities
     const least=cs.filter(e=>e[1]<=OPP_MAX);
     const mxLeast=Math.max(...least.map(e=>e[1]),1);
     const mxMost=Math.max(...cs.map(e=>e[1]),1);
@@ -1490,7 +1490,7 @@ setPanelDesc();renderSupport();load();
 
   // palette dal tema: verde acqua, rosa, blu
   var GOOD='45,212,167', ACCENT='255,77,94', ACC2='75,139,244';
-  // dati rete reali: paese, nodi, lat, lon
+  // real network data: country, nodes, lat, lon
   var GEO=[["US",536,39,-98],["UK",107,54,-2],["DE",101,51,10],["FR",84,46,2],["TR",60,39,35],["ES",60,40,-4],["JP",40,36,138],["CA",39,56,-106],["IN",36,22,78],["NL",33,52,5],["IT",28,42,12],["PL",13,52,19],["BR",10,-10,-55],["AU",12,-25,133],["SG",9,1,103],["SE",10,62,15],["FI",11,64,26],["RU",14,61,105],["KR",12,36,128],["ZA",4,-30,25],["AR",8,-38,-63],["MX",9,23,-102],["UA",9,49,32],["VN",7,16,108],["TH",6,15,100],["AE",8,24,54],["IL",6,31,35],["PK",8,30,70],["PE",6,-10,-76],["CL",6,-30,-71],["NO",8,62,10],["NZ",4,-41,174]];
   var HEALTH=0.91;
 
@@ -1513,7 +1513,7 @@ setPanelDesc();renderSupport();load();
     var bg=ctx.createRadialGradient(cx,cy,R*.5,cx,cy,Math.max(W,H)*.8);
     bg.addColorStop(0,'rgba(8,14,24,1)');bg.addColorStop(1,'rgba(4,7,13,1)');
     ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-    // stelle che luccicano
+   	// twinkling stars
     for(var i=0;i<stars.length;i++){var s=stars[i];var a=.15+.2*Math.sin(t*2+s.tw);ctx.fillStyle='rgba(180,210,230,'+a+')';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.28);ctx.fill();}
     // alone atmosferico esterno (glow del pianeta)
     var halo=ctx.createRadialGradient(cx,cy,R*.85,cx,cy,R*1.35);
