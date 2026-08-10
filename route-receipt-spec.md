@@ -50,7 +50,7 @@ Retrievable at `GET /receipt/{requestId}` (deterministic, idempotent). Shape:
   "requirementHash": "…",                      // sha-256 of the chosen quote (network,asset,amount,payTo,scheme)
   "resultHash": "…",                           // sha-256 of the exact bytes served
   "hashAlgorithm": "sha-256",
-  "canonicalization": "JCS/RFC8785",
+  "canonicalization": "jcs-strings-v0.2",       // versioned profile (see rule below)
   "settlement": {
     "tx": "0x… | sig…",                        // on-chain settlement reference
     "finalitySource": "eip155:8453:finalized | solana:finalized | sui:checkpoint",
@@ -69,6 +69,10 @@ Retrievable at `GET /receipt/{requestId}` (deterministic, idempotent). Shape:
   *different* quote after the fact.
 - **`resultHash`** is computed over the **unchanged** response body, canonicalized with
   JCS (RFC 8785) then SHA-256. The bytes you pay for are the bytes you get.
+- **`canonicalization`** names a *versioned profile* (e.g. `jcs-strings-v0.2` = sorted-key
+  JCS with amounts serialized as strings). A verifier MUST reject a receipt whose profile it
+  does not implement, and MUST NOT fall back to its own canonicalizer — otherwise two
+  verifiers could silently agree on different bytes. Unknown or missing profile → reject.
 - **`terminalState` / `settlement.status`** are derived from **on-chain finality**, not
   from the facilitator's `/settle` acknowledgement — this closes the duplicate-settle race
   (a facilitator can ack twice; finality is observed once). Values:
@@ -77,10 +81,12 @@ Retrievable at `GET /receipt/{requestId}` (deterministic, idempotent). Shape:
 
 ## 4. How an agent verifies (no trust in the server)
 
-1. Recompute `resultHash` from the bytes it received (JCS canonical → SHA-256) and compare
+1. Check `canonicalization` is a profile it implements; reject on an unknown or missing
+   profile (do NOT hash with a different canonicalizer).
+2. Recompute `resultHash` from the bytes it received (per that profile) and compare
    to `receipt.resultHash`. Mismatch → the data was altered; reject.
-2. Check `terminalState === "settled"` (and `settlement.tx` present).
-3. Check `requirementHash` matches the quote it actually paid.
+3. Check `terminalState === "settled"` (and `settlement.tx` present).
+4. Check `requirementHash` matches the quote it actually paid.
 
 All three pass → the agent has cryptographic proof it paid for, and received, exactly
 these bytes on exactly this route. Fail-closed on any missing field.
