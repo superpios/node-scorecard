@@ -55,6 +55,8 @@ returns a receipt binding the payment to a SHA-256 hash (JCS/RFC-8785 canonical)
 the exact bytes served — the bytes you pay for are the bytes you get. Verify by
 recomputing the hash from the response you received; no trust in the server required.
 
+The receipt format is published as an open, provider-agnostic spec — see [route-receipt-spec.md](route-receipt-spec.md) — with an independent offline verifier ([verify-receipt.mjs](verify-receipt.mjs)) that recomputes the hash from the served bytes and rejects an expired quote, altered bytes, or an unknown canonicalization profile without calling back to the server. Every receipt declares a versioned canonicalization profile (`jcs-strings-v0.2`) so two agents reach the same verdict from the receipt alone.
+
 #### Free discovery endpoints
 
 No payment, no headers, nothing required.
