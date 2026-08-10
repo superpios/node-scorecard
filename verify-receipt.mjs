@@ -2,7 +2,7 @@
 // Byte-identical to nodescorecard's receipt.mjs canonicalization. Handles v0.1 (flat hex resultHash)
 // and v0.2 (integrity.resultHash, optional 'sha256:' prefix, stale_at).
 //
-// v0.2 CANONICALIZATION PROFILE (per Axiom): the receipt MUST declare its canonicalization
+// v0.2 CANONICALIZATION PROFILE: the receipt MUST declare its canonicalization
 // profile (e.g. "jcs-strings-v0.2"). A verifier MUST fail loudly on an unknown/missing profile
 // instead of hashing with its own canonicalizer and silently agreeing on different bytes.
 import { createHash } from "node:crypto";
@@ -29,7 +29,7 @@ export function resultHash(value) { return sha256hex(canonicalize(value)); }
 export function verifyReceipt(receipt, servedBytes, now = Date.now()) {
   const reasons = [];
 
-  // 0. CANONICALIZATION PROFILE — fail loudly on unknown/missing (Axiom's point)
+  // 0. CANONICALIZATION PROFILE — fail loudly on unknown/missing 
   const profile = receipt?.canonicalization ?? receipt?.integrity?.canonicalization;
   if (!profile) {
     return { verdict: "REJECT", reasons: ["receipt declares no canonicalization profile (v0.2 requires one, e.g. jcs-strings-v0.2)"] };
