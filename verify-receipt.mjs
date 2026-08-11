@@ -2,7 +2,7 @@
 // Byte-identical to nodescorecard's receipt.mjs canonicalization. Handles v0.1 (flat hex resultHash)
 // and v0.2 (integrity.resultHash, optional 'sha256:' prefix, stale_at).
 //
-// v0.2 CANONICALIZATION PROFILE: the receipt MUST declare its canonicalization
+// v0.2 CANONICALIZATION PROFILE (per Axiom): the receipt MUST declare its canonicalization
 // profile (e.g. "jcs-strings-v0.2"). A verifier MUST fail loudly on an unknown/missing profile
 // instead of hashing with its own canonicalizer and silently agreeing on different bytes.
 import { createHash } from "node:crypto";
@@ -29,7 +29,7 @@ export function resultHash(value) { return sha256hex(canonicalize(value)); }
 export function verifyReceipt(receipt, servedBytes, now = Date.now()) {
   const reasons = [];
 
-  // 0. CANONICALIZATION PROFILE — fail loudly on unknown/missing 
+  // 0. CANONICALIZATION PROFILE — fail loudly on unknown/missing (Axiom's point)
   const profile = receipt?.canonicalization ?? receipt?.integrity?.canonicalization;
   if (!profile) {
     return { verdict: "REJECT", reasons: ["receipt declares no canonicalization profile (v0.2 requires one, e.g. jcs-strings-v0.2)"] };
@@ -66,9 +66,13 @@ export function verifyReceipt(receipt, servedBytes, now = Date.now()) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const fs = await import("node:fs");
-  const [r, b] = process.argv.slice(2);
-  if (!r || !b) { console.error("usage: node verify-receipt.mjs <receipt.json> <servedBytes.json>"); process.exit(2); }
-  const out = verifyReceipt(JSON.parse(fs.readFileSync(r, "utf8")), fs.readFileSync(b, "utf8"));
+  const args = process.argv.slice(2);
+  const nowIdx = args.indexOf("--now");
+  let now = Date.now();
+  if (nowIdx >= 0) { now = Date.parse(args[nowIdx + 1]); args.splice(nowIdx, 2); }
+  const [r, b] = args;
+  if (!r || !b) { console.error("usage: node verify-receipt.mjs <receipt.json> <servedBytes.json> [--now <iso8601>]"); process.exit(2); }
+  const out = verifyReceipt(JSON.parse(fs.readFileSync(r, "utf8")), fs.readFileSync(b, "utf8"), now);
   console.log(out.verdict); for (const x of out.reasons) console.log("  - " + x);
   process.exit(out.verdict === "ACCEPT" ? 0 : 1);
 }
