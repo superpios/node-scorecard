@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "requestId": "req_fixture_drift_01",
+  "route": { "resource": "https://nodescorecard.xyz/scorecard/node/sentnode1example", "method": "GET" },
+  "resultHash": "5c7c183d4330d1b9c48dbcade7d76e9ef240ff48d6b42ef5de6ad3d4c0ae42fc",
+  "hashAlgorithm": "sha-256",
+  "canonicalization": "jcs-strings-v0.2",
+  "measurement": { "stale_at": "2026-08-11T16:00:00Z" },
+  "terminalState": "settled"
+}
