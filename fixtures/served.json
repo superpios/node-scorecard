@@ -1,0 +1,15 @@
+{
+  "address": "sentnode1example",
+  "moniker": "DE-FRANKFURT-01",
+  "score": 93,
+  "reliability": 0.98,
+  "uptime_30d": 0.991,
+  "sla_pass": true,
+  "sla_mbps": 95.2,
+  "price_gb": 38.5,
+  "asn": "AS24940",
+  "country": "DE",
+  "residential": false,
+  "protocol": "v2ray",
+  "measured_at": "2026-08-10T18:00:00Z"
+}
