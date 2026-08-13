@@ -55,6 +55,10 @@ returns a receipt binding the payment to a SHA-256 hash (JCS/RFC-8785 canonical)
 the exact bytes served — the bytes you pay for are the bytes you get. Verify by
 recomputing the hash from the response you received; no trust in the server required.
 
+#### Networks
+
+Scoring is multi-network: pass `network=akash` to the node endpoints for independently scored Akash DePIN compute providers (GPU availability, uptime, audit), online-only and ranked.
+
 The receipt format is published as an open, provider-agnostic spec — see [route-receipt-spec.md](route-receipt-spec.md) — with an independent offline verifier ([verify-receipt.mjs](verify-receipt.mjs)) that recomputes the hash from the served bytes and rejects an expired quote, altered bytes, or an unknown canonicalization profile without calling back to the server. Every receipt declares a versioned canonicalization profile (`jcs-strings-v0.2`) so two agents reach the same verdict from the receipt alone.
 
 #### Free discovery endpoints
@@ -196,14 +200,6 @@ The service runs on a residential Raspberry Pi behind a Cloudflare Tunnel, with
 no inbound ports open and the origin address never exposed. The process that
 serves paid requests holds no private keys: settlement is delegated to a remote
 facilitator, and only the public receiving address is configured.
-
-#### Mirror
-
-The same data is also reachable through the Bankr x402 cloud:
-
-```
-https://x402.bankr.bot/0x0fcc5724d2dddf79ce1af1f091a823fd6438ef73/<endpoint>
-```
 
 `https://nodescorecard.xyz` is the canonical origin. The x402 payload served there
 advertises that URL as the resource, and the parameters documented above are the
