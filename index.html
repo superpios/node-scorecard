@@ -1625,7 +1625,7 @@ setPanelDesc();renderSupport();load();
 
   var tg=document.getElementById('bgToggle');
   tg.addEventListener('click',function(){if(isOn){turnOff();try{localStorage.setItem('sc_bg','off');}catch(_){}}else{turnOn();try{localStorage.setItem('sc_bg','on');}catch(_){}}});
-  // ripristina
+  // restore
   var saved='off';try{saved=localStorage.getItem('sc_bg')||'off';}catch(_){}
   if(saved==='on')turnOn();else setKnob(false);
 })();
