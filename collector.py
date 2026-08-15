@@ -219,7 +219,7 @@ def enrich_asn():
             if new_lookups%40==0:
                 json.dump(cache,open(ASNCACHE,"w"))
                 json.dump(nodes,open(LATEST,"w"))
-                print(f"  ...{new_lookups} nuovi lookup, cache {len(cache)} IP - pausa 62s")
+                print(f"  ...{new_lookups} new lookups, cache {len(cache)} IP - pausing 62s")
                 time.sleep(62)
         done+=1
     json.dump(cache,open(ASNCACHE,"w"))
