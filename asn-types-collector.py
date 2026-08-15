@@ -2,7 +2,7 @@
 # Aggiunge a ogni ASN il tipo ufficiale da PeeringDB, con cache su file.
 # info_type possibili: Content, NSP, Cable/DSL/ISP, Enterprise, Educational/Research,
 #   Non-Profit, Route Server, Network Services, Government, ecc.
-# Mappiamo questi nei badge del sito in modo OGGETTIVO (dato pubblico, non euristica sul nome).
+# These are mapped to the site badges OBJECTIVELY (public data, not a heuristic on the name).
 import json, os, time, urllib.request
 
 ASN_CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "asn-types.json")
@@ -33,7 +33,7 @@ def peeringdb_type(asn_num, cache):
                 info_type = data[0].get("info_type") or None
     except Exception:
         info_type = None  # non raggiungibile / non in PeeringDB
-    cache[key] = info_type           # cache anche i None (evita ri-tentare ogni giro)
+    cache[key] = info_type           # cache None too (avoids retrying on every run)
     time.sleep(0.7)                  # rate-limit gentile verso PeeringDB
     return info_type
 
