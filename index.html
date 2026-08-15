@@ -309,7 +309,7 @@
   <div class="stats" id="stats"></div>
   <div class="panel-desc" id="paneldesc"></div>
 
-  <!-- EXPLORER (unica vista; l'inspector si apre qui sopra al click) -->
+  <!-- EXPLORER (single view; the inspector opens above on click) -->
   <div class="tabs" id="maintabs">
     <div class="tab active" data-view="explorer">Nodes</div>
     <div class="tab" data-view="asnintel">ASN Intelligence</div>
@@ -620,7 +620,7 @@ function detectProblems(n){
   }
   // --- rules based on network comparison (medians) ---
   if(n.status==="active"&&n.price_hr!=null&&MED.price_hr){
-    if(n.price_hr>50)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/hr ("+n.price_hr+") is above the SLA limit (50 P2P/hr) \u2014 clients following the SLA won\u2019t pick this node."]);
+    if(n.price_hr>97.5)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/hr ("+n.price_hr+") is above the SLA limit (97.5 P2P/hr) \u2014 clients following the SLA won\u2019t pick this node."]);
     else if(n.price_hr>0&&n.price_hr<MED.price_hr*0.4)P.push(["info","\u2139\ufe0f","Price/hr ("+n.price_hr+") well below median ("+MED.price_hr+") \u2014 you may be leaving rewards on the table."]);
   }
   if(n.status==="active"&&n.ul_mbps!=null){
@@ -659,7 +659,7 @@ function detectProblems(n){
   }
   // price per GB vs network
   if(n.status==="active"&&n.price_gb!=null&&MED.price_gb){
-    if(n.price_gb>40)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/GB ("+n.price_gb+") is above the SLA limit (40 P2P/GB) \u2014 clients following the SLA will skip this node."]);
+    if(n.price_gb>80)P.push(["warn","<span class=dot-warn>\u25cf</span>","Price/GB ("+n.price_gb+") is above the SLA limit (80 P2P/GB) \u2014 clients following the SLA will skip this node."]);
   }
   // young node: track record still forming
   if(n.status==="active"&&n.samples>0&&n.samples<=10)P.push(["info","\u25cf","Young node ("+n.samples+" samples) \u2014 grade and uptime not meaningful yet, check back in a few days."]);
