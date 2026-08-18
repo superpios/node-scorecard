@@ -700,7 +700,7 @@ function detectProblems(n){
   if(!P.length)P.push(["ok","\u2705","No problems detected \u2014 node looks healthy."]);
   return P;
 }
-const PRICE_LIMIT={price_hr:50,price_gb:40};
+const PRICE_LIMIT={price_hr:97.5,price_gb:80};
 function slaRef(key,v){
   const lim=PRICE_LIMIT[key];if(lim==null||v==null)return "";
   const over=v>lim;
