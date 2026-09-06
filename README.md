@@ -370,6 +370,12 @@ Returns an array of node objects:
 | `asn` | string\|null | Hosting ASN + provider (e.g. `AS8560 IONOS SE`); active nodes only |
 | `gb_tokens` | int | Number of accepted payment denoms |
 | `api_ok` | bool | Whether the node's API answered the collector |
+| `hosting` | bool\|null | `true` = datacenter ASN, `false` = not classified as datacenter |
+| `leases` | number\|null | On-chain lease count at sample time |
+| `sla_pass` | boolean\|null | Official SLA tunnel from test.sentinel.co succeeded. Absent = untested, not failed |
+| `sla_mbps` | number\|null | Throughput measured by that official tunnel |
+| `sla_baseline` | number\|null | Tester baseline speed for the same run |
+| `sla_err` | string\|null | Error code when the official tunnel failed |
 
 ### Per-node historical summary — `history-summary.json`
 Aggregated history + a compact uptime timeline per node.
