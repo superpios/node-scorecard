@@ -44,6 +44,13 @@ active or not. Filter by `status` for the active ones, and by `api_ok` for those
 | `country` / `city` | string/null | IP geolocation |
 | `asn` | string/null | Hosting network, e.g. `AS24940 Hetzner` |
 | `hosting` | bool/null | true = datacenter, false = residential |
+| `api_status` | string | Granular API probe result from the collector (ok / timeout / refused / tls_error / reset / unreachable / bad_response / error). |
+| `protocols` | array/null | Per-protocol list `[{type, peers}, …]`. `protocol` stays the primary service for UI compatibility. |
+| `leases` | number/null | On-chain lease count at sample time. |
+| `sla_pass` | boolean/null | Official SLA tunnel from test.sentinel.co succeeded. Absent means untested, not failed. |
+| `sla_mbps` | number/null | Throughput measured by that official tunnel. |
+| `sla_baseline` | number/null | Tester baseline speed for the same run. |
+| `sla_err` | string/null | Error code when the official tunnel failed. |
 
 Example — active German WireGuard nodes:
 
