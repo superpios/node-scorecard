@@ -19,7 +19,7 @@ Full field-by-field documentation, examples and join patterns: **[API.md](API.md
 <!-- STATS:BEGIN -->
 <!-- generated hourly by update-stats.py — do not edit by hand -->
 
-Latest snapshot: **2,428 nodes tracked**, **1,734 active**, **1,673** of those with a responding API. Those 1,673 span **230 autonomous systems**, and **216** (12.9%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
+Latest snapshot: **2,428 nodes tracked**, **1,716 active**, **1,640** of those with a responding API. Those 1,640 span **227 autonomous systems**, and **194** (11.8%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
 
 <!-- STATS:END -->
 
