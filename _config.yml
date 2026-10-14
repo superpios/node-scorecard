@@ -1,0 +1,27 @@
+# GitHub Pages builds this repo with Jekyll from the main branch root.
+# Setting `exclude` replaces Jekyll's defaults, so the defaults are listed too.
+# Snapshot files are excluded so a later commit that puts them back on main
+# still does not publish them to https://superpios.github.io/node-scorecard/
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - latest.json
+  - history-summary.json
+  - trends.json
+  - latest-akash.json
+  - latest-akash-trends.json
+  - history.jsonl
+  - trends.jsonl
+  - akash-history.jsonl
+  - asn_cache.json
+  - asn-types.json
+  - watchlist.json
+  - collector.log

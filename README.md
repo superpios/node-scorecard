@@ -4,17 +4,15 @@
 
 The Scorecard answers the question that matters most to a node operator: **how has my node behaved over time, and how does it compare to the rest of the network?**
 
-It samples every node on the Sentinel network on a schedule, builds a historical record measured in hundreds of thousands of samples, and turns it into an actionable reliability score, a country ranking, time-series trends, and a node-by-node diagnostic — all from data collected on-device, with no backend.
-## Public API
+It samples every node on the Sentinel network on a schedule, builds a historical record measured in hundreds of thousands of samples, and turns it into an actionable reliability score, a country ranking, time-series trends, and a node-by-node diagnostic. Those results stay on the collector and are served by the paid API. The GitHub Pages site does not render them.
+## Data access
 
-All Scorecard data is available as free JSON endpoints (CORS open, no key,
-updated hourly):
+Node snapshots and scores are not published from this repository. GitHub Pages
+does not serve them. Agents and apps get that data only from the paid API:
 
-    https://superpios.github.io/node-scorecard/latest.json           # current snapshot
-    https://superpios.github.io/node-scorecard/history-summary.json  # reliability history per node
-    https://superpios.github.io/node-scorecard/trends.json           # network trends over time
+    https://nodescorecard.xyz
 
-Full field-by-field documentation, examples and join patterns: **[API.md](API.md)**
+Prices, routes, and the x402 payment flow: **[API.md](API.md)** and the [Paid API](#paid-api-for-ai-agents-x402) section below.
 
 <!-- STATS:BEGIN -->
 <!-- generated hourly by update-stats.py — do not edit by hand -->
@@ -90,7 +88,7 @@ Every hour the collector merges the results of Sentinel's **official SLA test ru
 node and its actual speed is measured - the strongest possible signal that a node
 **actually serves clients**, not just that its API answers.
 
-Each tested node carries four extra fields in `latest.json`:
+Each tested node carries four extra fields in the collector's local snapshot (kept on the device, not published):
 
 | field | meaning |
 |---|---|
@@ -123,7 +121,7 @@ New nodes start lower on longevity and climb as they build a track record — ex
 
 ## Architecture
 
-Everything runs on a single always-on device (e.g. a Raspberry Pi). No server, no database, no cost.
+Everything runs on a single always-on device (e.g. a Raspberry Pi). The collector writes local files there. A separate process on that device serves the paid API. GitHub Pages hosts only the static page.
 
 ```
 collector.py     -> samples every node from the Sentinel LCD (status, price, protocol,
@@ -131,92 +129,29 @@ collector.py     -> samples every node from the Sentinel LCD (status, price, pro
                     API twice to minimise blank fields from transient timeouts.
                     Enriches active nodes with their ASN (IP->ASN lookup, cached on
                     disk so each IP is resolved only once).
-make-summary.py  -> aggregates history.jsonl into history-summary.json (uptime %,
+make-summary.py  -> aggregates history.jsonl into a local history-summary.json (uptime %,
                     stability, longevity + a compact per-node timeline). Soft-purges
-                    nodes not seen for 30+ days to keep the files lean.
+                    nodes not seen for 30+ days to keep the files lean. Not published.
 make-trends.py   -> appends a network snapshot per run (active count, per-ASN and
                     per-country totals) and computes node movers (7d uptime vs prior)
-                    from raw history. Writes + publishes trends.json.
-push-latest.sh   -> publishes latest.json + history-summary.json to this repo
-index.html       -> static UI, fetches the two JSON files and renders everything
-                    client-side. Community feedback (NodeAdvisor) is read/written
+                    from raw history. Writes local trends.json only. Does not upload it.
+index.html       -> static page on GitHub Pages. It does not fetch or render node
+                    snapshots. Community feedback (NodeAdvisor) is read/written
                     directly to a free Supabase table from the browser.
 ```
 
-The UI is a single static HTML file — host it on GitHub Pages or any static host. It reads the published JSON directly. The only external dependency is a free Supabase project for NodeAdvisor feedback (optional — the rest works without it).
+The collector files (`latest.json`, `history-summary.json`, `trends.json`, `latest-akash.json`, `latest-akash-trends.json`, and the `*.jsonl` logs) stay on the device that runs the collector. They are the input the paid API reads. They are gitignored and excluded from the GitHub Pages build. Do not upload them with `push-latest.sh` or any other GitHub Contents API script.
+
+The UI is a single static HTML file on GitHub Pages. The only external dependency is a free Supabase project for NodeAdvisor feedback (optional).
 
 ---
 
 ## API / Data access (for developers & white-label apps)
 
-All Scorecard data is served as plain JSON over HTTPS — no key, no auth, no rate limit. White-label apps, dashboards, or bots can consume it directly. These are **read-only** endpoints.
-
-### Per-node current snapshot — `latest.json`
-The most recent sample of every node on the network.
-
-```
-GET https://superpios.github.io/node-scorecard/latest.json
-```
-
-Returns an array of node objects:
-
-| Field | Type | Meaning |
-|-------|------|---------|
-| `addr` | string | Node address (`sentnode1…`) |
-| `moniker` | string\|null | Node name (null if its API didn't answer at sample time) |
-| `status` | string | `active` / `inactive` (on-chain) |
-| `ts` | string | ISO timestamp of this sample |
-| `inactive_at` | string | On-chain heartbeat-expiry timestamp |
-| `remote` | string\|null | Announced `host:port` |
-| `protocol` | string\|null | `v2ray` / `wireguard` / `openvpn` / `xray` / `amneziawg` / `hysteria2` |
-| `protocols` | array\|null | Multi-protocol nodes only: `[{type, peers}]`, one entry per running service. `null` on single-protocol nodes |
-| `api_status` | string\|null | Why the node API did or did not answer: `ok` / `timeout` / `refused` / `tls_error` / `reset` / `unreachable` / `bad_response` / `error` |
-| `peers` | int\|null | Connected peers at sample time |
-| `price_hr` / `price_gb` | number\|null | Price in P2P per hour / per GB |
-| `dl_mbps` / `ul_mbps` | number\|null | Measured bandwidth |
-| `version` | string\|null | Node software version |
-| `country` / `city` | string\|null | Geolocation |
-| `asn` | string\|null | Hosting ASN + provider (e.g. `AS8560 IONOS SE`); active nodes only |
-| `gb_tokens` | int | Number of accepted payment denoms |
-| `api_ok` | bool | Whether the node's API answered the collector |
-| `hosting` | bool\|null | `true` = datacenter ASN, `false` = not classified as datacenter |
-| `leases` | number\|null | On-chain lease count at sample time |
-| `sla_pass` | boolean\|null | Official SLA tunnel from test.sentinel.co succeeded. Absent = untested, not failed |
-| `sla_mbps` | number\|null | Throughput measured by that official tunnel |
-| `sla_baseline` | number\|null | Tester baseline speed for the same run |
-| `sla_err` | string\|null | Error code when the official tunnel failed |
-
-### Per-node historical summary — `history-summary.json`
-Aggregated history + a compact uptime timeline per node.
-
-```
-GET https://superpios.github.io/node-scorecard/history-summary.json
-```
-
-| Field | Type | Meaning |
-|-------|------|---------|
-| `a` | string | Node address |
-| `mon` | string | Moniker (or address if unnamed) |
-| `n` | int | Number of samples collected |
-| `uptime` | number | % active across all samples |
-| `stab` | number | Stability score (0–100) |
-| `trans` | int | Count of active↔inactive transitions |
-| `ul` | number\|null | Average upload Mbps |
-| `country` | string\|null | Country |
-| `sc` | int | Rough composite score |
-| `tl` | string | Compact timeline: `1`=active, `0`=inactive, oldest→newest |
-| `tl_from` / `tl_to` | string | Timeline start / end timestamps |
-| `stale` | bool | Last sample older than 24h |
-| `age_h` | number\|null | Hours since last sample |
-
-> The on-page score uses a richer weighting than the `sc` field above; `sc` is a lightweight pre-computed approximation. To reproduce the full score, see the weights table under [The score](#the-score).
-
-### Network time series — `trends.json`
-One snapshot every hour: `{ts,total,active,stale,api_ok,asn:{...},country:{...}}` per point, plus `movers_up`/`movers_down` (nodes whose 7-day uptime changed most vs their prior history).
-
-```
-GET https://superpios.github.io/node-scorecard/trends.json
-```
+Node snapshots and scores are served only by the paid API at
+[`https://nodescorecard.xyz`](https://nodescorecard.xyz). There is no public JSON
+snapshot on GitHub Pages. Field lists, prices, and call examples are in
+**[API.md](API.md)** and in the [Paid API](#paid-api-for-ai-agents-x402) section below.
 
 ### Community feedback (NodeAdvisor)
 Feedback is stored in Supabase and is **readable** via its auto-generated REST API (read policy only). Example — fetch visible feedback for one node:
@@ -226,18 +161,18 @@ GET https://<project>.supabase.co/rest/v1/node_feedback?node_addr=eq.<addr>&hidd
 Header: apikey: <publishable-key>
 ```
 
-Feedback **writing** goes through the web UI, which applies anti-abuse measures (one vote per device, de-duplication). Writing directly via API bypasses those, so it isn't documented here by design.
+Feedback **writing** goes through the web UI, which applies anti-abuse measures (one vote per device, de-duplication). Writing directly via API bypasses those, so it isn't documented here by design. NodeAdvisor comments are community notes, not the scorecard snapshot.
 
 ### Notes for integrators
-- Data refreshes hourly; cache accordingly.
-- Fields can be `null` for nodes whose API was unreachable at sample time (~half the network at any moment) — handle nulls gracefully.
+- Paid responses refresh from an hourly collector snapshot and are cached for 10 minutes.
+- Fields can be `null` for nodes whose API was unreachable at sample time — handle nulls gracefully.
 - This is a community project; endpoints may evolve. Open an issue if you build on it and need stability guarantees.
 
 ---
 
 ## Data sources & honest limits
 
-- **test.sentinel.co** - official Sentinel SLA runs, merged hourly into `latest.json` (fields `sla_*`).
+- **test.sentinel.co** - official Sentinel SLA runs, merged hourly into the local collector snapshot (fields `sla_*`). That snapshot is not published.
 
 - **Prices, status, heartbeat** come from the Sentinel LCD and are available for **every** node.
 - **Protocol, peers, bandwidth, version** come from each node's local API — available only for nodes that expose it publicly, so these fields are blank for unreachable nodes (roughly half the network at any moment). This is a limit of public data, not a bug.
@@ -257,21 +192,21 @@ cd node-scorecard
 python3 collector.py --all
 python3 make-summary.py
 
-# schedule collection (crontab -e) - hourly
+# schedule collection (crontab -e) - every 2 hours
+# Do not append push-latest.sh or any script that uploads JSON to this repo.
 0 */2 * * * /usr/bin/python3 /path/to/collector.py --all >> collector.log 2>&1 && \
             /usr/bin/python3 /path/to/make-summary.py >> collector.log 2>&1 && \
-            /usr/bin/python3 /path/to/make-trends.py >> collector.log 2>&1 && \
-            /bin/bash /path/to/push-latest.sh >> collector.log 2>&1
+            /usr/bin/python3 /path/to/make-trends.py >> collector.log 2>&1
 
 ```
 
-Then publish `latest.json` and `history-summary.json` to the repo (see `push-latest.sh`) and open `index.html`.
+Leave `latest.json`, `history-summary.json`, and `trends.json` on the device. The paid API reads them there. Do not commit or upload them.
 
 ---
 
 ## Roadmap
 
-- ✅ Public read-only JSON API (done — see API section)
+- Public snapshot files were removed from GitHub Pages. Data access is the paid API (see API section)
 - ✅ ASN intelligence — per-provider saturation + placement advisor (done)
 - ✅ Reliability grade + global rank, Top Reliable leaderboard (done)
 - ✅ Trends — network time series, ASN movers, node movers (done — accumulating history)
@@ -334,11 +269,13 @@ recomputing the hash from the response you received; no trust in the server requ
 #### Provider trends (Akash)
 
 Akash provider snapshots are archived hourly, so every provider carries a history the
-upstream console does not expose. `latest-akash-trends.json` in this repository holds,
-per provider, the score, uptime and free-GPU series with direction and delta, and the
-API serves it: `/scorecard/node/:id?network=akash` returns a `trends` block for that
-provider, and `/scorecard/network-stats?network=akash` returns `trends_summary` with how
-many providers are improving or declining. Generated by `make-akash-trends.py`.
+upstream console does not expose. `make-akash-trends.py` writes a local
+`latest-akash-trends.json` (per provider: score, uptime and free-GPU series with
+direction and delta). That file stays on the collector. It is not committed and
+GitHub Pages does not serve it. The paid API serves it:
+`/scorecard/node/:id?network=akash` returns a `trends` block for that provider,
+and `/scorecard/network-stats?network=akash` returns `trends_summary` with how
+many providers are improving or declining.
 
 #### Networks
 
@@ -421,32 +358,11 @@ No query parameters.
 
 #### MCP server
 
-The Scorecard is also an MCP server, so any MCP-capable assistant can query the
-Sentinel network in plain language. Point your client at:
-
-```
-https://nodescorecard.xyz/mcp
-```
-
-Stateless Streamable HTTP. Both the `2026-07-28` and `2025-11-25` protocol
-revisions are accepted, so old and new clients both work.
-
-| Tool | Returns |
-|---|---|
-| `sentinel_network_overview` | Lifetime on-chain registrations vs nodes actually active, ASN concentration, verified-residential share |
-| `sentinel_node_lookup` | Status, location, protocol, historical uptime and measured speed for one node |
-| `sentinel_top_nodes` | Best-scoring active nodes, one per autonomous system |
-
-These tools are free and return a limited sample. The paid endpoints above serve
-the full dataset with filters.
-
-```bash
-curl -s -X POST https://nodescorecard.xyz/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'MCP-Protocol-Version: 2026-07-28' \
-  -H 'Mcp-Method: tools/list' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
+`https://nodescorecard.xyz/mcp` is a stateless Streamable HTTP MCP endpoint
+(`2026-07-28` and `2025-11-25`). It must not return node snapshots or scores
+without the same x402 payment as the paid routes above. The Express server that
+implements it is not in this repository. The inferred edits are in
+[SERVER_CHANGES.md](SERVER_CHANGES.md).
 
 #### Calling it
 

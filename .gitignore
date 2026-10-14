@@ -1,0 +1,17 @@
+# Collector state. The paid API reads these on the device.
+# GitHub Pages publishes the main branch, so they must not be committed.
+latest.json
+history-summary.json
+trends.json
+latest-akash.json
+latest-akash-trends.json
+history.jsonl
+trends.jsonl
+akash-history.jsonl
+asn_cache.json
+asn-types.json
+watchlist.json
+collector.log
+*.log
+__pycache__/
+*.pyc

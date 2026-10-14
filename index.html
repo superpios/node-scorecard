@@ -341,7 +341,7 @@
       </div>
       <div class="showing" id="showing"></div>
       <div class="tablewrap">
-        <div class="tscroll"><div id="content"><div class="loading"><div class="spinner"></div>connecting to Sentinel network&hellip;</div></div></div>
+        <div class="tscroll"><div id="content"><div class="loading">Node snapshots and scores are not published here. Use the paid API at <a href="https://nodescorecard.xyz" style="color:var(--good)">https://nodescorecard.xyz</a>.</div></div></div>
         <div class="pager" id="pager" style="display:none">
           <div class="info" id="pginfo"></div>
           <div class="btns"><select class="pp" id="perpage"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select>
@@ -366,7 +366,6 @@
   <footer>Sentinel Scorecard &middot; historical data collected on-device &middot; client-side scoring &middot; built for node operators<br>machine-readable, pay-per-call: <a href="https://nodescorecard.xyz" target="_blank" rel="noopener" style="color:var(--good)">nodescorecard.xyz</a></footer>
 </div>
 <script>
-const REPO="superpios/node-scorecard";
 // ===== NodeAdvisor (Supabase) =====
 const SB_URL="https://upalnwxnmavcrgifoftt.supabase.co";
 const SB_KEY="sb_publishable_cA2TS9Gq4b9rdV26bb2VfQ_NSxGU2Ds";
@@ -382,23 +381,14 @@ const NA_TAGS=[
   {id:"unreachable",label:"Hard to reach",pos:false}
 ];
 const NA_TAGMAP=Object.fromEntries(NA_TAGS.map(t=>[t.id,t]));
-const SRC={latest:["./latest.json","https://raw.githubusercontent.com/"+REPO+"/main/latest.json","https://raw.githubusercontent.com/"+REPO+"/master/latest.json"],
-  history:["./history-summary.json","https://raw.githubusercontent.com/"+REPO+"/main/history-summary.json","https://raw.githubusercontent.com/"+REPO+"/master/history-summary.json"],
-  trends:["./trends.json","https://raw.githubusercontent.com/"+REPO+"/main/trends.json","https://raw.githubusercontent.com/"+REPO+"/master/trends.json"]};
 let NODES=[],MAP={},HIST={},MAXN=1,MED={},TRENDS=null;
 let state={tab:"explorer",page:0,perPage:50,sortKey:"score",sortDir:-1,search:"",country:"",protocol:"",filters:{active:false,api:false},showInactive:false};
-async function tryFetch(u){for(const x of u){try{const cb=x.includes("githubusercontent")?"":"?t="+Date.now();const r=await fetch(x+cb,{cache:"no-store"});if(r.ok)return await r.json();}catch(e){}}return null;}
-async function load(){
-  tryFetch(SRC.trends).then(t=>{TRENDS=t;});
-  const [latest,history]=await Promise.all([tryFetch(SRC.latest),tryFetch(SRC.history)]);
-  if(!latest){document.getElementById("content").innerHTML='<div class="err">Could not load latest.json from '+REPO+'.</div>';return;}
-  if(Array.isArray(history)){history.forEach(h=>HIST[h.a]=h);MAXN=Math.max(1,...history.map(h=>h.n||1));}
-  NODES=latest.map(enrich);NODES.forEach(n=>MAP[n.addr]=n);
-  computeMedians();
-  buildCountry();renderStats();render();
-  const allTs=latest.map(n=>n.ts).filter(Boolean).sort();
-  const ts=allTs.length?allTs[allTs.length-1]:new Date().toISOString();
-  document.getElementById("updated").innerHTML='<span class="livedot"></span>'+"updated <b>"+fmtAgo(ts)+"</b><br>"+NODES.filter(n=>n.status==="active").length+" active";
+function load(){
+  const msg='Node snapshots and scores are not published on this site. They are available only through the paid API at <a href="https://nodescorecard.xyz" style="color:var(--good)">https://nodescorecard.xyz</a>.';
+  const content=document.getElementById("content");
+  if(content) content.innerHTML='<div class="loading">'+msg+'</div>';
+  const updated=document.getElementById("updated");
+  if(updated) updated.textContent="public snapshots removed";
 }
 function enrich(n){
   const h=HIST[n.addr]||{};const active=n.status==="active";
@@ -530,6 +520,7 @@ function updateShowing(total){
   el.innerHTML="Showing <b>"+total+"</b> "+what+suffix;
 }
 function render(){
+  if(!NODES.length){load();return;}
   const data=filtered();
   const total=data.length,start=state.page*state.perPage,rows=data.slice(start,start+state.perPage);
   updateShowing(total);
@@ -1300,6 +1291,7 @@ function renderAsnIntel(){
   }
 }
 function switchView(v){
+  if(!NODES.length){load();return;}
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
   ["explorer","asnintel","leaderboard","trends","decent"].forEach(k=>{
     const el=document.getElementById("view-"+k);

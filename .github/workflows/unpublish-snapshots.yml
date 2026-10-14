@@ -1,0 +1,52 @@
+name: Unpublish node snapshots
+
+# The collector host has pushed snapshot JSON straight to main with the
+# GitHub Contents API. Those commits bypass .gitignore. This job deletes the
+# files again so Pages and raw GitHub stop serving them.
+on:
+  push:
+    branches: [main]
+    paths:
+      - latest.json
+      - history-summary.json
+      - trends.json
+      - latest-akash.json
+      - latest-akash-trends.json
+      - history.jsonl
+      - trends.jsonl
+      - akash-history.jsonl
+
+permissions:
+  contents: write
+
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove public snapshot files
+        run: |
+          set -euo pipefail
+          files=(
+            latest.json
+            history-summary.json
+            trends.json
+            latest-akash.json
+            latest-akash-trends.json
+            history.jsonl
+            trends.jsonl
+            akash-history.jsonl
+          )
+          removed=0
+          for f in "${files[@]}"; do
+            if [ -e "$f" ]; then
+              git rm -f "$f"
+              removed=1
+            fi
+          done
+          if [ "$removed" -eq 1 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "unpublish node snapshots from Pages"
+            git push origin HEAD:main
+          fi

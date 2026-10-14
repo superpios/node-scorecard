@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # make-akash-trends.py - builds per-provider historical trends from akash-history.jsonl.
 # Output: latest-akash-trends.json (per-provider score/uptime/gpu time series + deltas).
+# Local collector file only. Do not commit or upload it; GitHub Pages would serve it.
 # Schema-robust: handles either one-snapshot-per-line {ts,providers:[...]} or one-record-per-line {ts,id,...}.
 import json, sys, os, time
 BASE = os.path.dirname(os.path.abspath(__file__))

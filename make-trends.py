@@ -2,10 +2,11 @@
 # make-trends v1.2: v1.1 + lease series (leases_total, nodes_leased) per the lease-coverage trend.
 # v1.1: also records chain_total/chain_active (native on-chain count via count_total):
 #       "hidden" field in the data, not shown in UI - historical record for us.
-# Runs after make-summary.py. Appends one snapshot per run to trends.jsonl,
-# writes trends.json (site file) and pushes it to GitHub reusing the token
-# already stored in push-latest.sh (never hardcode the token here).
-import json, os, re, base64, urllib.request
+# Runs after make-summary.py. Appends one snapshot per run to trends.jsonl
+# and writes trends.json next to the collector. Both files stay on the device
+# for the paid API. This script must not upload them to GitHub: Pages publishes
+# the main branch, so a push would serve node snapshots for free.
+import json, os, urllib.request
 from datetime import datetime, timezone, timedelta
 
 HERE=os.path.dirname(os.path.abspath(__file__)) or "."
@@ -14,8 +15,6 @@ SUMMARY=os.path.join(HERE,"history-summary.json")
 HISTORY=os.path.join(HERE,"history.jsonl")
 TRENDS_LOG=os.path.join(HERE,"trends.jsonl")
 TRENDS_OUT=os.path.join(HERE,"trends.json")
-PUSH_SH=os.path.join(HERE,"push-latest.sh")
-REPO="superpios/node-scorecard"; BRANCH="main"
 MAX_POINTS=1100          # ~ 4+ months at 8 runs/day
 NOW=datetime.now(timezone.utc)
 
@@ -96,25 +95,4 @@ for l in open(TRENDS_LOG):
 series=series[-MAX_POINTS:]
 json.dump({"series":series,"movers_up":movers_up,"movers_down":movers_down,
            "generated":snap["ts"]},open(TRENDS_OUT,"w"),separators=(",",":"))
-print(f"trends: {len(series)} points, movers +{len(movers_up)}/-{len(movers_down)} -> trends.json")
-
-# ---- push trends.json to GitHub (token read from push-latest.sh) ----
-try:
-    tok=re.search(r'(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})',open(PUSH_SH).read())
-    if not tok: raise RuntimeError("token not found in push-latest.sh")
-    tok=tok.group(1)
-    api=f"https://api.github.com/repos/{REPO}/contents/trends.json"
-    def gh(url,data=None,method="GET"):
-        req=urllib.request.Request(url,data=data,method=method,
-            headers={"Authorization":f"token {tok}","User-Agent":"scorecard","Accept":"application/vnd.github+json"})
-        return json.loads(urllib.request.urlopen(req,timeout=30).read())
-    sha=None
-    try: sha=gh(api+f"?ref={BRANCH}").get("sha")
-    except Exception: pass
-    body={"message":"update trends.json","branch":BRANCH,
-          "content":base64.b64encode(open(TRENDS_OUT,"rb").read()).decode()}
-    if sha: body["sha"]=sha
-    gh(api,json.dumps(body).encode(),"PUT")
-    print("OK trends.json pushed")
-except Exception as e:
-    print(f"trends push failed (will retry next cycle): {e}")
+print(f"trends: {len(series)} points, movers +{len(movers_up)}/-{len(movers_down)} -> {TRENDS_OUT} (local only, not published)")
