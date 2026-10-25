@@ -17,7 +17,7 @@ Prices, routes, and the x402 payment flow: **[API.md](API.md)** and the [Paid AP
 <!-- STATS:BEGIN -->
 <!-- generated hourly by update-stats.py — do not edit by hand -->
 
-Latest snapshot: **4,089 nodes tracked**, **1,832 active**, **1,797** of those with a responding API. Those 1,797 span **243 autonomous systems**, and **275** (15.3%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
+Latest snapshot: **4,089 nodes tracked**, **1,831 active**, **1,795** of those with a responding API. Those 1,795 span **245 autonomous systems**, and **275** (15.3%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
 
 <!-- STATS:END -->
 
