@@ -16,7 +16,7 @@ match the live service. This document does not change them.
 <!-- STATS:BEGIN -->
 <!-- generated hourly by update-stats.py — do not edit by hand -->
 
-Latest snapshot: **3,931 nodes tracked**, **1,783 active**, **1,744** of those with a responding API. Those 1,744 span **254 autonomous systems**, and **271** (15.5%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
+Latest snapshot: **3,931 nodes tracked**, **1,781 active**, **1,747** of those with a responding API. Those 1,747 span **254 autonomous systems**, and **272** (15.6%) pass verified-residential checks (geo-IP flag *and* a non-hosting ASN).
 
 <!-- STATS:END -->
 
