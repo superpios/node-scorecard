@@ -33,6 +33,19 @@
   @keyframes viewfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
   .viewfade{animation:viewfade .25s ease-out}
   .tab:hover{color:var(--txt)} .tab.active{color:var(--good);border-bottom-color:var(--good)}
+
+  /* Solana devnet temporary listing (Pages only; not sold) */
+  .sol-banner{margin:14px 0 12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(125,211,252,.35);background:rgba(125,211,252,.08);color:var(--txt);font-size:13px;line-height:1.45}
+  .sol-banner b{color:#7dd3fc}
+  .sol-banner .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);font-size:11px;font-family:'Space Mono',monospace}
+  #view-solana-devnet .controls{margin-top:8px}
+  .sol-mono{font-family:'Space Mono',monospace;font-size:12px}
+  .sol-status{font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.4px}
+  .sol-status.active{color:var(--good)} .sol-status.expired{color:var(--warn)} .sol-status.inactive,.sol-status.closed{color:var(--muted)}
+  #view-solana-devnet .stat .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.8px;margin-top:4px;font-family:'Space Grotesk',sans-serif;font-weight:500}
+  #view-solana-devnet .sdd-item{padding:8px 11px;border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap}
+  #view-solana-devnet .sdd-item:hover{background:rgba(45,212,167,.10);color:var(--txt)}
+
   .panel-desc{color:var(--txt);opacity:.92;font-size:13px;line-height:1.5;font-family:'Sora',sans-serif;margin:14px 0;max-width:780px}
   .net-label{color:var(--good);font-weight:700;opacity:1}
   .showing{color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;margin:0 0 10px 2px}
@@ -312,6 +325,7 @@
   <!-- EXPLORER (single view; the inspector opens above on click) -->
   <div class="tabs" id="maintabs">
     <div class="tab active" data-view="explorer">Nodes</div>
+    <div class="tab" data-view="solana-devnet">Solana (devnet)</div>
     <div class="tab" data-view="asnintel">ASN Intelligence</div>
     <div class="tab" data-view="leaderboard">Top Reliable</div>
     <div class="tab" data-view="trends">Trends</div>
@@ -321,6 +335,29 @@
   <div id="view-leaderboard" style="display:none"></div>
   <div id="view-trends" style="display:none"></div>
   <div id="view-decent" style="display:none"></div>
+  <div id="view-solana-devnet" style="display:none">
+    <div class="sol-banner">
+      <b>Solana devnet</b>
+      <span class="pill">experimental / not sold</span>
+      <div style="margin-top:6px;color:var(--muted)">Temporary public listing from on-chain Node accounts. Not the paid API. Cosmos scores stay on <a href="https://nodescorecard.xyz" style="color:var(--good)">nodescorecard.xyz</a>.</div>
+    </div>
+    <div class="stats" id="sol-stats"></div>
+    <div class="controls">
+      <input type="search" autocomplete="off" id="sol-search" placeholder="search addr, owner, country, uri…">
+      <div class="sdd" id="sol-dd-status"><button type="button" class="sdd-btn">All statuses</button><div class="sdd-menu"></div></div>
+    </div>
+    <div class="showing" id="sol-showing"></div>
+    <div class="tablewrap">
+      <div class="tscroll"><div id="sol-content"><div class="loading">Loading Solana devnet listing…</div></div></div>
+      <div class="pager" id="sol-pager" style="display:none">
+        <div class="info" id="sol-pginfo"></div>
+        <div class="btns">
+          <button class="pg" id="sol-prev">&lsaquo; prev</button>
+          <button class="pg" id="sol-next">next &rsaquo;</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div id="view-explorer">
     <!-- INSPECTOR PANEL: hidden until a node is clicked -->
     <div id="view-inspector" style="display:none">
@@ -1290,11 +1327,170 @@ function renderAsnIntel(){
     if(q){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
   }
 }
+
+// ===== Solana devnet temporary Pages listing (allowlisted public JSON) =====
+const SOL_URL="./solana-devnet-public.json";
+let SOL={doc:null,nodes:[],status:"",q:"",page:0,perPage:50,sortKey:"status",sortDir:1,loading:false,err:null};
+function solEsc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+}
+function solHttpsHref(uri){
+  if(!uri||typeof uri!=="string")return null;
+  const u=uri.trim();
+  // https only, and no quotes, spaces, or brackets that could break out of the href.
+  // display only — page never fetches node endpoints (SSRF-safe for the Pi)
+  if(!/^https:\/\/[A-Za-z0-9.-]+(?::\d+)?(?:\/[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]*)?$/i.test(u))return null;
+  return u;
+}
+function solShort(s,n){ if(!s)return "—"; s=String(s); return s.length<=n?s:s.slice(0,n)+"…"; }
+function loadSolanaPublic(force){
+  if(SOL.loading)return;
+  if(SOL.doc && !force){ renderSolana(); return; }
+  SOL.loading=true; SOL.err=null;
+  const box=document.getElementById("sol-content");
+  if(box) box.innerHTML='<div class="loading">Loading Solana devnet listing…</div>';
+  fetch(SOL_URL+"?t="+Date.now(),{cache:"no-store"})
+    .then(r=>{
+      if(r.status===404) throw new Error("not_published");
+      if(!r.ok) throw new Error("http_"+r.status);
+      return r.json();
+    })
+    .then(d=>{
+      SOL.doc=d; SOL.nodes=Array.isArray(d.nodes)?d.nodes:[]; SOL.loading=false; SOL.page=0;
+      renderSolana();
+    })
+    .catch(e=>{
+      SOL.loading=false; SOL.err=e && e.message;
+      const msg = (SOL.err==="not_published")
+        ? 'Solana-devnet public listing is not published yet. The collector can write <code>solana-devnet-public.json</code> without touching the paid API.'
+        : 'Could not load Solana-devnet listing ('+ solEsc(SOL.err||"error") +').';
+      if(box) box.innerHTML='<div class="loading">'+msg+'</div>';
+      const st=document.getElementById("sol-stats"); if(st) st.innerHTML="";
+      const sh=document.getElementById("sol-showing"); if(sh) sh.textContent="";
+    });
+}
+function solFiltered(){
+  let rows=SOL.nodes.slice();
+  if(SOL.status) rows=rows.filter(n=>n.status===SOL.status);
+  const q=(SOL.q||"").trim().toLowerCase();
+  if(q){
+    rows=rows.filter(n=>{
+      const blob=[n.addr,n.owner,n.country,n.uri,n.remote,n.status].map(x=>x==null?"":String(x).toLowerCase()).join(" ");
+      return blob.includes(q);
+    });
+  }
+  const k=SOL.sortKey, dir=SOL.sortDir;
+  rows.sort((a,b)=>{
+    const av=a[k], bv=b[k];
+    if(av==null&&bv==null)return 0;
+    if(av==null)return 1; if(bv==null)return -1;
+    if(typeof av==="number"&&typeof bv==="number") return (av-bv)*dir;
+    return String(av).localeCompare(String(bv))*dir;
+  });
+  return rows;
+}
+function solSort(key){
+  if(SOL.sortKey===key) SOL.sortDir*=-1; else {SOL.sortKey=key; SOL.sortDir=1;}
+  SOL.page=0; renderSolana();
+}
+function renderSolana(){
+  const d=SOL.doc||{};
+  const c=d.counts||{};
+  const st=document.getElementById("sol-stats");
+  if(st){
+    st.innerHTML =
+      '<div class="stat"><div class="v">'+solEsc(d.node_count!=null?d.node_count:SOL.nodes.length)+'</div><div class="k">tracked</div></div>'+
+      '<div class="stat"><div class="v">'+solEsc(c.active||0)+'</div><div class="k">active</div></div>'+
+      '<div class="stat"><div class="v">'+solEsc(c.expired||0)+'</div><div class="k">expired</div></div>'+
+      '<div class="stat"><div class="v">'+solEsc(c.inactive||0)+'</div><div class="k">inactive</div></div>'+
+      '<div class="stat"><div class="v sol-mono">'+solEsc(d.slot!=null?d.slot:"—")+'</div><div class="k">slot</div></div>';
+  }
+  // status dropdown once
+  const dd=document.getElementById("sol-dd-status");
+  if(dd && !dd.dataset.ready){
+    const menu=dd.querySelector(".sdd-menu");
+    const btn=dd.querySelector(".sdd-btn");
+    const opts=["","active","expired","inactive","closed"];
+    menu.innerHTML=opts.map(s=>'<div class="sdd-item" data-v="'+s+'">'+(s||"All statuses")+'</div>').join("");
+    btn.onclick=(e)=>{e.stopPropagation(); dd.classList.toggle("open");};
+    menu.onclick=(e)=>{
+      const it=e.target.closest(".sdd-item"); if(!it)return;
+      SOL.status=it.dataset.v||""; SOL.page=0;
+      btn.textContent=it.textContent; dd.classList.remove("open"); renderSolana();
+    };
+    document.addEventListener("click",()=>dd.classList.remove("open"));
+    dd.dataset.ready="1";
+  }
+  const rows=solFiltered();
+  const sh=document.getElementById("sol-showing");
+  if(sh) sh.textContent = rows.length+" shown · network=solana-devnet · "+(d.updated_at||"")+(d.label?(" · "+d.label):"");
+  const pages=Math.max(1, Math.ceil(rows.length/SOL.perPage));
+  if(SOL.page>=pages) SOL.page=pages-1;
+  const slice=rows.slice(SOL.page*SOL.perPage, (SOL.page+1)*SOL.perPage);
+  const th=(key,label)=>'<th style="cursor:pointer" onclick="solSort(\''+key+'\')">'+label+(SOL.sortKey===key?(SOL.sortDir>0?" ▲":" ▼"):"")+'</th>';
+  let html='<table><thead><tr>'+
+    th("status","Status")+th("country","CC")+th("bond","Bond")+th("price_gb","Price/GB")+th("price_hr","Price/hr")+
+    th("owner","Owner")+th("uri","URI")+th("listed_at","Listed")+th("addr","Addr")+
+    '</tr></thead><tbody>';
+  if(!slice.length){
+    html+='<tr><td colspan="9" style="padding:18px;color:var(--muted)">No nodes match.</td></tr>';
+  } else {
+    slice.forEach(n=>{
+      const href=solHttpsHref(n.uri);
+      const uriCell = href
+        ? '<a class="sol-mono" href="'+solEsc(href)+'" target="_blank" rel="noopener noreferrer">'+solEsc(solShort(n.uri,40))+'</a>'
+        : '<span class="sol-mono">'+(n.uri?solEsc(solShort(n.uri,40)):(n.remote?solEsc(solShort(n.remote,40)):"—"))+'</span>';
+      const statusClass=["active","expired","inactive","closed"].includes(n.status)?n.status:"";
+      html+='<tr>'+
+        '<td><span class="sol-status '+statusClass+'">'+(n.status?solEsc(n.status):"—")+'</span></td>'+
+        '<td>'+(n.country?solEsc(n.country):"—")+'</td>'+
+        '<td class="sol-mono">'+(n.bond!=null?solEsc(n.bond):"—")+'</td>'+
+        '<td class="sol-mono">'+(n.price_gb!=null?solEsc(n.price_gb):"—")+'</td>'+
+        '<td class="sol-mono">'+(n.price_hr!=null?solEsc(n.price_hr):"—")+'</td>'+
+        '<td class="sol-mono" title="'+solEsc(n.owner||'')+'">'+solEsc(solShort(n.owner,10))+'</td>'+
+        '<td>'+uriCell+'</td>'+
+        '<td class="sol-mono">'+(n.listed_at?solEsc(solShort(n.listed_at,16)):"—")+'</td>'+
+        '<td class="sol-mono" title="'+solEsc(n.addr||'')+'">'+solEsc(solShort((n.addr||"").replace(/^sol:/,""),12))+'</td>'+
+        '</tr>';
+    });
+  }
+  html+='</tbody></table>';
+  const box=document.getElementById("sol-content"); if(box) box.innerHTML=html;
+  const pager=document.getElementById("sol-pager");
+  const info=document.getElementById("sol-pginfo");
+  if(pager){ pager.style.display = rows.length>SOL.perPage ? "flex":"none"; }
+  if(info) info.textContent = "page "+(SOL.page+1)+" / "+pages;
+}
+function showSolanaView(){
+  document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view==="solana-devnet"));
+  ["explorer","asnintel","leaderboard","trends","decent","solana-devnet"].forEach(k=>{
+    const el=document.getElementById("view-"+k); if(!el)return;
+    const show=(k==="solana-devnet");
+    el.style.display=show?"block":"none";
+  });
+  const upd=document.getElementById("updated");
+  if(upd) upd.textContent="Solana devnet listing (experimental)";
+  loadSolanaPublic(false);
+}
+
 function switchView(v){
-  if(!NODES.length){load();return;}
+  if(v==="solana-devnet"){ showSolanaView(); return; }
+  if(!NODES.length){
+    // Cosmos snapshots stay unpublished. Any non-Solana tab returns to the
+    // Nodes view and its paid-API message, including after the Solana tab.
+    document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view==="explorer"));
+    ["explorer","asnintel","leaderboard","trends","decent","solana-devnet"].forEach(k=>{
+      const el=document.getElementById("view-"+k);
+      if(!el)return;
+      el.style.display=(k==="explorer")?"block":"none";
+    });
+    load();
+    return;
+  }
   document.querySelectorAll("#maintabs .tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-  ["explorer","asnintel","leaderboard","trends","decent"].forEach(k=>{
+  ["explorer","asnintel","leaderboard","trends","decent","solana-devnet"].forEach(k=>{
     const el=document.getElementById("view-"+k);
+    if(!el)return;
     const show=(v===k);
     el.style.display=show?"block":"none";
     el.classList.remove("viewfade");
@@ -1306,6 +1502,14 @@ function switchView(v){
   if(v==="decent")renderDecent();
 }
 document.querySelectorAll("#maintabs .tab").forEach(t=>t.onclick=()=>switchView(t.dataset.view));
+(function(){
+  const s=document.getElementById("sol-search");
+  if(s) s.oninput=()=>{SOL.q=s.value; SOL.page=0; if(SOL.doc) renderSolana();};
+  const prev=document.getElementById("sol-prev");
+  const next=document.getElementById("sol-next");
+  if(prev) prev.onclick=()=>{ if(SOL.page>0){SOL.page--; renderSolana();} };
+  if(next) next.onclick=()=>{ SOL.page++; renderSolana(); };
+})();
 // ===== Decentralization Score =====
 const DEC_CLOUD=["amazon","aws ","google","g cloud","azure","microsoft","oracle","alibaba","vultr","linode","digitalocean","digital ocean","colocrossing","tencent","huawei"];
 function decIsCloud(asn){ if(!asn)return false; const a=asn.toLowerCase(); return DEC_CLOUD.some(d=>a.includes(d)); }

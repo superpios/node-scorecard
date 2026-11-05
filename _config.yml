@@ -25,3 +25,5 @@ exclude:
   - asn-types.json
   - watchlist.json
   - collector.log
+# solana-devnet-public.json is intentionally published (temporary experimental listing).
+# Do NOT add it to exclude. Cosmos latest.json / history-summary.json stay excluded.
