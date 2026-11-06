@@ -1423,7 +1423,7 @@ function renderSolana(){
   }
   const rows=solFiltered();
   const sh=document.getElementById("sol-showing");
-  if(sh) sh.textContent = rows.length+" shown · network=solana-devnet · "+(d.updated_at||"")+(d.label?(" · "+d.label):"");
+  if(sh) sh.textContent = rows.length+" shown · network=solana-devnet · "+(d.updated_at||"");
   const pages=Math.max(1, Math.ceil(rows.length/SOL.perPage));
   if(SOL.page>=pages) SOL.page=pages-1;
   const slice=rows.slice(SOL.page*SOL.perPage, (SOL.page+1)*SOL.perPage);
