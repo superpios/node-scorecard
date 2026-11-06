@@ -34,7 +34,7 @@
   .viewfade{animation:viewfade .25s ease-out}
   .tab:hover{color:var(--txt)} .tab.active{color:var(--good);border-bottom-color:var(--good)}
 
-  /* Solana devnet temporary listing (Pages only; not sold) */
+  /* Solana devnet temporary view (Pages only) */
   .sol-banner{margin:14px 0 12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(125,211,252,.35);background:rgba(125,211,252,.08);color:var(--txt);font-size:13px;line-height:1.45}
   .sol-banner b{color:#7dd3fc}
   .sol-banner .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);font-size:11px;font-family:'Space Mono',monospace}
@@ -338,8 +338,8 @@
   <div id="view-solana-devnet" style="display:none">
     <div class="sol-banner">
       <b>Solana devnet</b>
-      <span class="pill">experimental / not sold</span>
-      <div style="margin-top:6px;color:var(--muted)">Temporary public listing from on-chain Node accounts. Not the paid API. Cosmos scores stay on <a href="https://nodescorecard.xyz" style="color:var(--good)">nodescorecard.xyz</a>.</div>
+      <span class="pill">experimental</span>
+      <div style="margin-top:6px;color:var(--muted)">Temporary view of on-chain Node accounts. Not the paid API. Cosmos scores stay on <a href="https://nodescorecard.xyz" style="color:var(--good)">nodescorecard.xyz</a>.</div>
     </div>
     <div class="stats" id="sol-stats"></div>
     <div class="controls">
@@ -348,7 +348,7 @@
     </div>
     <div class="showing" id="sol-showing"></div>
     <div class="tablewrap">
-      <div class="tscroll"><div id="sol-content"><div class="loading">Loading Solana devnet listing…</div></div></div>
+      <div class="tscroll"><div id="sol-content"><div class="loading">Loading Solana devnet nodes…</div></div></div>
       <div class="pager" id="sol-pager" style="display:none">
         <div class="info" id="sol-pginfo"></div>
         <div class="btns">
@@ -1328,7 +1328,7 @@ function renderAsnIntel(){
   }
 }
 
-// ===== Solana devnet temporary Pages listing (allowlisted public JSON) =====
+// ===== Solana devnet temporary Pages view (allowlisted public JSON) =====
 const SOL_URL="./solana-devnet-public.json";
 let SOL={doc:null,nodes:[],status:"",q:"",page:0,perPage:50,sortKey:"status",sortDir:1,loading:false,err:null};
 function solEsc(s){
@@ -1348,7 +1348,7 @@ function loadSolanaPublic(force){
   if(SOL.doc && !force){ renderSolana(); return; }
   SOL.loading=true; SOL.err=null;
   const box=document.getElementById("sol-content");
-  if(box) box.innerHTML='<div class="loading">Loading Solana devnet listing…</div>';
+  if(box) box.innerHTML='<div class="loading">Loading Solana devnet nodes…</div>';
   fetch(SOL_URL+"?t="+Date.now(),{cache:"no-store"})
     .then(r=>{
       if(r.status===404) throw new Error("not_published");
@@ -1362,8 +1362,8 @@ function loadSolanaPublic(force){
     .catch(e=>{
       SOL.loading=false; SOL.err=e && e.message;
       const msg = (SOL.err==="not_published")
-        ? 'Solana-devnet public listing is not published yet. The collector can write <code>solana-devnet-public.json</code> without touching the paid API.'
-        : 'Could not load Solana-devnet listing ('+ solEsc(SOL.err||"error") +').';
+        ? 'Solana-devnet node data is not published yet. The collector can write <code>solana-devnet-public.json</code> without touching the paid API.'
+        : 'Could not load Solana-devnet nodes ('+ solEsc(SOL.err||"error") +').';
       if(box) box.innerHTML='<div class="loading">'+msg+'</div>';
       const st=document.getElementById("sol-stats"); if(st) st.innerHTML="";
       const sh=document.getElementById("sol-showing"); if(sh) sh.textContent="";
@@ -1469,7 +1469,7 @@ function showSolanaView(){
     el.style.display=show?"block":"none";
   });
   const upd=document.getElementById("updated");
-  if(upd) upd.textContent="Solana devnet listing (experimental)";
+  if(upd) upd.textContent="Solana devnet nodes (experimental)";
   loadSolanaPublic(false);
 }
 
