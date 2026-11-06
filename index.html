@@ -1342,6 +1342,15 @@ function solHttpsHref(uri){
   if(!/^https:\/\/[A-Za-z0-9.-]+(?::\d+)?(?:\/[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]*)?$/i.test(u))return null;
   return u;
 }
+// Official terms (sentinel-dvpnd / sentinel-dvpn CLI): on-chain status is "listed" or
+// "delisted"; a listed node is "live" while now < listed_at + node_listing_ttl_seconds.
+const SOL_STATUS_LABEL={active:"live",expired:"listed, not live",inactive:"delisted",closed:"closed"};
+const SOL_STATUS_TIP={active:"Listed and within the listing TTL: clients can open channels and leases",expired:"Listed, but the listing TTL has passed (node daemon has not re-listed it)",inactive:"Delisted on-chain",closed:"Node account closed"};
+function solStatusLabel(s){ return SOL_STATUS_LABEL[s]||s||"—"; }
+// Protocol bits from sentinel-go-sdk (wireguard 1<<0, v2ray 1<<1, openvpn 1<<2, amneziawg 1<<3, xray 1<<4, hysteria2 1<<5)
+const SOL_PROTO=[[1,"WireGuard"],[2,"V2Ray"],[4,"OpenVPN"],[8,"AmneziaWG"],[16,"Xray"],[32,"Hysteria2"]];
+function solProtocols(b){ if(b==null)return "—"; b=Number(b)>>>0; const out=SOL_PROTO.filter(([m])=>b&m).map(([,n])=>n); return out.length?out.join(", "):"—"; }
+function solUtc(iso){ if(!iso)return "—"; const m=String(iso).match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/); return m?(m[1]+" "+m[2]+" UTC"):String(iso); }
 function solShort(s,n){ if(!s)return "—"; s=String(s); return s.length<=n?s:s.slice(0,n)+"…"; }
 function loadSolanaPublic(force){
   if(SOL.loading)return;
@@ -1400,9 +1409,9 @@ function renderSolana(){
   if(st){
     st.innerHTML =
       '<div class="stat"><div class="v">'+solEsc(d.node_count!=null?d.node_count:SOL.nodes.length)+'</div><div class="k">tracked</div></div>'+
-      '<div class="stat"><div class="v">'+solEsc(c.active||0)+'</div><div class="k">active</div></div>'+
-      '<div class="stat"><div class="v">'+solEsc(c.expired||0)+'</div><div class="k">expired</div></div>'+
-      '<div class="stat"><div class="v">'+solEsc(c.inactive||0)+'</div><div class="k">inactive</div></div>'+
+      '<div class="stat"><div class="v">'+solEsc(c.active||0)+'</div><div class="k">live</div></div>'+
+      '<div class="stat"><div class="v">'+solEsc(c.expired||0)+'</div><div class="k">listed, not live</div></div>'+
+      '<div class="stat"><div class="v">'+solEsc(c.inactive||0)+'</div><div class="k">delisted</div></div>'+
       '<div class="stat"><div class="v sol-mono">'+solEsc(d.slot!=null?d.slot:"—")+'</div><div class="k">slot</div></div>';
   }
   // status dropdown once
@@ -1411,7 +1420,7 @@ function renderSolana(){
     const menu=dd.querySelector(".sdd-menu");
     const btn=dd.querySelector(".sdd-btn");
     const opts=["","active","expired","inactive","closed"];
-    menu.innerHTML=opts.map(s=>'<div class="sdd-item" data-v="'+s+'">'+(s||"All statuses")+'</div>').join("");
+    menu.innerHTML=opts.map(s=>'<div class="sdd-item" data-v="'+s+'">'+(s?solStatusLabel(s):"All statuses")+'</div>').join("");
     btn.onclick=(e)=>{e.stopPropagation(); dd.classList.toggle("open");};
     menu.onclick=(e)=>{
       const it=e.target.closest(".sdd-item"); if(!it)return;
@@ -1429,11 +1438,11 @@ function renderSolana(){
   const slice=rows.slice(SOL.page*SOL.perPage, (SOL.page+1)*SOL.perPage);
   const th=(key,label)=>'<th style="cursor:pointer" onclick="solSort(\''+key+'\')">'+label+(SOL.sortKey===key?(SOL.sortDir>0?" ▲":" ▼"):"")+'</th>';
   let html='<table><thead><tr>'+
-    th("status","Status")+th("country","CC")+th("bond","Bond")+th("price_gb","Price/GB")+th("price_hr","Price/hr")+
-    th("owner","Owner")+th("uri","URI")+th("listed_at","Listed")+th("addr","Addr")+
+    th("status","Status")+th("country","CC")+th("protocols","Protocols")+th("bond","Bond (tDVPN)")+th("price_gb","Price/GB (tDVPN)")+th("price_hr","Price/hr (tDVPN)")+
+    th("owner","Owner")+th("uri","URI")+th("listed_at","Listed at")+th("listing_expires_at","Live until")+th("addr","Address")+
     '</tr></thead><tbody>';
   if(!slice.length){
-    html+='<tr><td colspan="9" style="padding:18px;color:var(--muted)">No nodes match.</td></tr>';
+    html+='<tr><td colspan="11" style="padding:18px;color:var(--muted)">No nodes match.</td></tr>';
   } else {
     slice.forEach(n=>{
       const href=solHttpsHref(n.uri);
@@ -1442,14 +1451,16 @@ function renderSolana(){
         : '<span class="sol-mono">'+(n.uri?solEsc(solShort(n.uri,40)):(n.remote?solEsc(solShort(n.remote,40)):"—"))+'</span>';
       const statusClass=["active","expired","inactive","closed"].includes(n.status)?n.status:"";
       html+='<tr>'+
-        '<td><span class="sol-status '+statusClass+'">'+(n.status?solEsc(n.status):"—")+'</span></td>'+
+        '<td><span class="sol-status '+statusClass+'" title="'+solEsc(SOL_STATUS_TIP[n.status]||"")+'">'+solEsc(solStatusLabel(n.status))+'</span></td>'+
         '<td>'+(n.country?solEsc(n.country):"—")+'</td>'+
+        '<td>'+solEsc(solProtocols(n.protocols))+'</td>'+
         '<td class="sol-mono">'+(n.bond!=null?solEsc(n.bond):"—")+'</td>'+
         '<td class="sol-mono">'+(n.price_gb!=null?solEsc(n.price_gb):"—")+'</td>'+
         '<td class="sol-mono">'+(n.price_hr!=null?solEsc(n.price_hr):"—")+'</td>'+
         '<td class="sol-mono" title="'+solEsc(n.owner||'')+'">'+solEsc(solShort(n.owner,10))+'</td>'+
         '<td>'+uriCell+'</td>'+
-        '<td class="sol-mono">'+(n.listed_at?solEsc(solShort(n.listed_at,16)):"—")+'</td>'+
+        '<td class="sol-mono">'+solEsc(solUtc(n.listed_at))+'</td>'+
+        '<td class="sol-mono">'+(n.status==="inactive"?"—":solEsc(solUtc(n.listing_expires_at)))+'</td>'+
         '<td class="sol-mono" title="'+solEsc(n.addr||'')+'">'+solEsc(solShort((n.addr||"").replace(/^sol:/,""),12))+'</td>'+
         '</tr>';
     });
